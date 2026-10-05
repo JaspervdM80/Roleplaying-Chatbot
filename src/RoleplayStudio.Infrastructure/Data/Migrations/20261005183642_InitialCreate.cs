@@ -82,7 +82,6 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Characters", x => x.Id);
-                    table.CheckConstraint("CK_Characters_Age", "\"Age\" >= 12");
                 });
 
             migrationBuilder.CreateTable(

@@ -96,7 +96,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.HasIndex(x => x.OwnerId);
             e.Property(x => x.Name).HasMaxLength(100);
-            e.ToTable(t => t.HasCheckConstraint("CK_Characters_Age", $"\"Age\" >= {Character.MinimumAge}"));
             e.OwnsOne(x => x.Appearance, o => o.ToJson());
             e.OwnsOne(x => x.DefaultOutfit, o => o.ToJson());
         });
