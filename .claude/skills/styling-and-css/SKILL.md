@@ -30,6 +30,11 @@ custom properties (`var(--...)`) or MudBlazor's palette, never a hex literal or 
 `color-mix` percentage. Muted text uses a named ink ramp, not per-page opacity. If the page colour
 changes, the `theme-color` meta changes with it.
 
+The palette is `src/RoleplayStudio.Web/Theming/AppTheme.cs`: add a token there, never in a stylesheet.
+The Identity pages are Bootstrap in `data-bs-theme="dark"`; they take the tokens through the `--bs-*`
+mappings at the top of `app.css`, so restyle Bootstrap through its variables, not its properties.
+Keep `font-size` off `html` — the root `rem` stays 16px so `1.0625rem` means 17px.
+
 ## MudBlazor 9.x rules that have already cost time
 
 - **Never let a global `.mud-*` rule touch layout.** A card rule setting `position: relative` on
