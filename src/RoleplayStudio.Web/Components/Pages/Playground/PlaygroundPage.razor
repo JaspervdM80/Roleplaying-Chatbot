@@ -1,0 +1,65 @@
+@page "/playground"
+@attribute [Authorize]
+@inherits CancellableComponent
+
+<PageTitle>Playground · Roleplay Studio</PageTitle>
+
+<div class="playground">
+    <MudExpansionPanels Outlined="true">
+        <MudExpansionPanel Text="@SetupTitle" Expanded="_turns.Count == 0">
+            <MudStack Spacing="2">
+                @if (_profiles is { Count: 0 })
+                {
+                    <MudAlert Severity="Severity.Info">Add a chat model on the <MudLink Href="@AppRoutes.Models">Models</MudLink> page first.</MudAlert>
+                }
+                else
+                {
+                    <MudSelect T="Guid?" @bind-Value="_profileId" Label="Model" Variant="Variant.Outlined" Disabled="_streaming">
+                        @foreach (var profile in _profiles ?? [])
+                        {
+                            <MudSelectItem T="Guid?" Value="profile.Id">@profile.Name (@profile.ModelId)</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                <MudTextField @bind-Value="_characterName" Label="Character name" MaxLength="100" Variant="Variant.Outlined" Disabled="_streaming" />
+                <MudTextField @bind-Value="_characterDescription" Label="Who they are" Lines="3" Sizing="InputSizing.Auto" MaxLines="8" Variant="Variant.Outlined" Disabled="_streaming"
+                              HelperText="Personality, speech style and the situation. The character is always an adult." />
+                <MudText Typo="Typo.caption" Class="playground-note">The playground keeps nothing: leaving the page clears the chat.</MudText>
+            </MudStack>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+
+    <div class="playground-messages" @ref="_messageList" aria-live="polite">
+        @foreach (var turn in _turns)
+        {
+            <div class="@(turn.FromUser ? "chat-turn chat-turn-user" : "chat-turn chat-turn-character")" @key="turn">
+                <div class="chat-turn-speaker">@(turn.FromUser ? "You" : turn.Speaker)</div>
+                <div class="chat-turn-text">@turn.Text</div>
+            </div>
+        }
+        @if (_streaming && _turns.Count > 0 && _turns[^1] is { FromUser: false, Text.Length: 0 })
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+    </div>
+
+    <div class="playground-input">
+        <MudTextField @bind-Value="_draft" Placeholder="Say something…" Lines="1" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+                      Immediate="true" Disabled="_streaming" OnKeyDown="OnDraftKeyDown" aria-label="Message" />
+        @if (_streaming)
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="Stop">Stop</MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="!CanSend" OnClick="SendAsync">Send</MudButton>
+            @if (_turns.Count > 0)
+            {
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="More chat actions" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.BottomRight">
+                    <MudMenuItem OnClick="RetryAsync">Retry last reply</MudMenuItem>
+                    <MudMenuItem OnClick="Clear">Clear chat</MudMenuItem>
+                </MudMenu>
+            }
+        }
+    </div>
+</div>

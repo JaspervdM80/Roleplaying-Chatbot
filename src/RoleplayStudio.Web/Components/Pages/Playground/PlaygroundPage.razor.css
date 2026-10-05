@@ -1,0 +1,63 @@
+.playground {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: calc(100dvh - 3.5rem - 2.2rem);
+    min-height: 360px;
+}
+
+.playground-messages {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 2px;
+}
+
+.chat-turn {
+    max-width: min(48rem, 90%);
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-lines-default);
+}
+
+.chat-turn-user {
+    align-self: flex-end;
+    background: var(--mud-palette-primary);
+    border-color: transparent;
+    color: var(--mud-palette-primary-text);
+}
+
+.chat-turn-speaker {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.chat-turn-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.playground-input {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.playground-input ::deep .mud-input-control {
+    margin-top: 0;
+}
+
+.playground ::deep .playground-note {
+    color: var(--mud-palette-text-secondary);
+}
+
+@media (max-width: 640.98px) {
+    .playground {
+        height: calc(100dvh - 3.5rem - 3.5rem - 2.2rem);
+    }
+}

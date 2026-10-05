@@ -15,7 +15,19 @@ description: Working in RoleplayStudio.AI — model providers behind IChatClient
 - Nothing outside the factory knows which provider it talks to. A provider-specific quirk is handled
   in the factory or a small decorating client, not at the call site.
 - **The API key is read from configuration by its setting name at call time.** It never enters the
-  database, a log line, an exception message or the page.
+  database, a log line, an exception message or the page. The setting must sit under `Providers:`
+  (`ModelProfile.ApiKeySettingPrefix`) — otherwise a profile pointed at a URL of the user's choosing
+  could send any configuration value (a connection string, the invite code) as its bearer token.
+  And because every user's profiles share the configured keys, a key only travels to the scheme and
+  host in the `BaseUrl` setting beside it (`Providers:OpenRouter:ApiKey` → `Providers:OpenRouter:BaseUrl`,
+  in `appsettings.json`); otherwise any signed-in friend could point a profile at their own server.
+- `IChatClientFactory` is the seam tests fake; `ChatClientFactory` builds the real clients.
+- **Provider HTTP never goes through `IHttpClientFactory`.** The service defaults put the standard
+  resilience handler on every factory client, with a 10-second attempt timeout that kills any
+  generation. The factory shares one `SocketsHttpHandler` instead.
+- Provider failures a user can fix (401, 404, unreachable, out of credit) are translated by
+  `ProviderErrors.TranslateAsync` into readable failures; anything else still reaches
+  `ServiceOperation`.
 
 ## Prompts are assembled by pure code
 

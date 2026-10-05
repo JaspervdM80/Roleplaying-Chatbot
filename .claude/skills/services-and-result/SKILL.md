@@ -10,15 +10,18 @@ This is the shape services take from the first one onward. Every service method 
 
 ## The shape
 
-Wrap the body in `ServiceOperation.RunAsync` for a read and `RunOwnerAsync` for a write. The
-signed-in check is a property of the shape, not something each method remembers.
+Wrap the body in `ServiceOperation.RunOwnerAsync` whenever it touches owned rows, read or write; it
+hands the lambda the signed-in user's id and refuses a signed-out caller. `RunAsync` is the same
+wrapper without a user, for work that reaches owned rows only through another service (the AI
+services call `ModelProfileService`). The signed-in check is a property of the shape, not something
+each method remembers. `Result`, `ServiceOperation` and `ICurrentUser` live in
+`Infrastructure/Services/`.
 
 ```csharp
-public Task<Result<Character>> CreateAsync(Character character, CancellationToken cancellationToken = default) =>
-    ServiceOperation.RunOwnerAsync(currentUser, logger, "create character", cancellationToken, async ownerId =>
+public Task<Result<Character>> CreateAsync(Character character) =>
+    ServiceOperation.RunOwnerAsync(currentUser, logger, "create the character", CancellationToken.None, async ownerId =>
     {
-        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        character.OwnerId = ownerId;
+        await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
         db.Characters.Add(character);
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Created character {CharacterName} (ID: {CharacterId})", character.Name, character.Id);
@@ -27,7 +30,9 @@ public Task<Result<Character>> CreateAsync(Character character, CancellationToke
 ```
 
 Expected misses return `Result.Failure(...)` explicitly from inside the lambda, after a `LogWarning`.
-Only unexpected exceptions fall through to the wrapper, which logs the error once.
+Only unexpected exceptions fall through to the wrapper, which logs the error once. The one sanctioned
+catch is `ProviderErrors.TranslateAsync` in the AI project: a wrong key, model or address is an
+expected miss with a readable message, not an error.
 
 ## Failure messages are templates
 
@@ -38,9 +43,10 @@ Result.Failure($"Chatbot {name} still has {count} chats")        // no — canno
 
 ## Ownership is enforced at the service, not in the markup
 
-Every row a user creates belongs to them (`OwnedEntity.OwnerId`). The service stamps `OwnerId` from
-`ICurrentUser` on create — **never from a parameter or a form field** — and every read sees only the
-caller's rows through the owner query filter (the `ef-core-and-queries` skill). Hiding a button with
+Every row a user creates belongs to them (`OwnedEntity.OwnerId`). `OwnerId` comes from `ICurrentUser`
+— **never from a parameter or a form field**: `SaveChanges` stamps it from the context's owner scope,
+and every read sees only the caller's rows through the owner query filter (the `ef-core-and-queries`
+skill). An update copies the editable fields onto the row it loaded, never attaches the input. Hiding a button with
 `<AuthorizeView>` is enforcement in the render tree only.
 
 Child rows (`Scenario`, `Message`, `CharacterState`, `MemoryEntry`) have no `OwnerId`; a write that

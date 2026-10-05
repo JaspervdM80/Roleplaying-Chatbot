@@ -2,9 +2,13 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using RoleplayStudio.AI.Playground;
+using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Infrastructure.Data;
+using RoleplayStudio.Infrastructure.Services;
 using RoleplayStudio.Web.Components;
 using RoleplayStudio.Web.Components.Account;
+using RoleplayStudio.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +31,8 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("roleplaydb") ?? throw new InvalidOperationException("Connection string 'roleplaydb' not found.");
-builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
+// Not pooled: a pooled context would carry the previous rental's ScopedOwnerId. This also registers the scoped context Identity uses.
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString, npgsql => npgsql.UseVector()));
 builder.EnrichNpgsqlDbContext<ApplicationDbContext>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -35,13 +40,19 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
-        options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+        options.Stores.SchemaVersion = DesignTimeDbContextFactory.IdentitySchemaVersion;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+builder.Services.AddScoped<ICurrentUser, AuthenticationStateCurrentUser>();
+builder.Services.AddScoped<ModelProfileService>();
+builder.Services.AddSingleton<IChatClientFactory, ChatClientFactory>();
+builder.Services.AddScoped<ModelConnectionService>();
+builder.Services.AddScoped<PlaygroundChatService>();
 
 var app = builder.Build();
 
