@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Services;
 using RoleplayStudio.Web.Components.Shared;
@@ -11,12 +12,17 @@ public partial class ModelProfileDialog
     private ModelProfile _profile = new();
     private ProviderPreset _preset = ProviderPreset.All[0];
     private bool _saving;
+    private IReadOnlyList<OllamaModel>? _ollamaModels;
+    private string? _ollamaProblem;
 
     [CascadingParameter]
     private IMudDialogInstance Dialog { get; set; } = null!;
 
     [Inject]
     private ModelProfileService Profiles { get; set; } = null!;
+
+    [Inject]
+    private OllamaModelCatalog OllamaModels { get; set; } = null!;
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
@@ -27,16 +33,46 @@ public partial class ModelProfileDialog
 
     private bool IsNew => Profile is null;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (Profile is null)
         {
             ApplyPreset(_preset);
+        }
+        else
+        {
+            _profile = new ModelProfile { Id = Profile.Id };
+            _profile.CopyEditableFieldsFrom(Profile);
+        }
+
+        await LoadOllamaModelsAsync();
+    }
+
+    private async Task LoadOllamaModelsAsync()
+    {
+        _ollamaModels = null;
+        _ollamaProblem = null;
+        if (_profile.Provider != ProviderKind.Ollama)
+        {
             return;
         }
 
-        _profile = new ModelProfile { Id = Profile.Id };
-        _profile.CopyEditableFieldsFrom(Profile);
+        var result = await OllamaModels.ListAsync(string.IsNullOrWhiteSpace(_profile.BaseUrl) ? null : _profile.BaseUrl.Trim(), _profile.Role, Cancellation);
+        if (result.IsSuccess)
+        {
+            _ollamaModels = result.Value;
+            _ollamaProblem = result.Value.Count == 0 ? "No chat models are installed; pull one with ollama pull" : null;
+        }
+        else if (!result.IsCancelled)
+        {
+            _ollamaProblem = result.Error;
+        }
+    }
+
+    private async Task ApplyPresetAsync(ProviderPreset preset)
+    {
+        ApplyPreset(preset);
+        await LoadOllamaModelsAsync();
     }
 
     private void ApplyPreset(ProviderPreset preset)

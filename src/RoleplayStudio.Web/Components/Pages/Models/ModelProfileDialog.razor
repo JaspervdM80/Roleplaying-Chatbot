@@ -1,9 +1,11 @@
+@inherits CancellableComponent
+
 <MudDialog Class="app-sheet-dialog">
     <DialogContent>
         <MudStack Spacing="2">
             @if (IsNew)
             {
-                <MudSelect T="ProviderPreset" Label="Start from" Value="_preset" ValueChanged="ApplyPreset" Variant="Variant.Outlined">
+                <MudSelect T="ProviderPreset" Label="Start from" Value="_preset" ValueChanged="ApplyPresetAsync" Variant="Variant.Outlined">
                     @foreach (var preset in ProviderPreset.All)
                     {
                         <MudSelectItem Value="preset">@preset.Label</MudSelectItem>
@@ -16,14 +18,32 @@
                 <MudSelectItem Value="ModelRole.Chat">Chat</MudSelectItem>
                 <MudSelectItem Value="ModelRole.Utility">Utility</MudSelectItem>
             </MudSelect>
-            <MudSelect @bind-Value="_profile.Provider" Label="Provider" Variant="Variant.Outlined">
+            <MudSelect @bind-Value="_profile.Provider" @bind-Value:after="LoadOllamaModelsAsync" Label="Provider" Variant="Variant.Outlined">
                 <MudSelectItem Value="ProviderKind.OpenAICompatible">OpenAI-compatible (OpenRouter, Featherless, …)</MudSelectItem>
                 <MudSelectItem Value="ProviderKind.Ollama">Ollama (local)</MudSelectItem>
             </MudSelect>
-            <MudTextField @bind-Value="_profile.BaseUrl" Label="Base URL" Variant="Variant.Outlined" InputType="InputType.Url"
+            <MudTextField @bind-Value="_profile.BaseUrl" @bind-Value:after="LoadOllamaModelsAsync" Label="Base URL" Variant="Variant.Outlined" InputType="InputType.Url"
                           Placeholder="@(_profile.Provider == ProviderKind.Ollama ? ModelProfile.DefaultOllamaUrl : "https://openrouter.ai/api/v1")" />
-            <MudTextField @bind-Value="_profile.ModelId" Label="Model id" Required="true" MaxLength="200" Variant="Variant.Outlined"
-                          Placeholder="@(_profile.Provider == ProviderKind.Ollama ? "mistral-nemo" : "mistralai/mistral-nemo")" />
+            @if (_profile.Provider == ProviderKind.Ollama && _ollamaModels is { Count: > 0 })
+            {
+                <MudSelect @bind-Value="_profile.ModelId" Label="Model" Required="true" Variant="Variant.Outlined"
+                           HelperText="The models installed on this Ollama server.">
+                    @if (_profile.ModelId.Length > 0 && !_ollamaModels.Any(m => m.Name == _profile.ModelId))
+                    {
+                        <MudSelectItem Value="_profile.ModelId">@_profile.ModelId (not installed)</MudSelectItem>
+                    }
+                    @foreach (var model in _ollamaModels)
+                    {
+                        <MudSelectItem Value="model.Name">@model.Name @(model.ParameterSize is null ? "" : $"· {model.ParameterSize}")</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            else
+            {
+                <MudTextField @bind-Value="_profile.ModelId" Label="Model id" Required="true" MaxLength="200" Variant="Variant.Outlined"
+                              Placeholder="@(_profile.Provider == ProviderKind.Ollama ? "qwen3:8b" : "mistralai/mistral-nemo")"
+                              HelperText="@(_profile.Provider == ProviderKind.Ollama ? _ollamaProblem : null)" />
+            }
             @if (_profile.Provider == ProviderKind.OpenAICompatible)
             {
                 <MudTextField @bind-Value="_profile.ApiKeySetting" Label="API key setting" Variant="Variant.Outlined" Placeholder="Providers:OpenRouter:ApiKey"

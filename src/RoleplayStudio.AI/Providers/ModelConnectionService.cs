@@ -39,7 +39,8 @@ public sealed class ModelConnectionService(ModelProfileService profiles, IChatCl
                 {
                     var response = await client.GetResponseAsync(
                         [new ChatMessage(ChatRole.User, "Reply with the single word OK.")],
-                        new ChatOptions { MaxOutputTokens = 16 },
+                        // Thinking models count their reasoning against this cap; a tiny one leaves them no tokens to answer with.
+                        new ChatOptions { MaxOutputTokens = 1024 },
                         timeout.Token);
                     logger.LogInformation("Model profile {ProfileId} answered a connection test in {LatencyMs} ms", profile.Id, stopwatch.ElapsedMilliseconds);
                     return Result.Success(new ConnectionCheck(stopwatch.Elapsed, response.Text.Trim()));
