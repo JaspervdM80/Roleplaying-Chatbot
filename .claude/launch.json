@@ -13,6 +13,11 @@
       ],
       "url": "https://localhost:17041",
       "port": 17041
+    },
+    {
+      "name": "web",
+      "url": "https://localhost:7175",
+      "port": 7175
     }
   ]
 }

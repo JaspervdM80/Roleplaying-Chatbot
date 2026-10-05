@@ -1,0 +1,28 @@
+@using RoleplayStudio.Domain.Authoring
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Outfit.Top" Label="Top" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Outfit.Bottom" Label="Bottom" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Outfit.Footwear" Label="Footwear" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Outfit.Accessories" Label="Accessories" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField @bind-Value="Outfit.Notes" Label="Other notes" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+</MudGrid>
+
+@code {
+    /// <summary>Edited in place; hand over a copy when cancelling must leave the original untouched.</summary>
+    [Parameter, EditorRequired]
+    public Outfit Outfit { get; set; } = null!;
+
+    [Parameter]
+    public bool Disabled { get; set; }
+}

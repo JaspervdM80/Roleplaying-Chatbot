@@ -1,0 +1,38 @@
+@using RoleplayStudio.Domain.Authoring
+
+<MudGrid Spacing="2">
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Appearance.BodyType" Label="Body type" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Appearance.Height" Label="Height" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Appearance.SkinTone" Label="Skin" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Appearance.Eyes" Label="Eyes" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Appearance.Hair" Label="Hair" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Appearance.Face" Label="Face" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField @bind-Value="Appearance.DistinguishingFeatures" Label="Distinguishing features" Variant="Variant.Outlined" Disabled="Disabled"
+                      Placeholder="Freckles, a scar over one eyebrow, a tattoo…" />
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField @bind-Value="Appearance.Notes" Label="Other notes" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined" Disabled="Disabled" />
+    </MudItem>
+</MudGrid>
+
+@code {
+    /// <summary>Edited in place; hand over a copy when cancelling must leave the original untouched.</summary>
+    [Parameter, EditorRequired]
+    public Appearance Appearance { get; set; } = null!;
+
+    [Parameter]
+    public bool Disabled { get; set; }
+}

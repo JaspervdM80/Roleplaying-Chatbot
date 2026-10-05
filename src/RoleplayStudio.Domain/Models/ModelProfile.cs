@@ -40,6 +40,8 @@ public class ModelProfile : OwnedEntity
 
     public static bool CanChat(ProviderKind provider) => provider is ProviderKind.OpenAICompatible or ProviderKind.Ollama;
 
+    public bool IsChatModel => Role == ModelRole.Chat && CanChat(Provider);
+
     public void CopyEditableFieldsFrom(ModelProfile other)
     {
         Name = other.Name;

@@ -1,4 +1,4 @@
-.playground {
+.chat {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -6,23 +6,37 @@
     min-height: 360px;
 }
 
-.playground-input {
+.chat-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+}
+
+.chat-header-title {
+    min-width: 0;
+    flex: 1 1 240px;
+}
+
+.chat ::deep .chat-model {
+    flex: 0 1 240px;
+    margin-top: 0;
+}
+
+.chat-input {
     display: flex;
     align-items: flex-end;
     gap: 8px;
     padding-bottom: env(safe-area-inset-bottom);
 }
 
-.playground-input ::deep .mud-input-control {
+.chat-input ::deep .mud-input-control {
     margin-top: 0;
 }
 
-.playground ::deep .playground-note {
-    color: var(--mud-palette-text-secondary);
-}
-
 @media (max-width: 640.98px) {
-    .playground {
+    .chat {
         height: calc(100dvh - 3.5rem - 3.5rem - 2.2rem);
     }
 }

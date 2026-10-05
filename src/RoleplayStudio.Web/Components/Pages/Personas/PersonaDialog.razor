@@ -1,0 +1,30 @@
+<MudDialog Class="app-sheet-dialog">
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudTextField @bind-Value="_persona.Name" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined" />
+            <MudGrid Spacing="2">
+                <MudItem xs="6">
+                    <MudNumericField @bind-Value="_persona.Age" Label="Age" Min="0" Variant="Variant.Outlined" HideSpinButtons="true" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTextField @bind-Value="_persona.Gender" Label="Gender" Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+            <MudTextField @bind-Value="_persona.Description" Label="Who you are" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
+                          HelperText="What the characters know about you." />
+            <MudTextField @bind-Value="_persona.Personality" Label="Personality" Lines="2" Sizing="InputSizing.Auto" MaxLines="8" Variant="Variant.Outlined" />
+            <MudExpansionPanels Outlined="true" MultiExpansion="true">
+                <MudExpansionPanel Text="Appearance">
+                    <AppearanceFields Appearance="_persona.Appearance" />
+                </MudExpansionPanel>
+                <MudExpansionPanel Text="Usual outfit">
+                    <OutfitFields Outfit="_persona.DefaultOutfit" />
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_saving" OnClick="SaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>

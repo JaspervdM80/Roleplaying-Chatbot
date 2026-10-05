@@ -12,6 +12,20 @@ public class Chatbot : OwnedEntity
 
     public List<ChatbotCharacter> Cast { get; set; } = [];
     public List<Scenario> Scenarios { get; set; } = [];
+
+    /// <summary>Copies the fields a user edits, cleaned; the cast and scenarios are changed on their own.</summary>
+    public void CopyEditableFieldsFrom(Chatbot other)
+    {
+        Name = other.Name.Trim();
+        Tagline = TextFields.Clean(other.Tagline);
+        WorldDescription = TextFields.Clean(other.WorldDescription);
+        ToneAndRules = TextFields.Clean(other.ToneAndRules);
+        ImageStylePreset = TextFields.Clean(other.ImageStylePreset);
+        DefaultChatModelProfileId = other.DefaultChatModelProfileId;
+    }
+
+    /// <summary>The first reason this chatbot cannot be saved, as a message template, or null when it can.</summary>
+    public string? FindProblem() => string.IsNullOrWhiteSpace(Name) ? "Give the chatbot a name" : null;
 }
 
 public class ChatbotCharacter
@@ -21,3 +35,6 @@ public class ChatbotCharacter
     public Character Character { get; set; } = null!;
     public string? Role { get; set; }
 }
+
+/// <summary>One character in a chatbot's cast, as the cast editor hands it over.</summary>
+public sealed record CastMember(Guid CharacterId, string? Role);

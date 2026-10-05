@@ -1,0 +1,27 @@
+@inherits CancellableComponent
+
+<MudDialog Class="app-sheet-dialog">
+    <DialogContent>
+        @if (_personas is null)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_personas.Count == 0)
+        {
+            <MudText>You play a chat as one of your personas. Create one on the <MudLink Href="@AppRoutes.Personas">Personas</MudLink> page first.</MudText>
+        }
+        else
+        {
+            <MudSelect T="Guid?" @bind-Value="_personaId" Label="Play as" Variant="Variant.Outlined">
+                @foreach (var persona in _personas)
+                {
+                    <MudSelectItem T="Guid?" Value="persona.Id">@persona.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_starting || _personaId is null" OnClick="StartAsync">Start chat</MudButton>
+    </DialogActions>
+</MudDialog>

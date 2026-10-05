@@ -1,8 +1,6 @@
 using System.Diagnostics;
-using System.Text;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 using RoleplayStudio.AI.Playground;
 using RoleplayStudio.Domain.Models;
@@ -15,17 +13,15 @@ public partial class PlaygroundPage
 {
     private static readonly TimeSpan RenderThrottle = TimeSpan.FromMilliseconds(50);
 
-    private readonly List<Turn> _turns = [];
+    private readonly List<ChatTurnView> _turns = [];
     private IReadOnlyList<ModelProfile>? _profiles;
     private Guid? _profileId;
     private string _characterName = "Mira";
     private string? _characterDescription;
     private string? _draft;
     private bool _streaming;
-    private bool _scrollToEnd;
     private CancellationTokenSource? _stop;
-    private ElementReference _messageList;
-    private IJSObjectReference? _scroll;
+    private ChatTranscript? _transcript;
 
     [Inject]
     private ModelProfileService Profiles { get; set; } = null!;
@@ -35,9 +31,6 @@ public partial class PlaygroundPage
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
-
-    [Inject]
-    private IJSRuntime JS { get; set; } = null!;
 
     [SupplyParameterFromQuery(Name = "profile")]
     public Guid? RequestedProfileId { get; set; }
@@ -56,25 +49,10 @@ public partial class PlaygroundPage
             return;
         }
 
-        _profiles = result.Value.Where(p => p.Role == ModelRole.Chat && ModelProfile.CanChat(p.Provider)).ToList();
+        _profiles = result.Value.Where(p => p.IsChatModel).ToList();
         _profileId = _profiles.FirstOrDefault(p => p.Id == RequestedProfileId)?.Id
             ?? _profiles.FirstOrDefault(p => p.IsDefault)?.Id
             ?? _profiles.FirstOrDefault()?.Id;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            _scroll = await JS.InvokeAsync<IJSObjectReference>("import", Cancellation, "./js/chat-scroll.js");
-            await _scroll.InvokeVoidAsync("track", Cancellation, _messageList);
-        }
-
-        if (_scroll is not null && _turns.Count > 0)
-        {
-            await _scroll.InvokeVoidAsync("follow", Cancellation, _messageList, _scrollToEnd);
-            _scrollToEnd = false;
-        }
     }
 
     private async Task OnDraftKeyDown(KeyboardEventArgs e)
@@ -92,9 +70,9 @@ public partial class PlaygroundPage
             return;
         }
 
-        _turns.Add(new Turn(true, "", _draft!.Trim()));
+        _turns.Add(new ChatTurnView(true, "You", _draft!.Trim()));
         _draft = null;
-        _scrollToEnd = true;
+        _transcript?.RequestScrollToEnd();
         await StreamReplyAsync();
     }
 
@@ -114,7 +92,7 @@ public partial class PlaygroundPage
     private async Task StreamReplyAsync()
     {
         var history = _turns.Select(t => new PlaygroundTurn(t.FromUser, t.Text)).ToList();
-        var reply = new Turn(false, _characterName.Trim(), "");
+        var reply = new ChatTurnView(false, _characterName.Trim(), "");
         _turns.Add(reply);
         _streaming = true;
         _stop = CancellationTokenSource.CreateLinkedTokenSource(Cancellation);
@@ -153,33 +131,7 @@ public partial class PlaygroundPage
     public override void Dispose()
     {
         _stop?.Cancel();
-        if (_scroll is not null)
-        {
-            _ = DisposeScrollAsync(_scroll);
-        }
-
         base.Dispose();
     }
 
-    private static async Task DisposeScrollAsync(IJSObjectReference scroll)
-    {
-        try
-        {
-            await scroll.DisposeAsync();
-        }
-        catch (JSDisconnectedException)
-        {
-        }
-    }
-
-    private sealed class Turn(bool fromUser, string speaker, string text)
-    {
-        private readonly StringBuilder _text = new(text);
-
-        public bool FromUser { get; } = fromUser;
-        public string Speaker { get; } = speaker;
-        public string Text => _text.ToString();
-
-        public void Append(string text) => _text.Append(text);
-    }
 }

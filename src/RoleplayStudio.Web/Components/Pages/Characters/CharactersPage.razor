@@ -1,0 +1,52 @@
+@page "/characters"
+@attribute [Authorize]
+@inherits CancellableComponent
+
+<PageTitle>Characters · Roleplay Studio</PageTitle>
+
+<div class="app-page-heading">
+    <MudText Typo="Typo.h4" HtmlTag="h1">Characters</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddAsync">Add character</MudButton>
+</div>
+
+@if (_characters is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_characters.Count == 0)
+{
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudText Typo="Typo.h6" HtmlTag="h2">No characters yet</MudText>
+        <MudText Class="mt-2">
+            A character has a personality, a voice, looks and a default outfit. Put characters in the cast of a
+            <MudLink Href="@AppRoutes.Chatbots">chatbot</MudLink> to chat with them.
+        </MudText>
+    </MudPaper>
+}
+else
+{
+    <MudStack Spacing="2">
+        @foreach (var character in _characters)
+        {
+            <MudPaper Class="app-list-card pa-3" Outlined="true" @key="character.Id">
+                <div class="app-list-card-main">
+                    <div class="app-list-card-title">
+                        <MudText Typo="Typo.h6" HtmlTag="h2">@character.Name</MudText>
+                        <MudText Typo="Typo.body2" Class="app-list-card-detail">@Summary(character)</MudText>
+                    </div>
+                    @if (character.ShortDescription is not null)
+                    {
+                        <MudText Typo="Typo.body2" Class="app-list-card-detail">@character.ShortDescription</MudText>
+                    }
+                </div>
+                <div class="app-list-card-actions">
+                    <MudButton Variant="Variant.Outlined" OnClick="() => EditAsync(character)">Edit</MudButton>
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="@($"More actions for {character.Name}")" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                        <MudMenuItem OnClick="() => DuplicateAsync(character)">Duplicate</MudMenuItem>
+                        <MudMenuItem OnClick="() => DeleteAsync(character)">Delete</MudMenuItem>
+                    </MudMenu>
+                </div>
+            </MudPaper>
+        }
+    </MudStack>
+}
