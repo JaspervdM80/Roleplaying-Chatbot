@@ -39,6 +39,7 @@ src/RoleplayStudio.AI/               Provider factory, prompt building, director
 src/RoleplayStudio.Web/              Blazor Web App: pages, Identity UI, DI wiring
 tests/RoleplayStudio.Tests/          xUnit
 docs/known_issues/                   Traps that already cost time
+docs/design/                         Static HTML mockups of the screens; open index.html
 ```
 
 Dependencies point one way: `Web → AI → Infrastructure → Domain`. Keep domain and prompt logic out of

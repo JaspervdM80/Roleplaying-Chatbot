@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat, desktop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--surface-sunken:#0b0910;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--ink-faint:rgba(236,230,242,.36);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--hover:rgba(236,230,242,.06);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div style="width: 1280px; height: 800px; display: flex; background: var(--surface-page); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <nav aria-label="Main" style="width: 64px; flex-shrink: 0; box-sizing: border-box; padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--surface-card); border-right: 1px solid var(--line)">
+    <div style="width: 32px; height: 32px; margin-bottom: 14px; border-radius: 9px; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-family: var(--font-prose); font-size: 21px; font-weight: 700; font-style: italic">R</div>
+    <a href="#" aria-label="Chats" aria-current="page" style="width: 44px; height: 44px; border-radius: 10px; background: var(--selected); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0739b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+    </a>
+    <a href="#" aria-label="Chatbots" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </a>
+    <a href="#" aria-label="Characters" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </a>
+    <a href="#" aria-label="Personas" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+    </a>
+    <div style="flex-grow: 1"></div>
+    <a href="#" aria-label="Models" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>
+    </a>
+    <a href="#" aria-label="Account" style="width: 36px; height: 36px; margin-top: 4px; border-radius: 50%; background: var(--surface-raised); color: var(--accent); display: grid; place-items: center; text-decoration: none; font-size: 13px; font-weight: 700">S</a>
+  </nav>
+
+  <section aria-label="Chat" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+    <header style="flex-shrink: 0; height: 64px; box-sizing: border-box; padding: 0 16px 0 28px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+        <h1 style="margin: 0; font-size: 17px; font-weight: 700">The Lantern Inn</h1>
+        <span style="font-size: 13px; color: var(--ink-subtle)">Snowed in at the pass · playing Wren</span>
+      </div>
+      <button type="button" style="height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #5fd39a"></span>
+        Mistral Nemo · OpenRouter
+      </button>
+      <button type="button" aria-pressed="true" style="height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--selected); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg>
+        Scene
+      </button>
+      <button type="button" aria-label="Chat options" style="width: 40px; height: 40px; border: 0; border-radius: 10px; background: none; color: var(--ink-muted); display: grid; place-items: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+      </button>
+    </header>
+
+    <div style="flex-grow: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 28px">
+      <div style="width: 100%; max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; padding-bottom: 20px">
+
+        <article aria-label="Earlier turn" style="display: flex; flex-direction: column; gap: 14px; padding: 12px 14px 8px; margin: 0 -14px; border-radius: 12px; background: var(--hover)">
+          <p style="margin: 0 0 0 48px; font-family: var(--font-prose); font-size: 17px; line-height: 1.6; font-style: italic; color: var(--ink-soft)">The door bangs open on a gust of snow. Every head in the common room turns.</p>
+          <figure style="margin: 0 0 0 48px; width: 380px; display: flex; flex-direction: column; gap: 6px">
+            <button type="button" aria-label="Open image full size" style="width: 380px; height: 214px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-raised); color: var(--ink-faint); display: grid; place-items: center">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+            </button>
+            <figcaption style="font-size: 12px; color: var(--ink-subtle)">Generated image · the common room, snowed in</figcaption>
+          </figure>
+          <div role="toolbar" aria-label="Turn actions" style="margin-left: 40px; display: flex; gap: 0">
+            <button type="button" style="height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+              Regenerate
+            </button>
+            <button type="button" style="height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              Edit
+            </button>
+            <button type="button" style="height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg>
+              Picture this
+            </button>
+            <button type="button" aria-label="More actions" style="width: 36px; height: 36px; border: 0; border-radius: 8px; background: none; color: var(--ink-muted); display: grid; place-items: center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+            </button>
+          </div>
+        </article>
+
+        <div style="align-self: flex-end; max-width: 78%; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+          <span style="font-size: 13px; font-weight: 600; color: var(--ink-subtle)">Wren</span>
+          <p style="margin: 0; padding: 12px 16px; border-radius: 16px 16px 4px 16px; background: rgba(240,115,155,.12); border: 1px solid rgba(240,115,155,.24); font-family: var(--font-prose); font-size: 17px; line-height: 1.6"><em style="color: var(--ink-soft)">I stamp the snow off my boots.</em> "Please tell me you've got a room left."</p>
+        </div>
+
+        <article aria-label="Current turn" aria-busy="true" style="display: flex; flex-direction: column; gap: 14px">
+          <p style="margin: 0 0 0 48px; font-family: var(--font-prose); font-size: 17px; line-height: 1.6; font-style: italic; color: var(--ink-soft)">The common room goes quiet for a breath. A log shifts in the hearth.</p>
+
+          <div style="display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 12px">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(240,115,155,.18); color: var(--primary); display: grid; place-items: center; font-size: 13px; font-weight: 700">M</div>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 14px; font-weight: 600; color: var(--primary)">Mira</span>
+              <p style="margin: 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.6">"A room? Love, there's a blizzard. Everyone who came up the pass tonight wants a room." <em style="color: var(--ink-soft)">She slides a mug across the bar anyway.</em> "There's the loft."</p>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 12px">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(124,183,255,.18); color: var(--info); display: grid; place-items: center; font-size: 13px; font-weight: 700">T</div>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 14px; font-weight: 600; color: var(--info)">Thorne</span>
+              <p style="margin: 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.6"><em style="color: var(--ink-soft)">From the corner table, without looking up from his map:</em> "The loft's mine."</p>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 12px">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(242,181,107,.18); color: var(--accent); display: grid; place-items: center; font-size: 13px; font-weight: 700">B</div>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 14px; font-weight: 600; color: var(--accent)">Old Bess</span>
+              <p style="margin: 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.6"><em style="color: var(--ink-soft)">Leaning through the kitchen hatch:</em> "The loft's got two beds and you've only got the one back, Thorne. Sh<span aria-hidden="true" style="display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: text-bottom; background: var(--primary)"></span></p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div style="flex-shrink: 0; padding: 0 28px 18px">
+      <div style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px">
+        <div role="group" aria-label="Director" style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button type="button" style="height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px">Let someone answer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <button type="button" style="height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px">Bring someone in <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <button type="button" style="height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500">Skip ahead</button>
+          <button type="button" style="height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500">Narration only</button>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 10px; padding: 8px 8px 8px 16px; border-radius: 14px; background: var(--surface-card); border: 1px solid var(--line-strong)">
+          <label style="flex-grow: 1; display: flex; padding: 9px 0">
+            <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Message as Wren</span>
+            <textarea rows="1" placeholder="Write as Wren. *Actions in asterisks.*" style="flex-grow: 1; resize: none; border: 0; outline: 0; background: none; color: var(--ink); font-family: var(--font-prose); font-size: 17px; line-height: 1.5"></textarea>
+          </label>
+          <button type="button" style="height: 44px; padding: 0 16px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface-raised); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+            Stop
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside aria-label="Scene" style="width: 320px; flex-shrink: 0; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 20px; background: var(--surface-card); border-left: 1px solid var(--line); overflow: hidden">
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">Scene</h2>
+      <dl style="margin: 0; display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px 12px; font-size: 14px">
+        <dt style="color: var(--ink-subtle)">Where</dt><dd style="margin: 0">The Lantern Inn, common room</dd>
+        <dt style="color: var(--ink-subtle)">When</dt><dd style="margin: 0">Late evening, snowing hard</dd>
+        <dt style="color: var(--ink-subtle)">Mood</dt><dd style="margin: 0">Crowded, warm, a little tense</dd>
+      </dl>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">Present</h2>
+
+      <div style="display: flex; gap: 12px">
+        <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: rgba(240,115,155,.18); color: var(--primary); display: grid; place-items: center; font-size: 14px; font-weight: 700">M</div>
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 15px; font-weight: 600">Mira</span><span style="font-size: 12px; color: #5fd39a">Warm</span></div>
+          <span style="font-size: 13px; line-height: 1.45; color: var(--ink-muted)">Green wool dress, flour-dusted apron, sleeves rolled up</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px">
+        <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: rgba(124,183,255,.18); color: var(--info); display: grid; place-items: center; font-size: 14px; font-weight: 700">T</div>
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 15px; font-weight: 600">Thorne</span><span style="font-size: 12px; color: var(--ink-subtle)">Wary</span></div>
+          <span style="font-size: 13px; line-height: 1.45; color: var(--ink-muted)">Oilskin coat over a grey jumper, snow still on his boots</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px">
+        <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: rgba(242,181,107,.18); color: var(--accent); display: grid; place-items: center; font-size: 14px; font-weight: 700">B</div>
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 15px; font-weight: 600">Old Bess</span><span style="font-size: 12px; color: var(--accent)">Amused</span></div>
+          <span style="font-size: 13px; line-height: 1.45; color: var(--ink-muted)">Kitchen whites, red headscarf</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid var(--line)">
+      <h2 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">You</h2>
+      <div style="display: flex; gap: 12px">
+        <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: var(--surface-raised); color: var(--ink); display: grid; place-items: center; font-size: 14px; font-weight: 700">W</div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 15px; font-weight: 600">Wren</span>
+          <span style="font-size: 13px; line-height: 1.45; color: var(--ink-muted)">Travelling cloak, soaked through</span>
+        </div>
+      </div>
+    </section>
+
+    <div style="flex-grow: 1"></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+      <a href="#" style="display: flex; align-items: center; justify-content: center; height: 40px; border-radius: 10px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 600">Memories</a>
+      <a href="#" style="display: flex; align-items: center; justify-content: center; height: 40px; border-radius: 10px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 600">Gallery</a>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

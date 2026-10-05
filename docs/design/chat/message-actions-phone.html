@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Message actions, phone</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--scrim:rgba(5,3,8,.7);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div style="width: 375px; height: 812px; position: relative; background: var(--surface-page); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <div aria-hidden="true" style="box-sizing: border-box; height: 104px; padding: 44px 16px 0; display: flex; align-items: center; border-bottom: 1px solid var(--line)">
+    <span style="font-size: 16px; font-weight: 700">The Lantern Inn</span>
+  </div>
+  <div style="position: absolute; inset: 0; background: var(--scrim)"></div>
+
+  <div aria-hidden="true" style="position: absolute; left: 12px; right: 12px; top: 128px; padding: 14px; border-radius: 14px; background: var(--surface-card); border: 1px solid var(--line-strong); display: flex; flex-direction: column; gap: 10px">
+    <p style="margin: 0; font-family: var(--font-prose); font-size: 16px; line-height: 1.55; font-style: italic; color: var(--ink-soft)">The common room goes quiet for a breath.</p>
+    <p style="margin: 0; font-family: var(--font-prose); font-size: 16px; line-height: 1.55"><span style="font-family: var(--font-ui); font-weight: 600; color: var(--primary)">Mira</span> "A room? Love, there's a blizzard."</p>
+    <p style="margin: 0; font-family: var(--font-prose); font-size: 16px; line-height: 1.55"><span style="font-family: var(--font-ui); font-weight: 600; color: var(--info)">Thorne</span> "The loft's mine."</p>
+    <p style="margin: 0; font-family: var(--font-prose); font-size: 16px; line-height: 1.55"><span style="font-family: var(--font-ui); font-weight: 600; color: var(--accent)">Old Bess</span> "Two beds, Thorne. Share."</p>
+  </div>
+
+  <section role="dialog" aria-modal="true" aria-label="Turn actions" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 10px 12px 34px; border-radius: 20px 20px 0 0; background: var(--surface-card); border-top: 1px solid var(--line-strong); display: flex; flex-direction: column; gap: 2px">
+    <div aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); margin-bottom: 10px"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 6px 10px 14px; margin-bottom: 6px; border-bottom: 1px solid var(--line)">
+      <span style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--ink-muted)"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg>
+        Picture this
+      </span>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--primary); color: var(--on-primary); font: inherit; font-size: 14px; font-weight: 600">The scene</button>
+        <button type="button" style="height: 44px; padding: 0 16px; border: 1px solid var(--line-strong); border-radius: 999px; background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 500">Mira</button>
+        <button type="button" style="height: 44px; padding: 0 16px; border: 1px solid var(--line-strong); border-radius: 999px; background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 500">Thorne</button>
+        <button type="button" style="height: 44px; padding: 0 16px; border: 1px solid var(--line-strong); border-radius: 999px; background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 500">Old Bess</button>
+      </div>
+    </div>
+
+    <button type="button" style="display: flex; align-items: center; gap: 14px; height: 52px; padding: 0 10px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 500; text-align: left">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--ink-muted)"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+      Regenerate this turn
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 14px; height: 52px; padding: 0 10px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 500; text-align: left">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--ink-muted)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      Edit
+    </button>
+    <button type="button" style="display: flex; align-items: center; gap: 14px; height: 52px; padding: 0 10px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 500; text-align: left">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--ink-muted)"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy text
+    </button>
+    <div style="height: 1px; background: var(--line); margin: 6px 0"></div>
+    <button type="button" style="display: flex; align-items: center; gap: 14px; height: 52px; padding: 0 10px; border: 0; border-radius: 10px; background: none; color: var(--error); font: inherit; font-size: 16px; font-weight: 500; text-align: left">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      Delete this turn
+    </button>
+  </section>
+</div>
+</body>
+</html>

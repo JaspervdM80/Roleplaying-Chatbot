@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chats home, desktop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--surface-sunken:#0b0910;--primary:#f0739b;--primary-deep:#c9557b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--ink-faint:rgba(236,230,242,.36);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--hover:rgba(236,230,242,.06);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div style="width: 1280px; height: 800px; display: flex; background: var(--surface-page); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <nav aria-label="Main" style="width: 248px; flex-shrink: 0; box-sizing: border-box; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; background: var(--surface-card); border-right: 1px solid var(--line)">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 18px">
+      <div style="width: 32px; height: 32px; border-radius: 9px; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-family: var(--font-prose); font-size: 21px; font-weight: 700; font-style: italic">R</div>
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -.01em">Roleplay Studio</span>
+    </div>
+    <a href="#" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; margin-bottom: 14px; border-radius: 10px; background: var(--primary); color: var(--on-primary); text-decoration: none; font-size: 15px; font-weight: 600">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
+      New chat
+    </a>
+    <a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 8px; background: var(--selected); color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 600">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0739b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+      Chats
+    </a>
+    <a href="#" style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 8px; color: var(--ink-muted); text-decoration: none; font-size: 15px; font-weight: 500">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Chatbots
+    </a>
+    <a href="#" style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 8px; color: var(--ink-muted); text-decoration: none; font-size: 15px; font-weight: 500">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Characters
+    </a>
+    <a href="#" style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 8px; color: var(--ink-muted); text-decoration: none; font-size: 15px; font-weight: 500">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+      Personas
+    </a>
+    <div style="margin: 18px 12px 6px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">Setup</div>
+    <a href="#" style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 8px; color: var(--ink-muted); text-decoration: none; font-size: 15px; font-weight: 500">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>
+      Models
+    </a>
+    <a href="#" style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 8px; color: var(--ink-muted); text-decoration: none; font-size: 15px; font-weight: 500">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg>
+      Playground
+    </a>
+    <div style="flex-grow: 1"></div>
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); color: var(--ink); text-decoration: none">
+      <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--surface-raised); color: var(--accent); display: grid; place-items: center; font-size: 13px; font-weight: 700">S</div>
+      <div style="display: flex; flex-direction: column; min-width: 0; flex-grow: 1">
+        <span style="font-size: 14px; font-weight: 600">Sam</span>
+        <span style="font-size: 12px; color: var(--ink-subtle)">Account · Sign out</span>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--ink-subtle)"><path d="m9 18 6-6-6-6"/></svg>
+    </a>
+  </nav>
+
+  <main style="flex-grow: 1; min-width: 0; overflow: hidden; box-sizing: border-box; padding: 32px 48px; display: flex; flex-direction: column; gap: 28px">
+    <header style="display: flex; align-items: center; gap: 16px">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.015em; flex-grow: 1">Chats</h1>
+      <label style="display: flex; align-items: center; gap: 8px; width: 300px; height: 40px; padding: 0 12px; box-sizing: border-box; border-radius: 10px; background: var(--surface-sunken); border: 1px solid var(--line); color: var(--ink-subtle)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" placeholder="Search chats and characters" aria-label="Search chats and characters" style="flex-grow: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--ink); font: inherit; font-size: 14px">
+      </label>
+    </header>
+
+    <section aria-labelledby="start-heading" style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <h2 id="start-heading" style="margin: 0; font-size: 15px; font-weight: 600; color: var(--ink-muted); flex-grow: 1">Start from a scenario</h2>
+        <a href="#" style="font-size: 14px; font-weight: 500; text-decoration: none">All chatbots</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+        <a href="#" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 12px; background: var(--surface-card); border: 1px solid var(--line); color: var(--ink); text-decoration: none">
+          <span style="font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .05em">The Lantern Inn</span>
+          <span style="font-size: 16px; font-weight: 600">Snowed in at the pass</span>
+          <span style="font-family: var(--font-prose); font-size: 15px; line-height: 1.5; color: var(--ink-muted)">A storm closes the mountain road and the last room is already taken.</span>
+        </a>
+        <a href="#" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 12px; background: var(--surface-card); border: 1px solid var(--line); color: var(--ink); text-decoration: none">
+          <span style="font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .05em">Starlight Academy</span>
+          <span style="font-size: 16px; font-weight: 600">First day, wrong dormitory</span>
+          <span style="font-family: var(--font-prose); font-size: 15px; line-height: 1.5; color: var(--ink-muted)">Your key opens the door. The two people inside did not expect you.</span>
+        </a>
+        <a href="#" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 12px; background: var(--surface-card); border: 1px solid var(--line); color: var(--ink); text-decoration: none">
+          <span style="font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .05em">Harbour of Saints</span>
+          <span style="font-size: 16px; font-weight: 600">The smuggler's debt</span>
+          <span style="font-family: var(--font-prose); font-size: 15px; line-height: 1.5; color: var(--ink-muted)">Captain Ilse calls in a favour you don't remember owing.</span>
+        </a>
+      </div>
+    </section>
+
+    <section aria-labelledby="recent-heading" style="display: flex; flex-direction: column; gap: 12px; min-height: 0">
+      <h2 id="recent-heading" style="margin: 0; font-size: 15px; font-weight: 600; color: var(--ink-muted)">Continue</h2>
+      <div style="display: flex; flex-direction: column; border-radius: 12px; background: var(--surface-card); border: 1px solid var(--line); overflow: hidden">
+
+        <a href="#" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none">
+          <div style="display: flex; width: 76px; flex-shrink: 0">
+            <div style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(240,115,155,.18); color: var(--primary); display: grid; place-items: center; font-size: 13px; font-weight: 700">M</div>
+            <div style="width: 36px; height: 36px; margin-left: -12px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(124,183,255,.18); color: var(--info); display: grid; place-items: center; font-size: 13px; font-weight: 700">T</div>
+            <div style="width: 36px; height: 36px; margin-left: -12px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(242,181,107,.18); color: var(--accent); display: grid; place-items: center; font-size: 13px; font-weight: 700">B</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex-grow: 1">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 15px; font-weight: 600">The Lantern Inn</span><span style="font-size: 13px; color: var(--ink-subtle)">Snowed in at the pass</span></div>
+            <span style="font-family: var(--font-prose); font-size: 15px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><em>Mira slides a second mug across the bar.</em> "You look like you walked through the whole storm."</span>
+          </div>
+          <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-raised); color: var(--ink-muted); white-space: nowrap">as Wren</span>
+          <span style="width: 72px; text-align: right; font-size: 13px; color: var(--ink-subtle)">12 min</span>
+        </a>
+
+        <a href="#" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none">
+          <div style="display: flex; width: 76px; flex-shrink: 0">
+            <div style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(124,183,255,.18); color: var(--info); display: grid; place-items: center; font-size: 13px; font-weight: 700">K</div>
+            <div style="width: 36px; height: 36px; margin-left: -12px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(240,115,155,.18); color: var(--primary); display: grid; place-items: center; font-size: 13px; font-weight: 700">J</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex-grow: 1">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 15px; font-weight: 600">Starlight Academy</span><span style="font-size: 13px; color: var(--ink-subtle)">First day, wrong dormitory</span></div>
+            <span style="font-family: var(--font-prose); font-size: 15px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><strong style="font-family: var(--font-ui); font-weight: 600; color: var(--ink)">Juniper:</strong> "You're not on my list. So you're either lost or interesting."</span>
+          </div>
+          <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-raised); color: var(--ink-muted); white-space: nowrap">as Ash</span>
+          <span style="width: 72px; text-align: right; font-size: 13px; color: var(--ink-subtle)">2 h</span>
+        </a>
+
+        <a href="#" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none">
+          <div style="display: flex; width: 76px; flex-shrink: 0">
+            <div style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(242,181,107,.18); color: var(--accent); display: grid; place-items: center; font-size: 13px; font-weight: 700">I</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex-grow: 1">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 15px; font-weight: 600">Harbour of Saints</span><span style="font-size: 13px; color: var(--ink-subtle)">The smuggler's debt</span></div>
+            <span style="font-family: var(--font-prose); font-size: 15px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><em>The lantern swings as the ship lists; Ilse doesn't look up from the map.</em></span>
+          </div>
+          <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-raised); color: var(--ink-muted); white-space: nowrap">as Wren</span>
+          <span style="width: 72px; text-align: right; font-size: 13px; color: var(--ink-subtle)">Yesterday</span>
+        </a>
+
+        <a href="#" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none">
+          <div style="display: flex; width: 76px; flex-shrink: 0">
+            <div style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(240,115,155,.18); color: var(--primary); display: grid; place-items: center; font-size: 13px; font-weight: 700">N</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex-grow: 1">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 15px; font-weight: 600">Café Mirabel</span><span style="font-size: 13px; color: var(--ink-subtle)">A reservation for two</span></div>
+            <span style="font-family: var(--font-prose); font-size: 15px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">"I saved you the window seat. Don't make it weird."</span>
+          </div>
+          <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-raised); color: var(--ink-muted); white-space: nowrap">as Sam</span>
+          <span style="width: 72px; text-align: right; font-size: 13px; color: var(--ink-subtle)">Mon</span>
+        </a>
+
+        <a href="#" style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; color: var(--ink); text-decoration: none">
+          <div style="display: flex; width: 76px; flex-shrink: 0">
+            <div style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(124,183,255,.18); color: var(--info); display: grid; place-items: center; font-size: 13px; font-weight: 700">E</div>
+            <div style="width: 36px; height: 36px; margin-left: -12px; border-radius: 50%; border: 2px solid #1a1622; background: rgba(242,181,107,.18); color: var(--accent); display: grid; place-items: center; font-size: 13px; font-weight: 700">V</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex-grow: 1">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 15px; font-weight: 600">The Glass Observatory</span><span style="font-size: 13px; color: var(--ink-subtle)">Comet night</span></div>
+            <span style="font-family: var(--font-prose); font-size: 15px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis"><em>Vesper adjusts the telescope and hands you the eyepiece.</em></span>
+          </div>
+          <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-raised); color: var(--ink-muted); white-space: nowrap">as Ash</span>
+          <span style="width: 72px; text-align: right; font-size: 13px; color: var(--ink-subtle)">28 Sep</span>
+        </a>
+
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

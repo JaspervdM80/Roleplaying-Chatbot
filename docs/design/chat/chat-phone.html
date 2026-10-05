@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat, phone</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div style="width: 375px; height: 812px; display: flex; flex-direction: column; background: var(--surface-page); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <header style="flex-shrink: 0; height: 104px; box-sizing: border-box; padding: 44px 4px 0; display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--line)">
+    <a href="#" aria-label="Back to chats" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </a>
+    <div style="display: flex; flex-shrink: 0; margin-right: 6px">
+      <div style="width: 30px; height: 30px; border-radius: 50%; border: 2px solid #110e17; background: rgba(240,115,155,.18); color: var(--primary); display: grid; place-items: center; font-size: 11px; font-weight: 700">M</div>
+      <div style="width: 30px; height: 30px; margin-left: -10px; border-radius: 50%; border: 2px solid #110e17; background: rgba(124,183,255,.18); color: var(--info); display: grid; place-items: center; font-size: 11px; font-weight: 700">T</div>
+      <div style="width: 30px; height: 30px; margin-left: -10px; border-radius: 50%; border: 2px solid #110e17; background: rgba(242,181,107,.18); color: var(--accent); display: grid; place-items: center; font-size: 11px; font-weight: 700">B</div>
+    </div>
+    <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">The Lantern Inn</h1>
+      <span style="font-size: 12px; color: var(--ink-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Common room · late evening</span>
+    </div>
+    <a href="scene-drawer-phone.html" aria-label="Scene" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg>
+    </a>
+  </header>
+
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 16px 14px; gap: 16px">
+    <div style="align-self: flex-end; max-width: 86%; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+      <span style="font-size: 12px; font-weight: 600; color: var(--ink-subtle)">Wren</span>
+      <p style="margin: 0; padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: rgba(240,115,155,.12); border: 1px solid rgba(240,115,155,.24); font-family: var(--font-prose); font-size: 17px; line-height: 1.55"><em style="color: var(--ink-soft)">I stamp the snow off my boots.</em> "Please tell me you've got a room left."</p>
+    </div>
+
+    <p style="margin: 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.6; font-style: italic; color: var(--ink-soft)">The common room goes quiet for a breath. A log shifts in the hearth.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(240,115,155,.18); color: var(--primary); display: grid; place-items: center; font-size: 11px; font-weight: 700">M</div>
+        <span style="font-size: 14px; font-weight: 600; color: var(--primary)">Mira</span>
+      </div>
+      <p style="margin: 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.6">"A room? Love, there's a blizzard." <em style="color: var(--ink-soft)">She slides a mug across the bar anyway.</em> "There's the loft."</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(124,183,255,.18); color: var(--info); display: grid; place-items: center; font-size: 11px; font-weight: 700">T</div>
+        <span style="font-size: 14px; font-weight: 600; color: var(--info)">Thorne</span>
+      </div>
+      <p style="margin: 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.6"><em style="color: var(--ink-soft)">Without looking up from his map:</em> "The loft's mine."</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <div style="width: 26px; height: 26px; border-radius: 50%; background: rgba(242,181,107,.18); color: var(--accent); display: grid; place-items: center; font-size: 11px; font-weight: 700">B</div>
+        <span style="font-size: 14px; font-weight: 600; color: var(--accent)">Old Bess</span>
+      </div>
+      <p style="margin: 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.6">"Two beds and you've only got the one back, Thorne. Sh<span aria-hidden="true" style="display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: text-bottom; background: var(--primary)"></span></p>
+    </div>
+  </div>
+
+  <div style="flex-shrink: 0; box-sizing: border-box; padding: 8px 0 34px; display: flex; flex-direction: column; gap: 8px; background: var(--surface-page); border-top: 1px solid var(--line)">
+    <div role="group" aria-label="Director" style="display: flex; gap: 8px; padding: 0 16px; overflow: hidden">
+      <button type="button" style="flex-shrink: 0; height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 14px; font-weight: 500">Let someone answer</button>
+      <button type="button" style="flex-shrink: 0; height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 14px; font-weight: 500">Bring someone in</button>
+      <button type="button" style="flex-shrink: 0; height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 14px; font-weight: 500">Skip ahead</button>
+    </div>
+    <div style="display: flex; align-items: flex-end; gap: 8px; margin: 0 12px; padding: 6px 6px 6px 14px; border-radius: 14px; background: var(--surface-card); border: 1px solid var(--line-strong)">
+      <label style="flex-grow: 1; display: flex; padding: 10px 0">
+        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Message as Wren</span>
+        <textarea rows="1" placeholder="Write as Wren" style="flex-grow: 1; resize: none; border: 0; outline: 0; background: none; color: var(--ink); font-family: var(--font-prose); font-size: 17px; line-height: 1.5"></textarea>
+      </label>
+      <button type="button" aria-label="Stop" style="width: 44px; height: 44px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface-raised); color: var(--ink); display: grid; place-items: center">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
