@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene drawer, phone</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--primary:#f0739b;--accent:#f2b56b;--info:#7cb7ff;--success:#5fd39a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--scrim:rgba(5,3,8,.7);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div style="width: 375px; height: 812px; position: relative; background: var(--surface-page); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <div aria-hidden="true" style="box-sizing: border-box; height: 104px; padding: 44px 16px 0; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line)">
+    <span style="font-size: 16px; font-weight: 700">The Lantern Inn</span>
+  </div>
+  <div aria-hidden="true" style="padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; font-family: var(--font-prose); font-size: 17px; line-height: 1.6; color: var(--ink-muted)">
+    <p style="margin: 0">"Please tell me you've got a room left."</p>
+    <p style="margin: 0">The common room goes quiet for a breath.</p>
+  </div>
+  <div style="position: absolute; inset: 0; background: var(--scrim)"></div>
+
+  <section role="dialog" aria-modal="true" aria-labelledby="scene-title" style="position: absolute; left: 0; right: 0; bottom: 0; height: 640px; box-sizing: border-box; display: flex; flex-direction: column; border-radius: 20px 20px 0 0; background: var(--surface-card); border-top: 1px solid var(--line-strong)">
+    <div style="flex-shrink: 0; padding: 10px 8px 0 20px; display: flex; flex-direction: column">
+      <div aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); margin: 0 0 6px -12px"></div>
+      <div style="display: flex; align-items: center">
+        <h2 id="scene-title" style="margin: 0; font-size: 18px; font-weight: 700; flex-grow: 1">Scene</h2>
+        <a href="chat-phone.html" aria-label="Close" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 8px 20px 0; display: flex; flex-direction: column; gap: 20px">
+      <dl style="margin: 0; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px 12px; font-size: 15px">
+        <dt style="color: var(--ink-subtle)">Where</dt><dd style="margin: 0">The Lantern Inn, common room</dd>
+        <dt style="color: var(--ink-subtle)">When</dt><dd style="margin: 0">Late evening, snowing hard</dd>
+        <dt style="color: var(--ink-subtle)">Mood</dt><dd style="margin: 0">Crowded, warm, a little tense</dd>
+      </dl>
+
+      <section style="display: flex; flex-direction: column; gap: 4px">
+        <h3 style="margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">Present</h3>
+        <a href="#" style="display: flex; gap: 12px; padding: 8px 0; color: var(--ink); text-decoration: none">
+          <div style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: rgba(240,115,155,.18); color: var(--primary); display: grid; place-items: center; font-size: 15px; font-weight: 700">M</div>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 16px; font-weight: 600">Mira</span><span style="font-size: 13px; color: var(--success)">Warm</span></div>
+            <span style="font-size: 14px; line-height: 1.45; color: var(--ink-muted)">Green wool dress, flour-dusted apron, sleeves rolled up</span>
+          </div>
+        </a>
+        <a href="#" style="display: flex; gap: 12px; padding: 8px 0; color: var(--ink); text-decoration: none">
+          <div style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: rgba(124,183,255,.18); color: var(--info); display: grid; place-items: center; font-size: 15px; font-weight: 700">T</div>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 16px; font-weight: 600">Thorne</span><span style="font-size: 13px; color: var(--ink-subtle)">Wary</span></div>
+            <span style="font-size: 14px; line-height: 1.45; color: var(--ink-muted)">Oilskin coat over a grey jumper, snow still on his boots</span>
+          </div>
+        </a>
+        <a href="#" style="display: flex; gap: 12px; padding: 8px 0; color: var(--ink); text-decoration: none">
+          <div style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: rgba(242,181,107,.18); color: var(--accent); display: grid; place-items: center; font-size: 15px; font-weight: 700">B</div>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 16px; font-weight: 600">Old Bess</span><span style="font-size: 13px; color: var(--accent)">Amused</span></div>
+            <span style="font-size: 14px; line-height: 1.45; color: var(--ink-muted)">Kitchen whites, red headscarf</span>
+          </div>
+        </a>
+      </section>
+
+      <section style="display: flex; gap: 12px; padding-top: 14px; border-top: 1px solid var(--line)">
+        <div style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: var(--surface-raised); color: var(--ink); display: grid; place-items: center; font-size: 15px; font-weight: 700">W</div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 16px; font-weight: 600">Wren <span style="font-size: 13px; font-weight: 500; color: var(--ink-subtle)">· you</span></span>
+          <span style="font-size: 14px; line-height: 1.45; color: var(--ink-muted)">Travelling cloak, soaked through</span>
+        </div>
+      </section>
+    </div>
+
+    <div style="flex-shrink: 0; padding: 12px 20px 34px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; border-top: 1px solid var(--line)">
+      <a href="#" style="display: flex; align-items: center; justify-content: center; height: 48px; border-radius: 10px; border: 1px solid var(--line-strong); color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 600">Memories</a>
+      <a href="#" style="display: flex; align-items: center; justify-content: center; height: 48px; border-radius: 10px; border: 1px solid var(--line-strong); color: var(--ink); text-decoration: none; font-size: 15px; font-weight: 600">Gallery</a>
+    </div>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in, desktop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--surface-sunken:#0b0910;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div style="width: 1280px; height: 800px; display: flex; background: var(--surface-page); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <section style="flex: 1 1 0; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between; background: var(--surface-sunken); border-right: 1px solid var(--line)">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div style="width: 32px; height: 32px; border-radius: 9px; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-family: var(--font-prose); font-size: 21px; font-weight: 700; font-style: italic">R</div>
+      <span style="font-size: 17px; font-weight: 700; letter-spacing: -.01em">Roleplay Studio</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 20px; max-width: 480px">
+      <p style="margin: 0; font-family: var(--font-prose); font-size: 40px; line-height: 1.2; font-weight: 700; letter-spacing: -.01em">Your characters, <em style="color: var(--primary)">your</em> worlds, and a story that remembers.</p>
+      <p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-muted)">A private studio for a small circle of friends. Build a cast, set the scene and pick up exactly where you left off.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 460px; padding: 18px 20px; border-radius: 12px; border: 1px solid var(--line)">
+      <span style="font-family: var(--font-prose); font-size: 16px; line-height: 1.6; color: var(--ink-muted)"><em>Mira slides a second mug across the bar.</em> "You look like you walked through the whole storm."</span>
+      <span style="font-size: 13px; font-weight: 600; color: var(--accent)">The Lantern Inn</span>
+    </div>
+  </section>
+
+  <section style="width: 560px; flex-shrink: 0; display: grid; place-items: center">
+    <form style="width: 380px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.015em">Sign in</h1>
+        <p style="margin: 0; font-size: 15px; color: var(--ink-subtle)">Welcome back.</p>
+      </div>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink-muted)">
+        Email
+        <input type="email" autocomplete="username" style="height: 46px; box-sizing: border-box; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface-sunken); color: var(--ink); font: inherit; font-size: 15px; font-weight: 400">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink-muted)">
+        <span style="display: flex; justify-content: space-between">Password <a href="#" style="font-weight: 500; text-decoration: none">Forgot it?</a></span>
+        <input type="password" autocomplete="current-password" style="height: 46px; box-sizing: border-box; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface-sunken); color: var(--ink); font: inherit; font-size: 15px; font-weight: 400">
+      </label>
+      <label style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 15px; color: var(--ink-muted)">
+        <input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #f0739b">
+        Keep me signed in
+      </label>
+      <button type="submit" style="height: 48px; border: 0; border-radius: 10px; background: var(--primary); color: var(--on-primary); font: inherit; font-size: 16px; font-weight: 600">Sign in</button>
+      <div style="display: flex; align-items: center; gap: 12px; color: var(--ink-subtle); font-size: 13px">
+        <div style="flex-grow: 1; height: 1px; background: var(--line)"></div>or<div style="flex-grow: 1; height: 1px; background: var(--line)"></div>
+      </div>
+      <button type="button" style="height: 48px; border: 1px solid var(--line-strong); border-radius: 10px; background: none; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600">Sign in with a passkey</button>
+      <p style="margin: 8px 0 0; font-size: 14px; color: var(--ink-subtle); text-align: center">Got an invite code? <a href="#" style="font-weight: 600; text-decoration: none">Create an account</a></p>
+    </form>
+  </section>
+</div>
+</body>
+</html>
