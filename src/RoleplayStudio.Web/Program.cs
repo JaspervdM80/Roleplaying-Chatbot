@@ -52,6 +52,7 @@ builder.Services.AddScoped<ICurrentUser, AuthenticationStateCurrentUser>();
 builder.Services.AddScoped<ModelProfileService>();
 builder.Services.AddSingleton<IChatClientFactory, ChatClientFactory>();
 builder.Services.AddScoped<ModelConnectionService>();
+builder.Services.AddScoped<OllamaModelCatalog>();
 builder.Services.AddScoped<PlaygroundChatService>();
 
 var app = builder.Build();
@@ -63,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
     await using var scope = app.Services.CreateAsyncScope();
     await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.SeedDevelopmentUserAsync();
 }
 else
 {

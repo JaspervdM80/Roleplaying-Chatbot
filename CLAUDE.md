@@ -22,6 +22,8 @@ dotnet test
 dotnet run --project src/RoleplayStudio.AppHost  # Aspire: Postgres+pgvector in Docker, the web app, the dashboard
 dotnet ef migrations add <Name> --project src/RoleplayStudio.Infrastructure --output-dir Data/Migrations
 dotnet user-secrets set "Registration:InviteCode" "<code>" --project src/RoleplayStudio.Web
+dotnet user-secrets set "DevelopmentUser:Email" "<email>" --project src/RoleplayStudio.Web     # created on startup in Development
+dotnet user-secrets set "DevelopmentUser:Password" "<password>" --project src/RoleplayStudio.Web
 ```
 
 Docker Desktop must be running for the AppHost and for integration tests.
