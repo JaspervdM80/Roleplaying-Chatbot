@@ -1,0 +1,71 @@
+---
+name: ai-and-background-work
+description: Working in RoleplayStudio.AI — model providers behind IChatClient/IEmbeddingGenerator/IImageGenerator, prompt assembly and token budgets, the director turn and speaker parsing, memory extraction, summarization and retrieval, image prompts, and background jobs that run outside any request or circuit. Use for any provider, prompt, memory, image or background-queue change.
+---
+
+# AI and background work
+
+## Providers sit behind abstractions
+
+- Chat and utility models are `Microsoft.Extensions.AI.IChatClient`; embeddings are
+  `IEmbeddingGenerator<string, Embedding<float>>`; images are our own `IImageGenerator`.
+- A `ModelProfile` (provider, base URL, model id, `ApiKeySetting`) is turned into a client by one
+  factory. OpenRouter, Featherless and OpenAI are all `OpenAICompatible` with a different base URL —
+  not separate code paths.
+- Nothing outside the factory knows which provider it talks to. A provider-specific quirk is handled
+  in the factory or a small decorating client, not at the call site.
+- **The API key is read from configuration by its setting name at call time.** It never enters the
+  database, a log line, an exception message or the page.
+
+## Prompts are assembled by pure code
+
+`PromptBuilder` takes loaded entities and returns the message list, with no I/O, so it is unit-tested
+without a model. Each section (rules, world, persona, present characters + state, scenario, summary,
+retrieved memories, recent messages, director instruction) has a **token budget**; when over budget
+the oldest recent messages go first and the system sections never get truncated mid-sentence.
+
+## Structured output is parsed defensively
+
+Memory extraction, state deltas and image prompts ask the utility model for JSON. Models break JSON:
+
+- Parse with a tolerant step (strip code fences, take the outermost object) and validate the shape.
+- A parse failure is a logged warning and a skipped extraction, never an exception that fails the
+  chat turn, and never a half-applied delta.
+- Ids in model output (a character to update) are checked against the session's characters — a model
+  can name someone who is not there.
+
+Speaker tags in a director reply (`**Name:**`) are parsed against the present cast; an unknown name
+becomes narration rather than a new character.
+
+## Background work never blocks the user
+
+Memory extraction, summarization and image generation run **after** the reply is saved, through a
+bounded `Channel<T>` read by a `BackgroundService`:
+
+- **The producer only `TryWrite`s and returns.** A chat turn never waits on extraction, and a failing
+  job never fails the turn.
+- **A job has no user and no circuit.** It carries the session id; it reads the session's `OwnerId`
+  and works within that owner's rows (the `ef-core-and-queries` skill). It cannot take a scoped
+  service — it creates its own scope or context per job.
+- **It never throws out of the loop.** One bad job is logged and dropped; the reader keeps going.
+- Completion is announced through a singleton notifier; pages subscribe and re-enter with
+  `InvokeAsync` (the `razor-pages-and-circuit` skill).
+- In-process only: one app instance. Scaling out needs a real queue.
+- Jobs for one session are processed in order, or a summary can be written over messages a later
+  extraction has not seen.
+
+## Cost and latency
+
+- Background jobs use the cheap utility profile, never the chat model by default.
+- Embed once, at write time; never re-embed memories on read.
+- Pass the `CancellationToken` into every provider call, so a user leaving stops a stream rather than
+  paying for tokens nobody reads.
+- Tests never call a real provider (the `testing` skill).
+
+## Images
+
+The image prompt is written by the utility model from the character's `Appearance`, the session's
+`CharacterState.CurrentOutfit`, `SceneState` and a few related memories, then sent to the
+`IImageGenerator`. It always describes the character as an adult. Store the final prompt, seed,
+provider and source memory ids on `GeneratedImage`, so an image can be explained and regenerated.
+Files go through `IImageStore`, never a path built in a page.

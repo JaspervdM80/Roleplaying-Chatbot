@@ -1,0 +1,8 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Local Debug builds stay quick to iterate on; Release is what a push is gated on. -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

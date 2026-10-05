@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "apphost",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--project",
+        "src/RoleplayStudio.AppHost",
+        "--launch-profile",
+        "https"
+      ],
+      "url": "https://localhost:17041",
+      "port": 17041
+    }
+  ]
+}
