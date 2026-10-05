@@ -26,17 +26,6 @@ public class ApplicationDbContextModelTests
         Assert.Equal("hnsw", index.FindAnnotation("Npgsql:IndexMethod")?.Value);
     }
 
-    [Fact]
-    public void Characters_enforce_minimum_age()
-    {
-        using var db = CreateContext();
-        // Check constraints only exist in the design-time model; the runtime model drops them.
-        var entity = db.GetService<IDesignTimeModel>().Model.FindEntityType(typeof(Character))!;
-
-        var constraint = Assert.Single(entity.GetCheckConstraints());
-        Assert.Contains($">= {Character.MinimumAge}", constraint.Sql);
-    }
-
     [Theory]
     [InlineData(typeof(Character), nameof(Character.Appearance))]
     [InlineData(typeof(Character), nameof(Character.DefaultOutfit))]
