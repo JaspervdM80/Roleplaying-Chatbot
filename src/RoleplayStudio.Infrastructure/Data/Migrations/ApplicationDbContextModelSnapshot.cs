@@ -236,10 +236,7 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Characters", t =>
-                        {
-                            t.HasCheckConstraint("CK_Characters_Age", "\"Age\" >= 18");
-                        });
+                    b.ToTable("Characters");
                 });
 
             modelBuilder.Entity("RoleplayStudio.Domain.Authoring.Chatbot", b =>

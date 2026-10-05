@@ -3,6 +3,7 @@ using System.ClientModel.Primitives;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using OllamaSharp;
+using OllamaSharp.Models.Chat;
 using OpenAI;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Services;
@@ -17,7 +18,7 @@ public interface IChatClientFactory
 public sealed class ChatClientFactory(IConfiguration configuration) : IChatClientFactory
 {
     // Not IHttpClientFactory: the service defaults put a 10-second resilience timeout on every client, far shorter than a generation.
-    private static readonly SocketsHttpHandler Handler = new() { PooledConnectionLifetime = TimeSpan.FromMinutes(5) };
+    internal static readonly SocketsHttpHandler Handler = new() { PooledConnectionLifetime = TimeSpan.FromMinutes(5) };
 
     public Result<IChatClient> Create(ModelProfile profile)
     {
@@ -86,6 +87,12 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
             BaseAddress = new Uri(profile.BaseUrl ?? ModelProfile.DefaultOllamaUrl),
             Timeout = Timeout.InfiniteTimeSpan,
         };
-        return Result.Success<IChatClient>(new OllamaApiClient(http, profile.ModelId));
+        // Thinking models (qwen3) otherwise reason at length before every reply, and the stream shows nothing meanwhile.
+        IChatClient ollama = new OllamaApiClient(http, profile.ModelId);
+        var client = ollama
+            .AsBuilder()
+            .ConfigureOptions(options => options.RawRepresentationFactory ??= _ => new ChatRequest { Think = false })
+            .Build();
+        return Result.Success(client);
     }
 }

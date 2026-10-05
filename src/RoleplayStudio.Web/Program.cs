@@ -29,6 +29,17 @@ builder.Services.AddAuthentication(options =>
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
     .AddIdentityCookies();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+    options.SlidingExpiration = true;
+    // Every sign-in path (password, passkey, registration, 2FA) keeps the cookie across browser restarts.
+    options.Events.OnSigningIn = context =>
+    {
+        context.Properties.IsPersistent = true;
+        return Task.CompletedTask;
+    };
+});
 
 var connectionString = builder.Configuration.GetConnectionString("roleplaydb") ?? throw new InvalidOperationException("Connection string 'roleplaydb' not found.");
 // Not pooled: a pooled context would carry the previous rental's ScopedOwnerId. This also registers the scoped context Identity uses.
@@ -52,6 +63,7 @@ builder.Services.AddScoped<ICurrentUser, AuthenticationStateCurrentUser>();
 builder.Services.AddScoped<ModelProfileService>();
 builder.Services.AddSingleton<IChatClientFactory, ChatClientFactory>();
 builder.Services.AddScoped<ModelConnectionService>();
+builder.Services.AddScoped<OllamaModelCatalog>();
 builder.Services.AddScoped<PlaygroundChatService>();
 
 var app = builder.Build();
@@ -63,6 +75,7 @@ if (app.Environment.IsDevelopment())
 
     await using var scope = app.Services.CreateAsyncScope();
     await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
+    await scope.ServiceProvider.SeedDevelopmentUserAsync();
 }
 else
 {

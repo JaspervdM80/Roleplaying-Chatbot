@@ -40,9 +40,6 @@ no characters" — and the director prompt silently loses its cast.
 
 ## Rules worth knowing before changing a member
 
-- **Every character is an adult.** `Character.MinimumAge` is enforced by a check constraint in the
-  database and must be validated in the editor; image prompts state "adult". This stays even while
-  other content guardrails are deferred.
 - **`Message.Sequence` orders a session**, unique per session — never `CreatedAt`, which ties under
   a fast stream and moves with clock skew.
 - **`SessionSummary.CoveredUpToSequence`** marks which messages the summary already contains; the
