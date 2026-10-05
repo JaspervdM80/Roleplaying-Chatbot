@@ -2,7 +2,7 @@ namespace RoleplayStudio.Domain.Authoring;
 
 public class Character : OwnedEntity
 {
-    public const int MinimumAge = 18;
+    public const int MinimumAge = 12;
 
     public string Name { get; set; } = "";
     public int Age { get; set; } = MinimumAge;

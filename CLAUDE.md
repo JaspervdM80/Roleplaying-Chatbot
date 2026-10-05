@@ -73,9 +73,7 @@ you find a new one, and update the skill for an area in the same change that alt
    `ModelProfile` stores only the setting name).
 4. **A chat turn never waits on background work.** Memory extraction, summarization and image
    generation are queued after the reply is saved and must not fail the turn.
-5. **Every character is an adult** (`Character.MinimumAge`, a database check constraint, and image
-   prompts). Other content guardrails are deferred; this one is not.
-6. **Build Release before pushing.** Warnings are errors only there; the push hook runs it.
+5. **Build Release before pushing.** Warnings are errors only there; the push hook runs it.
 
 ## Workflow
 
