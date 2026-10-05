@@ -29,6 +29,17 @@ builder.Services.AddAuthentication(options =>
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
     .AddIdentityCookies();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+    options.SlidingExpiration = true;
+    // Every sign-in path (password, passkey, registration, 2FA) keeps the cookie across browser restarts.
+    options.Events.OnSigningIn = context =>
+    {
+        context.Properties.IsPersistent = true;
+        return Task.CompletedTask;
+    };
+});
 
 var connectionString = builder.Configuration.GetConnectionString("roleplaydb") ?? throw new InvalidOperationException("Connection string 'roleplaydb' not found.");
 // Not pooled: a pooled context would carry the previous rental's ScopedOwnerId. This also registers the scoped context Identity uses.
