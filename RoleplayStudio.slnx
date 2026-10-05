@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RoleplayStudio.AI/RoleplayStudio.AI.csproj" />
+    <Project Path="src/RoleplayStudio.AppHost/RoleplayStudio.AppHost.csproj" />
+    <Project Path="src/RoleplayStudio.Domain/RoleplayStudio.Domain.csproj" />
+    <Project Path="src/RoleplayStudio.Infrastructure/RoleplayStudio.Infrastructure.csproj" />
+    <Project Path="src/RoleplayStudio.ServiceDefaults/RoleplayStudio.ServiceDefaults.csproj" />
+    <Project Path="src/RoleplayStudio.Web/RoleplayStudio.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RoleplayStudio.Tests/RoleplayStudio.Tests.csproj" />
+  </Folder>
+</Solution>
