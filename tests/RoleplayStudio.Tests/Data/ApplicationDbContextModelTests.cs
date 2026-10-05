@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using RoleplayStudio.Domain;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
+using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Data;
 
 namespace RoleplayStudio.Tests.Data;
@@ -46,5 +48,15 @@ public class ApplicationDbContextModelTests
         var ownedType = db.Model.FindEntityType(owner)!.FindNavigation(navigation)!.TargetEntityType;
 
         Assert.True(ownedType.IsMappedToJson());
+    }
+
+    [Fact]
+    public void Every_owned_entity_is_filtered_to_its_owner()
+    {
+        using var db = CreateContext();
+        var owned = db.Model.GetEntityTypes().Where(t => typeof(OwnedEntity).IsAssignableFrom(t.ClrType)).ToList();
+
+        Assert.Contains(owned, t => t.ClrType == typeof(ModelProfile));
+        Assert.All(owned, t => Assert.NotEmpty(t.GetDeclaredQueryFilters()));
     }
 }

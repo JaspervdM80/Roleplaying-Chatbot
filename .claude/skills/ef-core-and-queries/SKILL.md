@@ -15,18 +15,20 @@ and two concurrent queries throw *"A second operation was started on this contex
 streams a reply while the memory panel loads — that is exactly two at once.
 
 ```csharp
-await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+await using var db = await dbFactory.CreateForOwnerAsync(ownerId, cancellationToken);
 ```
 
-The scoped context registered in `Program.cs` exists for ASP.NET Core Identity's stores. Nothing else
-injects it.
+`AddDbContextFactory` also registers the scoped context ASP.NET Core Identity's stores use. Nothing
+else injects it. The context is **not pooled**: a pooled instance would carry the previous rental's
+owner scope.
 
 ## Every read is scoped to its owner, and you do not write the `Where`
 
-The pattern, as the first service lands: an owner-scoped factory stamps the current user id onto each
-context, and `ApplicationDbContext` carries a `HasQueryFilter` on every `OwnedEntity`. A query that
-never mentions the owner still returns only the caller's rows; an unstamped context returns *nothing*,
-never another user's rows.
+`CreateForOwnerAsync` (`Data/OwnerScopedContexts.cs`) scopes a context to one user, and
+`ApplicationDbContext` carries a `HasQueryFilter` on every `OwnedEntity` (a model test fails if a new
+one is missed). A query that never mentions the owner still returns only the caller's rows; an
+unscoped context returns *nothing*, never another user's rows. `SaveChanges` stamps `OwnerId` on
+added rows and refuses to write an owned row from an unscoped context or for another owner.
 
 - **Child rows carry no filter.** `Scenario`, `Message`, `CharacterState` and `MemoryEntry` are reached
   through a filtered parent. A write that loads one by its own id gates on its parent being in scope

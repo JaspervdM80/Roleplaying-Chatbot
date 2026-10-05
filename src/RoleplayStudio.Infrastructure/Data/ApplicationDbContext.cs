@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using RoleplayStudio.Domain;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Media;
@@ -21,6 +23,55 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<GeneratedImage> Images => Set<GeneratedImage>();
     public DbSet<ModelProfile> ModelProfiles => Set<ModelProfile>();
 
+    // Child rows are reached through their filtered parent on purpose (the ef-core-and-queries skill).
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning));
+
+    /// <summary>The user whose rows this context sees; null sees no owned rows at all.</summary>
+    public string? ScopedOwnerId { get; private set; }
+
+    public ApplicationDbContext ScopeToOwner(string ownerId)
+    {
+        ScopedOwnerId = ownerId;
+        return this;
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        StampOwnedEntities();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        StampOwnedEntities();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    private void StampOwnedEntities()
+    {
+        foreach (var entry in ChangeTracker.Entries<OwnedEntity>())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted))
+            {
+                continue;
+            }
+
+            if (ScopedOwnerId is null || (entry.State != EntityState.Added && entry.Entity.OwnerId != ScopedOwnerId))
+            {
+                throw new InvalidOperationException($"A {entry.Metadata.ClrType.Name} can only be written through a context scoped to its owner.");
+            }
+
+            if (entry.State == EntityState.Deleted)
+            {
+                continue;
+            }
+
+            entry.Entity.OwnerId = ScopedOwnerId;
+            entry.Entity.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         configurationBuilder.Properties<MessageRole>().HaveConversion<string>();
@@ -33,6 +84,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(builder);
         builder.HasPostgresExtension("vector");
+
+        ApplyOwnerFilter<Persona>(builder);
+        ApplyOwnerFilter<Character>(builder);
+        ApplyOwnerFilter<Chatbot>(builder);
+        ApplyOwnerFilter<ChatSession>(builder);
+        ApplyOwnerFilter<GeneratedImage>(builder);
+        ApplyOwnerFilter<ModelProfile>(builder);
 
         builder.Entity<Character>(e =>
         {
@@ -107,7 +165,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<ModelProfile>(e =>
         {
             e.HasIndex(x => new { x.OwnerId, x.Role });
+            e.HasIndex(x => new { x.OwnerId, x.Role }, "IX_ModelProfiles_OneDefaultPerRole").IsUnique().HasFilter("\"IsDefault\"");
             e.Property(x => x.Name).HasMaxLength(100);
+            e.Property(x => x.ModelId).HasMaxLength(200);
+            e.Property(x => x.BaseUrl).HasMaxLength(500);
+            e.Property(x => x.ApiKeySetting).HasMaxLength(200);
         });
     }
+
+    private void ApplyOwnerFilter<T>(ModelBuilder builder) where T : OwnedEntity =>
+        builder.Entity<T>().HasQueryFilter(e => e.OwnerId == ScopedOwnerId);
 }
