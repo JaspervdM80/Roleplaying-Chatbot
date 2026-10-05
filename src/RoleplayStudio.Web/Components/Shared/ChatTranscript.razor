@@ -1,0 +1,15 @@
+@inherits CancellableComponent
+
+<div class="chat-messages" @ref="_messageList" aria-live="polite">
+    @foreach (var turn in Turns)
+    {
+        <div class="@(turn.FromUser ? "chat-turn chat-turn-user" : "chat-turn")" @key="turn">
+            <div class="chat-turn-speaker">@turn.Speaker</div>
+            <div class="chat-turn-text">@turn.Text</div>
+        </div>
+    }
+    @if (Streaming && Turns.Count > 0 && Turns[^1] is { FromUser: false, Text.Length: 0 })
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+</div>

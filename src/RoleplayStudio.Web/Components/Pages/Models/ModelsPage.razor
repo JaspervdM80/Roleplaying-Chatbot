@@ -4,8 +4,7 @@
 
 <PageTitle>Models · Roleplay Studio</PageTitle>
 
-<div class="models-page">
-<div class="page-heading">
+<div class="app-page-heading">
     <MudText Typo="Typo.h4" HtmlTag="h1">Models</MudText>
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddAsync">Add model</MudButton>
 </div>
@@ -29,9 +28,9 @@ else
     <MudStack Spacing="2">
         @foreach (var profile in _profiles)
         {
-            <MudPaper Class="model-card pa-3" Outlined="true" @key="profile.Id">
-                <div class="model-card-main">
-                    <div class="model-card-title">
+            <MudPaper Class="app-list-card pa-3" Outlined="true" @key="profile.Id">
+                <div class="app-list-card-main">
+                    <div class="app-list-card-title">
                         <MudText Typo="Typo.h6" HtmlTag="h2">@profile.Name</MudText>
                         <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@profile.Role</MudChip>
                         @if (profile.IsDefault)
@@ -39,13 +38,13 @@ else
                             <MudChip T="string" Size="Size.Small" Color="Color.Primary">Default</MudChip>
                         }
                     </div>
-                    <MudText Typo="Typo.body2" Class="model-card-detail">@ProviderLabel(profile) · @profile.ModelId</MudText>
+                    <MudText Typo="Typo.body2" Class="app-list-card-detail">@ProviderLabel(profile) · @profile.ModelId</MudText>
                     @if (_checks.TryGetValue(profile.Id, out var check))
                     {
                         <MudText Typo="Typo.body2" Color="@(check.Ok ? Color.Success : Color.Error)" Class="mt-1">@check.Text</MudText>
                     }
                 </div>
-                <div class="model-card-actions">
+                <div class="app-list-card-actions">
                     <MudButton Variant="Variant.Outlined" Disabled="_testing.Contains(profile.Id)" OnClick="() => TestAsync(profile)">
                         @(_testing.Contains(profile.Id) ? "Testing…" : "Test")
                     </MudButton>
@@ -66,4 +65,3 @@ else
         }
     </MudStack>
 }
-</div>

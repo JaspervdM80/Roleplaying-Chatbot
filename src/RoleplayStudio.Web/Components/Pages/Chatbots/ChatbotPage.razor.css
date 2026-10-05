@@ -1,0 +1,14 @@
+.chatbot-page ::deep .chatbot-world {
+    white-space: pre-wrap;
+    max-width: 60rem;
+}
+
+.chatbot-cast {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chatbot-cast ::deep .mud-chip {
+    margin: 0;
+}

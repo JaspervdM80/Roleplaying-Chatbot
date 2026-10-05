@@ -1,0 +1,47 @@
+@page "/chatbots"
+@attribute [Authorize]
+@inherits CancellableComponent
+
+<PageTitle>Chatbots · Roleplay Studio</PageTitle>
+
+<div class="app-page-heading">
+    <MudText Typo="Typo.h4" HtmlTag="h1">Chatbots</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddAsync">Add chatbot</MudButton>
+</div>
+
+@if (_chatbots is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_chatbots.Count == 0)
+{
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudText Typo="Typo.h6" HtmlTag="h2">No chatbots yet</MudText>
+        <MudText Class="mt-2">
+            A chatbot is a world with a cast of <MudLink Href="@AppRoutes.Characters">characters</MudLink> and the scenarios you start chats from.
+        </MudText>
+    </MudPaper>
+}
+else
+{
+    <MudStack Spacing="2">
+        @foreach (var chatbot in _chatbots)
+        {
+            <MudPaper Class="app-list-card pa-3" Outlined="true" @key="chatbot.Id">
+                <div class="app-list-card-main">
+                    <div class="app-list-card-title">
+                        <MudText Typo="Typo.h6" HtmlTag="h2">@chatbot.Name</MudText>
+                    </div>
+                    @if (chatbot.Tagline is not null)
+                    {
+                        <MudText Typo="Typo.body2" Class="app-list-card-detail">@chatbot.Tagline</MudText>
+                    }
+                    <MudText Typo="Typo.body2" Class="app-list-card-detail">@CastLine(chatbot) · @Wording.Plural(chatbot.Scenarios.Count, "scenario")</MudText>
+                </div>
+                <div class="app-list-card-actions">
+                    <MudButton Variant="Variant.Outlined" Href="@AppRoutes.Chatbot(chatbot.Id)">Open</MudButton>
+                </div>
+            </MudPaper>
+        }
+    </MudStack>
+}

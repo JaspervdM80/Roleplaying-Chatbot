@@ -1,0 +1,27 @@
+@inherits CancellableComponent
+
+<MudDialog Class="app-sheet-dialog">
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudTextField @bind-Value="_chatbot.Name" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="_chatbot.Tagline" Label="Tagline" Variant="Variant.Outlined" Placeholder="A sleepy seaside café with a secret" />
+            <MudTextField @bind-Value="_chatbot.WorldDescription" Label="World" Lines="4" Sizing="InputSizing.Auto" MaxLines="14" Variant="Variant.Outlined"
+                          HelperText="The setting every chat in this chatbot shares." />
+            <MudTextField @bind-Value="_chatbot.ToneAndRules" Label="Tone and rules" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
+                          Placeholder="Wholesome but cheeky. Keep replies to a few paragraphs." />
+            <MudSelect T="Guid?" @bind-Value="_chatbot.DefaultChatModelProfileId" Label="Chat model" Variant="Variant.Outlined" Clearable="true"
+                       HelperText="Leave empty to use your default chat model.">
+                @foreach (var profile in _chatModels)
+                {
+                    <MudSelectItem T="Guid?" Value="profile.Id">@profile.Name (@profile.ModelId)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField @bind-Value="_chatbot.ImageStylePreset" Label="Image style" Variant="Variant.Outlined" Placeholder="Soft watercolour, warm light"
+                          HelperText="Used once pictures arrive." />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_saving" OnClick="SaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>

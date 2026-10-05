@@ -1,0 +1,44 @@
+@page "/chats"
+@attribute [Authorize]
+@inherits CancellableComponent
+
+<PageTitle>Chats · Roleplay Studio</PageTitle>
+
+<div class="app-page-heading">
+    <MudText Typo="Typo.h4" HtmlTag="h1">Chats</MudText>
+    <MudButton Variant="Variant.Outlined" Href="@AppRoutes.Chatbots">New chat</MudButton>
+</div>
+
+@if (_chats is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_chats.Count == 0)
+{
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudText Typo="Typo.h6" HtmlTag="h2">No chats yet</MudText>
+        <MudText Class="mt-2">Open a <MudLink Href="@AppRoutes.Chatbots">chatbot</MudLink> and start a chat from one of its scenarios.</MudText>
+    </MudPaper>
+}
+else
+{
+    <MudStack Spacing="2">
+        @foreach (var chat in _chats)
+        {
+            <MudPaper Class="app-list-card pa-3" Outlined="true" @key="chat.Id">
+                <div class="app-list-card-main">
+                    <MudText Typo="Typo.h6" HtmlTag="h2">@chat.Title</MudText>
+                    <MudText Typo="Typo.body2" Class="app-list-card-detail">
+                        @chat.ChatbotName · as @chat.PersonaName · @Wording.Plural(chat.MessageCount, "message") · @chat.LastActivityAt.ToLocalTime().ToString("g")
+                    </MudText>
+                </div>
+                <div class="app-list-card-actions">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@AppRoutes.Chat(chat.Id)">Continue</MudButton>
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="@($"More actions for {chat.Title}")" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                        <MudMenuItem OnClick="() => DeleteAsync(chat)">Delete</MudMenuItem>
+                    </MudMenu>
+                </div>
+            </MudPaper>
+        }
+    </MudStack>
+}

@@ -29,19 +29,7 @@
         </MudExpansionPanel>
     </MudExpansionPanels>
 
-    <div class="playground-messages" @ref="_messageList" aria-live="polite">
-        @foreach (var turn in _turns)
-        {
-            <div class="@(turn.FromUser ? "chat-turn chat-turn-user" : "chat-turn chat-turn-character")" @key="turn">
-                <div class="chat-turn-speaker">@(turn.FromUser ? "You" : turn.Speaker)</div>
-                <div class="chat-turn-text">@turn.Text</div>
-            </div>
-        }
-        @if (_streaming && _turns.Count > 0 && _turns[^1] is { FromUser: false, Text.Length: 0 })
-        {
-            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-        }
-    </div>
+    <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming" />
 
     <div class="playground-input">
         <MudTextField @bind-Value="_draft" Placeholder="Say something…" Lines="1" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"

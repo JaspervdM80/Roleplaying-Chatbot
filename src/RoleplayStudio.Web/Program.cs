@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Playground;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Infrastructure.Data;
@@ -65,6 +66,12 @@ builder.Services.AddSingleton<IChatClientFactory, ChatClientFactory>();
 builder.Services.AddScoped<ModelConnectionService>();
 builder.Services.AddScoped<OllamaModelCatalog>();
 builder.Services.AddScoped<PlaygroundChatService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<PersonaService>();
+builder.Services.AddScoped<CharacterService>();
+builder.Services.AddScoped<ChatbotService>();
+builder.Services.AddScoped<ChatSessionService>();
+builder.Services.AddScoped<ChatTurnService>();
 
 var app = builder.Build();
 

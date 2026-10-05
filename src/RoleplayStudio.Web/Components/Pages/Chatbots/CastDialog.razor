@@ -1,0 +1,33 @@
+@inherits CancellableComponent
+
+<MudDialog Class="app-sheet-dialog">
+    <DialogContent>
+        @if (_rows is null)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_rows.Count == 0)
+        {
+            <MudText>You have no characters yet. Create some on the <MudLink Href="@AppRoutes.Characters">Characters</MudLink> page first.</MudText>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                @foreach (var row in _rows)
+                {
+                    <div class="cast-row" @key="row.Character.Id">
+                        <MudCheckBox @bind-Value="row.InCast" Label="@row.Character.Name" Color="Color.Primary" />
+                        @if (row.InCast)
+                        {
+                            <MudTextField @bind-Value="row.Role" Label="Role" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="The café owner" />
+                        }
+                    </div>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_saving || _rows is null" OnClick="SaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>

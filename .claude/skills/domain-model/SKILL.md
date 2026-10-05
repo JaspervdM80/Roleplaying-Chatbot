@@ -46,6 +46,10 @@ no characters" — and the director prompt silently loses its cast.
   short-term window starts after it. Rewriting history (edit, regenerate, branch) must move it back.
 - **`MemoryEntry.Embedding` has a fixed dimension** (`EmbeddingDimensions`). See the `migrations`
   skill before changing the embedding model.
+- **Who is present is `Scene.PresentCharacterIds`**, read through `ChatSession.PresentStates`. The
+  prompt and the speaker a reply is saved under both go through it, so they cannot disagree. Until
+  speaker tags are parsed, a reply belongs to the one character present, otherwise to the narrator
+  (`ChatSession.ReplySpeaker`).
 - **Secrets are not domain data.** `ModelProfile.ApiKeySetting` is a configuration key name, never
   the key.
 - Enums are persisted **as strings**: adding a member is free, renaming one is a data migration.
@@ -57,6 +61,7 @@ no characters" — and the director prompt silently loses its cast.
   with it. The service refuses with a readable message rather than surfacing a `DbUpdateException`.
 - Deleting a **chatbot** cascades its scenarios and cast links — and is therefore refused while any
   session still uses one of its scenarios.
-- Deleting a **character** cascades its cast links and character states; decide deliberately before
-  letting that remove a character from running chats.
+- Deleting a **character** is refused while any chat has a `CharacterState` for them; otherwise it
+  cascades their cast links and the service also takes them out of every scenario's
+  `StartingCharacterIds` (a plain `uuid[]`, which no foreign key cleans up). Leaving a cast does the same.
 - A `ModelProfile` delete sets referencing defaults to null.

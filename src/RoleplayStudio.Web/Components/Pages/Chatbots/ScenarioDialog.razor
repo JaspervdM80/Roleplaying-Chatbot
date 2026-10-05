@@ -1,0 +1,33 @@
+<MudDialog Class="app-sheet-dialog">
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudTextField @bind-Value="_scenario.Title" Label="Title" Required="true" MaxLength="200" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="_scenario.Premise" Label="Premise" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
+                          HelperText="What is going on when the chat starts." />
+            <MudTextField @bind-Value="_scenario.StartingLocation" Label="Where it starts" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="_scenario.OpeningMessage" Label="Opening message" Lines="3" Sizing="InputSizing.Auto" MaxLines="12" Variant="Variant.Outlined"
+                          HelperText="The first message of every chat, before you say anything." />
+            <MudTextField @bind-Value="_scenario.Goals" Label="Goals" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+                          HelperText="Where the story could go. Optional." />
+            <div>
+                <MudText Typo="Typo.subtitle2" HtmlTag="h3">Who is there at the start</MudText>
+                @if (Cast.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="app-list-card-detail">The cast is empty, so the chat starts with nobody but you.</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Class="app-list-card-detail">Tick nobody to start with the whole cast.</MudText>
+                    @foreach (var character in Cast)
+                    {
+                        <MudCheckBox T="bool" Value="_starting.Contains(character.Id)" ValueChanged="on => Toggle(character.Id, on)" Label="@character.Name" Color="Color.Primary" @key="character.Id" />
+                    }
+                }
+            </div>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_saving" OnClick="SaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -1,0 +1,93 @@
+@page "/chatbots/{Id:guid}"
+@attribute [Authorize]
+@inherits CancellableComponent
+
+<PageTitle>@(_chatbot?.Name ?? "Chatbot") · Roleplay Studio</PageTitle>
+
+@if (_chatbot is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+<div class="chatbot-page">
+    <div class="app-page-heading">
+        <div>
+            <MudText Typo="Typo.h4" HtmlTag="h1">@_chatbot.Name</MudText>
+            @if (_chatbot.Tagline is not null)
+            {
+                <MudText Typo="Typo.body1" Class="app-list-card-detail">@_chatbot.Tagline</MudText>
+            }
+        </div>
+        <div class="app-list-card-actions">
+            <MudButton Variant="Variant.Outlined" OnClick="EditAsync">Edit</MudButton>
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="More chatbot actions" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                <MudMenuItem OnClick="DeleteAsync">Delete chatbot</MudMenuItem>
+            </MudMenu>
+        </div>
+    </div>
+
+    @if (_chatbot.WorldDescription is not null)
+    {
+        <MudText Class="chatbot-world mb-4">@_chatbot.WorldDescription</MudText>
+    }
+
+    <section class="mb-6">
+        <div class="app-page-heading">
+            <MudText Typo="Typo.h5" HtmlTag="h2">Cast</MudText>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Group" OnClick="EditCastAsync">Edit cast</MudButton>
+        </div>
+        @if (_chatbot.Cast.Count == 0)
+        {
+            <MudText Class="app-list-card-detail">Nobody yet. Add characters to the cast to meet them in a chat.</MudText>
+        }
+        else
+        {
+            <div class="chatbot-cast">
+                @foreach (var member in _chatbot.Cast)
+                {
+                    <MudChip T="string" Variant="Variant.Outlined" @key="member.CharacterId">
+                        @member.Character.Name@(member.Role is null ? "" : $" · {member.Role}")
+                    </MudChip>
+                }
+            </div>
+        }
+    </section>
+
+    <section>
+        <div class="app-page-heading">
+            <MudText Typo="Typo.h5" HtmlTag="h2">Scenarios</MudText>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddScenarioAsync">Add scenario</MudButton>
+        </div>
+        @if (_chatbot.Scenarios.Count == 0)
+        {
+            <MudText Class="app-list-card-detail">A scenario is the situation a chat starts in. Add one to start chatting.</MudText>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                @foreach (var scenario in _chatbot.Scenarios)
+                {
+                    <MudPaper Class="app-list-card pa-3" Outlined="true" @key="scenario.Id">
+                        <div class="app-list-card-main">
+                            <MudText Typo="Typo.h6" HtmlTag="h3">@scenario.Title</MudText>
+                            @if (scenario.Premise is not null)
+                            {
+                                <MudText Typo="Typo.body2" Class="app-list-card-detail">@scenario.Premise</MudText>
+                            }
+                            <MudText Typo="Typo.body2" Class="app-list-card-detail">@StartingLine(scenario)</MudText>
+                        </div>
+                        <div class="app-list-card-actions">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => StartChatAsync(scenario)">Start chat</MudButton>
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="@($"More actions for {scenario.Title}")" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                <MudMenuItem OnClick="() => EditScenarioAsync(scenario)">Edit</MudMenuItem>
+                                <MudMenuItem OnClick="() => DeleteScenarioAsync(scenario)">Delete</MudMenuItem>
+                            </MudMenu>
+                        </div>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+    </section>
+</div>
+}

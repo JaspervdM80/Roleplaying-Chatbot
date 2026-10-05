@@ -21,4 +21,32 @@ public class Character : OwnedEntity
     public long? ImageSeed { get; set; }
     public Guid? AvatarImageId { get; set; }
     public Guid? ReferenceImageId { get; set; }
+
+    /// <summary>Copies the fields a user edits, cleaned, leaving identity, ownership and images alone.</summary>
+    public void CopyEditableFieldsFrom(Character other)
+    {
+        Name = other.Name.Trim();
+        Age = other.Age;
+        Gender = TextFields.Clean(other.Gender);
+        ShortDescription = TextFields.Clean(other.ShortDescription);
+        Personality = TextFields.Clean(other.Personality);
+        SpeechStyle = TextFields.Clean(other.SpeechStyle);
+        Backstory = TextFields.Clean(other.Backstory);
+        Boundaries = TextFields.Clean(other.Boundaries);
+        Appearance = other.Appearance.Copy();
+        DefaultOutfit = other.DefaultOutfit.Copy();
+        ImageTags = TextFields.Clean(other.ImageTags);
+        ImageSeed = other.ImageSeed;
+    }
+
+    /// <summary>The first reason this character cannot be saved, as a message template, or null when it can.</summary>
+    public string? FindProblem()
+    {
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            return "Give the character a name";
+        }
+
+        return Age < 0 ? "The age cannot be negative" : null;
+    }
 }
