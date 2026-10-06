@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avatars and crops, desktop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--surface-sunken:#0b0910;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--ink-faint:rgba(236,230,242,.36);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--hover:rgba(236,230,242,.06);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; padding: 40px 56px; display: flex; gap: 72px; background: var(--surface-page); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <section aria-labelledby="crop-title" style="display: flex; flex-direction: column; gap: 16px">
+    <h1 id="crop-title" style="margin: 0; font-size: 22px; font-weight: 700">One portrait, every size</h1>
+    <p style="margin: 0; max-width: 420px; font-size: 15px; line-height: 1.55; color: var(--ink-muted)">The reference portrait is 3:4, drawn head-and-shoulders and centred. Avatars are cut from it, never generated separately.</p>
+    <div style="display: flex; gap: 32px; align-items: flex-start; margin-top: 8px">
+      <div style="position: relative; width: 300px; height: 400px; border-radius: 12px; overflow: hidden">
+        <div aria-hidden="true" style="width: 300px; height: 400px; background: linear-gradient(165deg, #4a2a44 0%, #241a2e 55%, #17121f 100%)"><svg width="300" height="400" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.34)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.26)"/></svg></div>
+        <div aria-hidden="true" style="position: absolute; left: 45px; top: 65px; width: 210px; height: 210px; box-sizing: border-box; border: 2px dashed var(--ink); border-radius: 50%; box-shadow: 0 0 0 999px rgba(8,7,11,.55)"></div>
+        <span style="position: absolute; left: 12px; bottom: 12px; font-size: 12px; color: var(--ink-soft)">Avatar crop: a square 70% of the width, its top at 16%</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">Portrait</span>
+        <div style="border-radius: 12px; overflow: hidden; width: 180px"><div aria-hidden="true" style="width: 180px; height: 240px; background: linear-gradient(165deg, #4a2a44 0%, #241a2e 55%, #17121f 100%)"><svg width="180" height="240" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.34)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.26)"/></svg></div></div>
+        <span style="font-size: 13px; color: var(--ink-subtle)">Editor 180×240 · phone editor 96×128</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="sizes-title" style="display: flex; flex-direction: column; gap: 8px">
+    <h2 id="sizes-title" style="margin: 0 0 8px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">Avatar sizes</h2>
+      <div style="display: flex; align-items: center; gap: 16px; min-height: 56px">
+        <div style="width: 64px; display: grid; place-items: center"><div aria-hidden="true" style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: linear-gradient(165deg, #4a2a44 0%, #1b1424 100%)"><svg width="48" height="48" viewBox="18 26 84 84" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.4)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.3)"/></svg></div></div>
+        <div style="display: flex; flex-direction: column">
+          <span style="font-size: 15px; font-weight: 600">48 px</span>
+          <span style="font-size: 13px; color: var(--ink-subtle)">Page header (character pictures)</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; min-height: 56px">
+        <div style="width: 64px; display: grid; place-items: center"><div aria-hidden="true" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: linear-gradient(165deg, #4a2a44 0%, #1b1424 100%)"><svg width="40" height="40" viewBox="18 26 84 84" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.4)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.3)"/></svg></div></div>
+        <div style="display: flex; flex-direction: column">
+          <span style="font-size: 15px; font-weight: 600">40 px</span>
+          <span style="font-size: 13px; color: var(--ink-subtle)">Lists and the cast picker</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; min-height: 56px">
+        <div style="width: 64px; display: grid; place-items: center"><div aria-hidden="true" style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: linear-gradient(165deg, #4a2a44 0%, #1b1424 100%)"><svg width="36" height="36" viewBox="18 26 84 84" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.4)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.3)"/></svg></div></div>
+        <div style="display: flex; flex-direction: column">
+          <span style="font-size: 15px; font-weight: 600">36 px</span>
+          <span style="font-size: 13px; color: var(--ink-subtle)">Speaker in the desktop chat</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; min-height: 56px">
+        <div style="width: 64px; display: grid; place-items: center"><div aria-hidden="true" style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: linear-gradient(165deg, #4a2a44 0%, #1b1424 100%)"><svg width="32" height="32" viewBox="18 26 84 84" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.4)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.3)"/></svg></div></div>
+        <div style="display: flex; flex-direction: column">
+          <span style="font-size: 15px; font-weight: 600">32 px</span>
+          <span style="font-size: 13px; color: var(--ink-subtle)">Chips: starting characters, filters</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; min-height: 56px">
+        <div style="width: 64px; display: grid; place-items: center"><div aria-hidden="true" style="width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: linear-gradient(165deg, #4a2a44 0%, #1b1424 100%)"><svg width="26" height="26" viewBox="18 26 84 84" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.4)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.3)"/></svg></div></div>
+        <div style="display: flex; flex-direction: column">
+          <span style="font-size: 15px; font-weight: 600">26 px</span>
+          <span style="font-size: 13px; color: var(--ink-subtle)">Speaker in the phone chat</span>
+        </div>
+      </div>
+    <h2 style="margin: 24px 0 8px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">No portrait yet</h2>
+    <div style="display: flex; gap: 16px; align-items: center">
+      <div aria-hidden="true" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: rgba(240,115,155,.18); color: rgb(240,115,155); display: grid; place-items: center; font-size: 15px; font-weight: 700">M</div>
+      <div aria-hidden="true" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: rgba(124,183,255,.18); color: rgb(124,183,255); display: grid; place-items: center; font-size: 15px; font-weight: 700">T</div>
+      <div aria-hidden="true" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: rgba(242,181,107,.18); color: rgb(242,181,107); display: grid; place-items: center; font-size: 15px; font-weight: 700">B</div>
+      <span style="max-width: 300px; font-size: 13px; line-height: 1.5; color: var(--ink-subtle)">First letter on the character's own colour, the same colour as their name in the chat.</span>
+    </div>
+  </section>
+</div>
+</body>
+</html>
