@@ -1,50 +1,53 @@
-<EditorSheet @ref="_sheet" Kind="Character" Title="@Title" Sections="Sections" IsDirty="IsDirty" DiscardMessage="@DiscardMessage"
-             ProblemSection="@ProblemSection" Saving="_saving" OnSave="SaveAsync">
+@inherits EntityEditor<Character>
+@using RoleplayStudio.Domain.Authoring
+
+<EditorSheet @ref="Sheet" Kind="@Kind" Title="@Title" Sections="Sections" IsDirty="IsDirty" DiscardMessage="@DiscardMessage"
+             ProblemSection="@ProblemSection" Saving="Saving" OnSave="SaveAsync">
     <Portrait>
         <div class="app-editor-portrait">
-            <Avatar Id="Character?.Id ?? Guid.Empty" Name="@_character.Name" Size="96" Class="app-editor-portrait-letter" />
+            <Avatar Id="Character?.Id ?? Guid.Empty" Name="@Edited.Name" Size="96" Class="app-editor-portrait-letter" />
             <span class="app-editor-portrait-note">No portrait yet</span>
         </div>
     </Portrait>
     <ChildContent>
         <EditorSectionBlock Section="Identity">
             <div data-field="@nameof(Character.Name)">
-                <MudTextField @bind-Value="_character.Name" @bind-Value:after="Changed" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined"
-                              Error="IsProblem(nameof(Character.Name))" ErrorText="@_problem?.Message" />
+                <MudTextField @bind-Value="Edited.Name" @bind-Value:after="Changed" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined"
+                              Error="IsProblem(nameof(Character.Name))" ErrorText="@Problem?.Message" />
             </div>
             <div class="app-editor-row">
                 <div class="app-editor-narrow" data-field="@nameof(Character.Age)">
-                    <MudNumericField @bind-Value="_character.Age" @bind-Value:after="Changed" Label="Age" Variant="Variant.Outlined" HideSpinButtons="true"
-                                     Error="IsProblem(nameof(Character.Age))" ErrorText="@_problem?.Message" />
+                    <MudNumericField @bind-Value="Edited.Age" @bind-Value:after="Changed" Label="Age" Variant="Variant.Outlined" HideSpinButtons="true"
+                                     Error="IsProblem(nameof(Character.Age))" ErrorText="@Problem?.Message" />
                 </div>
-                <MudTextField @bind-Value="_character.Gender" @bind-Value:after="Changed" Label="Gender" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Edited.Gender" @bind-Value:after="Changed" Label="Gender" Variant="Variant.Outlined" />
             </div>
-            <MudTextField @bind-Value="_character.ShortDescription" @bind-Value:after="Changed" Label="In a sentence" Lines="2" Sizing="InputSizing.Auto" MaxLines="4" Variant="Variant.Outlined"
+            <MudTextField @bind-Value="Edited.ShortDescription" @bind-Value:after="Changed" Label="In a sentence" Lines="2" Sizing="InputSizing.Auto" MaxLines="4" Variant="Variant.Outlined"
                           HelperText="Shown in lists and given to the model first." />
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Voice">
-            <MudTextField @bind-Value="_character.Personality" @bind-Value:after="Changed" Label="Personality" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="_character.SpeechStyle" @bind-Value:after="Changed" Label="Speech style" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+            <MudTextField @bind-Value="Edited.Personality" @bind-Value:after="Changed" Label="Personality" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Edited.SpeechStyle" @bind-Value:after="Changed" Label="Speech style" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
                           Placeholder="Dry humour, short sentences, calls everyone 'love'…" />
-            <MudTextField @bind-Value="_character.Backstory" @bind-Value:after="Changed" Label="Backstory" Lines="3" Sizing="InputSizing.Auto" MaxLines="12" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="_character.Boundaries" @bind-Value:after="Changed" Label="Boundaries" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+            <MudTextField @bind-Value="Edited.Backstory" @bind-Value:after="Changed" Label="Backstory" Lines="3" Sizing="InputSizing.Auto" MaxLines="12" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Edited.Boundaries" @bind-Value:after="Changed" Label="Boundaries" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
                           HelperText="What this character won't do or talk about." />
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Looks">
-            <AppearanceFields Appearance="_character.Appearance" Changed="Changed" />
+            <AppearanceFields Appearance="Edited.Appearance" Changed="Changed" />
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Outfit">
             <MudText Typo="Typo.body2" Class="app-list-card-detail">What they wear when a chat starts. Each chat keeps track of outfit changes on its own.</MudText>
-            <OutfitFields Outfit="_character.DefaultOutfit" Changed="Changed" />
+            <OutfitFields Outfit="Edited.DefaultOutfit" Changed="Changed" />
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Images">
-            <MudTextField @bind-Value="_character.ImageTags" @bind-Value:after="Changed" Label="Image tags" Variant="Variant.Outlined"
+            <MudTextField @bind-Value="Edited.ImageTags" @bind-Value:after="Changed" Label="Image tags" Variant="Variant.Outlined"
                           HelperText="Comma-separated tags added to every picture of this character." />
-            <MudNumericField @bind-Value="_character.ImageSeed" @bind-Value:after="Changed" Label="Seed" Variant="Variant.Outlined" HideSpinButtons="true"
+            <MudNumericField @bind-Value="Edited.ImageSeed" @bind-Value:after="Changed" Label="Seed" Variant="Variant.Outlined" HideSpinButtons="true"
                              HelperText="Reusing one seed keeps pictures more consistent. Leave empty for a random one." />
         </EditorSectionBlock>
     </ChildContent>

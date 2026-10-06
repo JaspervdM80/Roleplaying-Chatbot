@@ -30,14 +30,14 @@ public partial class PersonasPage
         }
     }
 
-    private Task AddAsync() => OpenEditorAsync("Add persona", null);
+    private Task AddAsync() => OpenEditorAsync(null);
 
-    private Task EditAsync(Persona persona) => OpenEditorAsync("Edit persona", persona);
+    private Task EditAsync(Persona persona) => OpenEditorAsync(persona);
 
-    private async Task OpenEditorAsync(string title, Persona? persona)
+    private async Task OpenEditorAsync(Persona? persona)
     {
         var parameters = new DialogParameters<PersonaDialog> { { d => d.Persona, persona } };
-        var dialog = await Dialogs.ShowAsync<PersonaDialog>(title, parameters, DialogServiceExtensions.Options);
+        var dialog = await Dialogs.ShowAsync<PersonaDialog>("", parameters, DialogServiceExtensions.EditorOptions);
         if (await dialog.Result is { Canceled: false })
         {
             await LoadAsync();

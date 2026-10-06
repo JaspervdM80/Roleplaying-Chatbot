@@ -1,30 +1,42 @@
-<MudDialog Class="app-sheet-dialog">
-    <DialogContent>
-        <MudStack Spacing="2">
-            <MudTextField @bind-Value="_persona.Name" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined" />
-            <MudGrid Spacing="2">
-                <MudItem xs="6">
-                    <MudNumericField @bind-Value="_persona.Age" Label="Age" Min="0" Variant="Variant.Outlined" HideSpinButtons="true" />
-                </MudItem>
-                <MudItem xs="6">
-                    <MudTextField @bind-Value="_persona.Gender" Label="Gender" Variant="Variant.Outlined" />
-                </MudItem>
-            </MudGrid>
-            <MudTextField @bind-Value="_persona.Description" Label="Who you are" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
+@inherits EntityEditor<Persona>
+@using RoleplayStudio.Domain.Authoring
+
+<EditorSheet @ref="Sheet" Kind="@Kind" Title="@Title" Sections="Sections" IsDirty="IsDirty" DiscardMessage="@DiscardMessage"
+             ProblemSection="@ProblemSection" Saving="Saving" OnSave="SaveAsync">
+    <Portrait>
+        <div class="app-editor-portrait">
+            <Avatar Id="Persona?.Id ?? Guid.Empty" Name="@Edited.Name" Size="96" Class="app-editor-portrait-letter" />
+            <span class="app-editor-portrait-note">No portrait yet</span>
+        </div>
+    </Portrait>
+    <ChildContent>
+        <EditorSectionBlock Section="Identity">
+            <div data-field="@nameof(Persona.Name)">
+                <MudTextField @bind-Value="Edited.Name" @bind-Value:after="Changed" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined"
+                              Error="IsProblem(nameof(Persona.Name))" ErrorText="@Problem?.Message" />
+            </div>
+            <div class="app-editor-row">
+                <div class="app-editor-narrow" data-field="@nameof(Persona.Age)">
+                    <MudNumericField @bind-Value="Edited.Age" @bind-Value:after="Changed" Label="Age" Variant="Variant.Outlined" HideSpinButtons="true"
+                                     Error="IsProblem(nameof(Persona.Age))" ErrorText="@Problem?.Message" />
+                </div>
+                <MudTextField @bind-Value="Edited.Gender" @bind-Value:after="Changed" Label="Gender" Variant="Variant.Outlined" />
+            </div>
+        </EditorSectionBlock>
+
+        <EditorSectionBlock Section="About">
+            <MudTextField @bind-Value="Edited.Description" @bind-Value:after="Changed" Label="Who you are" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
                           HelperText="What the characters know about you." />
-            <MudTextField @bind-Value="_persona.Personality" Label="Personality" Lines="2" Sizing="InputSizing.Auto" MaxLines="8" Variant="Variant.Outlined" />
-            <MudExpansionPanels Outlined="true" MultiExpansion="true">
-                <MudExpansionPanel Text="Appearance">
-                    <AppearanceFields Appearance="_persona.Appearance" />
-                </MudExpansionPanel>
-                <MudExpansionPanel Text="Usual outfit">
-                    <OutfitFields Outfit="_persona.DefaultOutfit" />
-                </MudExpansionPanel>
-            </MudExpansionPanels>
-        </MudStack>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_saving" OnClick="SaveAsync">Save</MudButton>
-    </DialogActions>
-</MudDialog>
+            <MudTextField @bind-Value="Edited.Personality" @bind-Value:after="Changed" Label="Personality" Lines="2" Sizing="InputSizing.Auto" MaxLines="8" Variant="Variant.Outlined" />
+        </EditorSectionBlock>
+
+        <EditorSectionBlock Section="Looks">
+            <AppearanceFields Appearance="Edited.Appearance" Changed="Changed" />
+        </EditorSectionBlock>
+
+        <EditorSectionBlock Section="Outfit">
+            <MudText Typo="Typo.body2" Class="app-list-card-detail">What you wear when a chat starts. Each chat keeps track of outfit changes on its own.</MudText>
+            <OutfitFields Outfit="Edited.DefaultOutfit" Changed="Changed" />
+        </EditorSectionBlock>
+    </ChildContent>
+</EditorSheet>
