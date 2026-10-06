@@ -23,8 +23,8 @@ public sealed class PersonaService(IDbContextFactory<ApplicationDbContext> dbFac
             persona.CopyEditableFieldsFrom(input);
             if (persona.FindProblem() is { } problem)
             {
-                logger.LogWarning("Refused to create a persona: {Problem}", problem);
-                return Result.Failure<Persona>(problem);
+                logger.LogWarning("Refused to create a persona: {Problem}", problem.Message);
+                return Result.Failure<Persona>(problem.Message);
             }
 
             await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
@@ -47,8 +47,8 @@ public sealed class PersonaService(IDbContextFactory<ApplicationDbContext> dbFac
             persona.CopyEditableFieldsFrom(input);
             if (persona.FindProblem() is { } problem)
             {
-                logger.LogWarning("Refused to save persona {PersonaId}: {Problem}", input.Id, problem);
-                return Result.Failure<Persona>(problem);
+                logger.LogWarning("Refused to save persona {PersonaId}: {Problem}", input.Id, problem.Message);
+                return Result.Failure<Persona>(problem.Message);
             }
 
             await db.SaveChangesAsync();

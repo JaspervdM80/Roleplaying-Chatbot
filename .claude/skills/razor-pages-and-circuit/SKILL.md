@@ -85,6 +85,11 @@ Dialogs must not close on backdrop click. A generic dialog result cannot tell `d
 the footer, and asks before unsaved edits are lost — from Close, Cancel and Escape alike, which is
 why the dialog's own Escape handling is off.
 
+- **The dialog inherits `EntityEditor<T>`** (`@inherits` in the `.razor`) and supplies only the
+  sections, the field-to-section map, its noun and name, the entity's copy/`FindProblem` and the
+  service call. The copy to edit, the dirty check, the problem, the save and the wording live there
+  once. The sheet takes `@ref="Sheet"`, `Kind`, `Title`, `DiscardMessage`, `IsDirty`, `ProblemSection`,
+  `Saving` and `OnSave="SaveAsync"` from it; a missing `ProblemSection` drops the problem dot silently.
 - **Dirty is a snapshot compare, asked on demand** (`IsDirty` is a `Func<bool>`). A field inside a
   child component (`AppearanceFields`) re-renders only that child, so it raises `Changed` and the
   editor re-renders its footer.

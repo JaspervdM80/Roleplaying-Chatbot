@@ -24,14 +24,14 @@ public class Persona : OwnedEntity
         DefaultOutfit = other.DefaultOutfit.Copy();
     }
 
-    /// <summary>The first reason this persona cannot be saved, as a message template, or null when it can.</summary>
-    public string? FindProblem()
+    /// <summary>The first reason this persona cannot be saved, or null when it can.</summary>
+    public EditProblem? FindProblem()
     {
         if (string.IsNullOrWhiteSpace(Name))
         {
-            return "Give the persona a name";
+            return new EditProblem(nameof(Name), "Give the persona a name");
         }
 
-        return Age is < 0 ? "The age cannot be negative" : null;
+        return Age is < 0 ? new EditProblem(nameof(Age), "The age cannot be negative") : null;
     }
 }
