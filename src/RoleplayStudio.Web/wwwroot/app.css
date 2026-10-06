@@ -249,6 +249,20 @@ h1:focus {
     display: none;
 }
 
+.app-editor-header:has(+ .app-editor-toolbar) {
+    border-bottom: 0;
+}
+
+.app-editor-toolbar {
+    flex-shrink: 0;
+    padding: 4px 28px 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.app-editor-toolbar .mud-input-control {
+    margin-top: 0;
+}
+
 .app-editor-main {
     flex: 1 1 auto;
     min-height: 0;
@@ -519,6 +533,10 @@ h1:focus {
 
     .app-editor-row > .app-editor-narrow {
         flex-basis: 104px;
+    }
+
+    .app-editor-toolbar {
+        padding: 0 16px 12px;
     }
 }
 

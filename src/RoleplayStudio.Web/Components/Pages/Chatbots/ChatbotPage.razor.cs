@@ -56,7 +56,7 @@ public partial class ChatbotPage
     private async Task EditAsync()
     {
         var parameters = new DialogParameters<ChatbotDialog> { { d => d.Chatbot, _chatbot } };
-        await ShowAndReloadAsync<ChatbotDialog>("Edit chatbot", parameters);
+        await ShowAndReloadAsync<ChatbotDialog>("", parameters, DialogServiceExtensions.EditorOptions);
     }
 
     private async Task DeleteAsync()
@@ -73,9 +73,10 @@ public partial class ChatbotPage
         var parameters = new DialogParameters<CastDialog>
         {
             { d => d.ChatbotId, Id },
-            { d => d.Cast, _chatbot!.Cast },
+            { d => d.ChatbotName, _chatbot!.Name },
+            { d => d.Cast, _chatbot.Cast },
         };
-        await ShowAndReloadAsync<CastDialog>("Edit cast", parameters);
+        await ShowAndReloadAsync<CastDialog>("", parameters, DialogServiceExtensions.EditorOptions with { MaxWidth = MaxWidth.Small });
     }
 
     private Task AddScenarioAsync() => OpenScenarioEditorAsync("Add scenario", null);
@@ -90,7 +91,7 @@ public partial class ChatbotPage
             { d => d.Cast, Cast },
             { d => d.Scenario, scenario },
         };
-        await ShowAndReloadAsync<ScenarioDialog>(title, parameters);
+        await ShowAndReloadAsync<ScenarioDialog>(title, parameters, DialogServiceExtensions.Options);
     }
 
     private async Task DeleteScenarioAsync(Scenario scenario)
@@ -116,10 +117,10 @@ public partial class ChatbotPage
         }
     }
 
-    private async Task ShowAndReloadAsync<TDialog>(string title, DialogParameters parameters)
+    private async Task ShowAndReloadAsync<TDialog>(string title, DialogParameters parameters, DialogOptions options)
         where TDialog : IComponent
     {
-        var dialog = await Dialogs.ShowAsync<TDialog>(title, parameters, DialogServiceExtensions.Options);
+        var dialog = await Dialogs.ShowAsync<TDialog>(title, parameters, options);
         if (await dialog.Result is { Canceled: false })
         {
             await LoadAsync();

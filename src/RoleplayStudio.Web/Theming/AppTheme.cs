@@ -35,6 +35,9 @@ public static class AppTheme
     private static readonly string Hover = InkAt(0.06);
     private static readonly string Stripe = InkAt(0.03);
 
+    private static readonly string Picked = At(Primary, 0.06);
+    private static readonly string PickedLine = At(Primary, 0.24);
+
     // A character's colour; Avatar picks one from their id, so it never changes.
     private static readonly string[] Tones = [Primary, Info, Accent, Success];
 
@@ -79,6 +82,8 @@ public static class AppTheme
             --line-strong: {{LineStrong}};
             --hover: {{Hover}};
             --selected: {{Line}};
+            --picked: {{Picked}};
+            --picked-line: {{PickedLine}};
             --scrim: {{Scrim}};
             --shadow: {{Shadow}};
 

@@ -34,6 +34,13 @@ public class AuthoringTests
     }
 
     [Fact]
+    public void A_chatbot_problem_names_the_field_the_editor_points_at()
+    {
+        Assert.Equal("Name", new Chatbot { Name = " " }.FindProblem()?.Field);
+        Assert.Null(new Chatbot { Name = "The Lantern Inn" }.FindProblem());
+    }
+
+    [Fact]
     public void A_scenario_with_no_starting_characters_starts_with_the_whole_cast()
     {
         var cast = new[] { Character("Mira"), Character("Jun") };

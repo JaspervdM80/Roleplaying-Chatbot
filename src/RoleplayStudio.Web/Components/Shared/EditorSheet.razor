@@ -9,35 +9,46 @@
                 <MudIconButton Class="app-editor-close" Icon="@Icons.Material.Filled.Close" aria-label="Close" OnClick="RequestCloseAsync" />
             </header>
 
-            <nav class="app-editor-chips" aria-label="Sections">
-                @foreach (var info in Sections)
-                {
-                    <button type="button" class="app-editor-chip" data-section="@info.Id" @onclick="() => ShowSectionAsync(info.Id)" @key="info.Id">
-                        @if (info.Id == ProblemSection)
-                        {
-                            <span class="app-editor-problem-dot" role="img" aria-label="Has a problem"></span>
-                        }
-                        @info.ShortTitle
-                    </button>
-                }
-            </nav>
+            @if (Sections.Count > 0)
+            {
+                <nav class="app-editor-chips" aria-label="Sections">
+                    @foreach (var info in Sections)
+                    {
+                        <button type="button" class="app-editor-chip" data-section="@info.Id" @onclick="() => ShowSectionAsync(info.Id)" @key="info.Id">
+                            @if (info.Id == ProblemSection)
+                            {
+                                <span class="app-editor-problem-dot" role="img" aria-label="Has a problem"></span>
+                            }
+                            @info.ShortTitle
+                        </button>
+                    }
+                </nav>
+            }
+
+            @if (Toolbar is not null)
+            {
+                <div class="app-editor-toolbar">@Toolbar</div>
+            }
 
             <div class="app-editor-main">
-                <aside class="app-editor-aside">
-                    @Portrait
-                    <nav class="app-editor-links" aria-label="Sections">
-                        @foreach (var info in Sections)
-                        {
-                            <button type="button" class="app-editor-link" data-section="@info.Id" @onclick="() => ShowSectionAsync(info.Id)" @key="info.Id">
-                                @info.Title
-                                @if (info.Id == ProblemSection)
-                                {
-                                    <span class="app-editor-problem-dot" role="img" aria-label="Has a problem"></span>
-                                }
-                            </button>
-                        }
-                    </nav>
-                </aside>
+                @if (Sections.Count > 0)
+                {
+                    <aside class="app-editor-aside">
+                        @Portrait
+                        <nav class="app-editor-links" aria-label="Sections">
+                            @foreach (var info in Sections)
+                            {
+                                <button type="button" class="app-editor-link" data-section="@info.Id" @onclick="() => ShowSectionAsync(info.Id)" @key="info.Id">
+                                    @info.Title
+                                    @if (info.Id == ProblemSection)
+                                    {
+                                        <span class="app-editor-problem-dot" role="img" aria-label="Has a problem"></span>
+                                    }
+                                </button>
+                            }
+                        </nav>
+                    </aside>
+                }
 
                 <div class="app-editor-body">
                     @if (Portrait is not null)
@@ -50,7 +61,11 @@
 
             <footer class="app-editor-footer">
                 <span class="app-editor-status">
-                    @if (IsDirty())
+                    @if (Status is not null)
+                    {
+                        @Status
+                    }
+                    else if (IsDirty())
                     {
                         <span class="app-editor-status-dot"></span>
                         <span>Unsaved changes</span>
