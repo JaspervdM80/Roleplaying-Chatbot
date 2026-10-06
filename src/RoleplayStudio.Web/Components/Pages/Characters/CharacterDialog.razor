@@ -1,48 +1,51 @@
-<MudDialog Class="app-sheet-dialog">
-    <DialogContent>
-        <MudStack Spacing="2">
-            <MudTextField @bind-Value="_character.Name" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined" />
-            <MudGrid Spacing="2">
-                <MudItem xs="6">
-                    <MudNumericField @bind-Value="_character.Age" Label="Age" Min="0" Variant="Variant.Outlined" HideSpinButtons="true" />
-                </MudItem>
-                <MudItem xs="6">
-                    <MudTextField @bind-Value="_character.Gender" Label="Gender" Variant="Variant.Outlined" />
-                </MudItem>
-            </MudGrid>
-            <MudTextField @bind-Value="_character.ShortDescription" Label="In a sentence" Lines="2" Sizing="InputSizing.Auto" MaxLines="4" Variant="Variant.Outlined"
+<EditorSheet @ref="_sheet" Kind="Character" Title="@Title" Sections="Sections" IsDirty="IsDirty" DiscardMessage="@DiscardMessage"
+             ProblemSection="@ProblemSection" Saving="_saving" OnSave="SaveAsync">
+    <Portrait>
+        <div class="app-editor-portrait">
+            <Avatar Id="Character?.Id ?? Guid.Empty" Name="@_character.Name" Size="96" Class="app-editor-portrait-letter" />
+            <span class="app-editor-portrait-note">No portrait yet</span>
+        </div>
+    </Portrait>
+    <ChildContent>
+        <EditorSectionBlock Section="Identity">
+            <div data-field="@nameof(Character.Name)">
+                <MudTextField @bind-Value="_character.Name" @bind-Value:after="Changed" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined"
+                              Error="IsProblem(nameof(Character.Name))" ErrorText="@_problem?.Message" />
+            </div>
+            <div class="app-editor-row">
+                <div class="app-editor-narrow" data-field="@nameof(Character.Age)">
+                    <MudNumericField @bind-Value="_character.Age" @bind-Value:after="Changed" Label="Age" Variant="Variant.Outlined" HideSpinButtons="true"
+                                     Error="IsProblem(nameof(Character.Age))" ErrorText="@_problem?.Message" />
+                </div>
+                <MudTextField @bind-Value="_character.Gender" @bind-Value:after="Changed" Label="Gender" Variant="Variant.Outlined" />
+            </div>
+            <MudTextField @bind-Value="_character.ShortDescription" @bind-Value:after="Changed" Label="In a sentence" Lines="2" Sizing="InputSizing.Auto" MaxLines="4" Variant="Variant.Outlined"
                           HelperText="Shown in lists and given to the model first." />
-            <MudExpansionPanels Outlined="true" MultiExpansion="true">
-                <MudExpansionPanel Text="Personality and voice">
-                    <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_character.Personality" Label="Personality" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined" />
-                        <MudTextField @bind-Value="_character.SpeechStyle" Label="Speech style" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
-                                      Placeholder="Dry humour, short sentences, calls everyone 'love'…" />
-                        <MudTextField @bind-Value="_character.Backstory" Label="Backstory" Lines="3" Sizing="InputSizing.Auto" MaxLines="12" Variant="Variant.Outlined" />
-                        <MudTextField @bind-Value="_character.Boundaries" Label="Boundaries" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
-                                      HelperText="What this character won't do or talk about." />
-                    </MudStack>
-                </MudExpansionPanel>
-                <MudExpansionPanel Text="Appearance">
-                    <AppearanceFields Appearance="_character.Appearance" />
-                </MudExpansionPanel>
-                <MudExpansionPanel Text="Default outfit">
-                    <MudText Typo="Typo.body2" Class="mb-2 app-list-card-detail">What they wear when a chat starts. Each chat keeps track of outfit changes on its own.</MudText>
-                    <OutfitFields Outfit="_character.DefaultOutfit" />
-                </MudExpansionPanel>
-                <MudExpansionPanel Text="Images">
-                    <MudStack Spacing="2">
-                        <MudTextField @bind-Value="_character.ImageTags" Label="Image tags" Variant="Variant.Outlined"
-                                      HelperText="Comma-separated tags added to every picture of this character." />
-                        <MudNumericField @bind-Value="_character.ImageSeed" Label="Seed" Variant="Variant.Outlined" HideSpinButtons="true"
-                                         HelperText="Reusing one seed keeps pictures more consistent. Leave empty for a random one." />
-                    </MudStack>
-                </MudExpansionPanel>
-            </MudExpansionPanels>
-        </MudStack>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_saving" OnClick="SaveAsync">Save</MudButton>
-    </DialogActions>
-</MudDialog>
+        </EditorSectionBlock>
+
+        <EditorSectionBlock Section="Voice">
+            <MudTextField @bind-Value="_character.Personality" @bind-Value:after="Changed" Label="Personality" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="_character.SpeechStyle" @bind-Value:after="Changed" Label="Speech style" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+                          Placeholder="Dry humour, short sentences, calls everyone 'love'…" />
+            <MudTextField @bind-Value="_character.Backstory" @bind-Value:after="Changed" Label="Backstory" Lines="3" Sizing="InputSizing.Auto" MaxLines="12" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="_character.Boundaries" @bind-Value:after="Changed" Label="Boundaries" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+                          HelperText="What this character won't do or talk about." />
+        </EditorSectionBlock>
+
+        <EditorSectionBlock Section="Looks">
+            <AppearanceFields Appearance="_character.Appearance" Changed="Changed" />
+        </EditorSectionBlock>
+
+        <EditorSectionBlock Section="Outfit">
+            <MudText Typo="Typo.body2" Class="app-list-card-detail">What they wear when a chat starts. Each chat keeps track of outfit changes on its own.</MudText>
+            <OutfitFields Outfit="_character.DefaultOutfit" Changed="Changed" />
+        </EditorSectionBlock>
+
+        <EditorSectionBlock Section="Images">
+            <MudTextField @bind-Value="_character.ImageTags" @bind-Value:after="Changed" Label="Image tags" Variant="Variant.Outlined"
+                          HelperText="Comma-separated tags added to every picture of this character." />
+            <MudNumericField @bind-Value="_character.ImageSeed" @bind-Value:after="Changed" Label="Seed" Variant="Variant.Outlined" HideSpinButtons="true"
+                             HelperText="Reusing one seed keeps pictures more consistent. Leave empty for a random one." />
+        </EditorSectionBlock>
+    </ChildContent>
+</EditorSheet>

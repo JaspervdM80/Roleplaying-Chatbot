@@ -33,14 +33,14 @@ public partial class CharactersPage
     private static string Summary(Character character) =>
         character.Gender is null ? $"{character.Age}" : $"{character.Age} · {character.Gender}";
 
-    private Task AddAsync() => OpenEditorAsync("Add character", null);
+    private Task AddAsync() => OpenEditorAsync(null);
 
-    private Task EditAsync(Character character) => OpenEditorAsync("Edit character", character);
+    private Task EditAsync(Character character) => OpenEditorAsync(character);
 
-    private async Task OpenEditorAsync(string title, Character? character)
+    private async Task OpenEditorAsync(Character? character)
     {
         var parameters = new DialogParameters<CharacterDialog> { { d => d.Character, character } };
-        var dialog = await Dialogs.ShowAsync<CharacterDialog>(title, parameters, DialogServiceExtensions.Options);
+        var dialog = await Dialogs.ShowAsync<CharacterDialog>("", parameters, DialogServiceExtensions.EditorOptions);
         if (await dialog.Result is { Canceled: false })
         {
             await LoadAsync();

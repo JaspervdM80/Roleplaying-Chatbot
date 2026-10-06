@@ -2,29 +2,29 @@
 
 <MudGrid Spacing="2">
     <MudItem xs="12" sm="6">
-        <MudTextField @bind-Value="Appearance.BodyType" Label="Body type" Variant="Variant.Outlined" Disabled="Disabled" />
+        <MudTextField @bind-Value="Appearance.BodyType" @bind-Value:after="NotifyAsync" Label="Body type" Variant="Variant.Outlined" Disabled="Disabled" />
     </MudItem>
     <MudItem xs="12" sm="6">
-        <MudTextField @bind-Value="Appearance.Height" Label="Height" Variant="Variant.Outlined" Disabled="Disabled" />
+        <MudTextField @bind-Value="Appearance.Height" @bind-Value:after="NotifyAsync" Label="Height" Variant="Variant.Outlined" Disabled="Disabled" />
     </MudItem>
     <MudItem xs="12" sm="6">
-        <MudTextField @bind-Value="Appearance.SkinTone" Label="Skin" Variant="Variant.Outlined" Disabled="Disabled" />
+        <MudTextField @bind-Value="Appearance.SkinTone" @bind-Value:after="NotifyAsync" Label="Skin" Variant="Variant.Outlined" Disabled="Disabled" />
     </MudItem>
     <MudItem xs="12" sm="6">
-        <MudTextField @bind-Value="Appearance.Eyes" Label="Eyes" Variant="Variant.Outlined" Disabled="Disabled" />
+        <MudTextField @bind-Value="Appearance.Eyes" @bind-Value:after="NotifyAsync" Label="Eyes" Variant="Variant.Outlined" Disabled="Disabled" />
     </MudItem>
     <MudItem xs="12" sm="6">
-        <MudTextField @bind-Value="Appearance.Hair" Label="Hair" Variant="Variant.Outlined" Disabled="Disabled" />
+        <MudTextField @bind-Value="Appearance.Hair" @bind-Value:after="NotifyAsync" Label="Hair" Variant="Variant.Outlined" Disabled="Disabled" />
     </MudItem>
     <MudItem xs="12" sm="6">
-        <MudTextField @bind-Value="Appearance.Face" Label="Face" Variant="Variant.Outlined" Disabled="Disabled" />
+        <MudTextField @bind-Value="Appearance.Face" @bind-Value:after="NotifyAsync" Label="Face" Variant="Variant.Outlined" Disabled="Disabled" />
     </MudItem>
     <MudItem xs="12">
-        <MudTextField @bind-Value="Appearance.DistinguishingFeatures" Label="Distinguishing features" Variant="Variant.Outlined" Disabled="Disabled"
+        <MudTextField @bind-Value="Appearance.DistinguishingFeatures" @bind-Value:after="NotifyAsync" Label="Distinguishing features" Variant="Variant.Outlined" Disabled="Disabled"
                       Placeholder="Freckles, a scar over one eyebrow, a tattoo…" />
     </MudItem>
     <MudItem xs="12">
-        <MudTextField @bind-Value="Appearance.Notes" Label="Other notes" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined" Disabled="Disabled" />
+        <MudTextField @bind-Value="Appearance.Notes" @bind-Value:after="NotifyAsync" Label="Other notes" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined" Disabled="Disabled" />
     </MudItem>
 </MudGrid>
 
@@ -35,4 +35,9 @@
 
     [Parameter]
     public bool Disabled { get; set; }
+
+    [Parameter]
+    public EventCallback Changed { get; set; }
+
+    private Task NotifyAsync() => Changed.InvokeAsync();
 }

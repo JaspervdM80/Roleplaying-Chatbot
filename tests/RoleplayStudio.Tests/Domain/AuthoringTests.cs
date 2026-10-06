@@ -18,6 +18,14 @@ public class AuthoringTests
     }
 
     [Fact]
+    public void A_character_problem_names_the_field_the_editor_points_at()
+    {
+        Assert.Equal("Name", new Character { Name = " " }.FindProblem()?.Field);
+        Assert.Equal("Age", new Character { Name = "Mira", Age = -1 }.FindProblem()?.Field);
+        Assert.Null(new Character { Name = "Mira" }.FindProblem());
+    }
+
+    [Fact]
     public void A_scenario_with_no_starting_characters_starts_with_the_whole_cast()
     {
         var cast = new[] { Character("Mira"), Character("Jun") };

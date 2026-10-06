@@ -39,14 +39,14 @@ public class Character : OwnedEntity
         ImageSeed = other.ImageSeed;
     }
 
-    /// <summary>The first reason this character cannot be saved, as a message template, or null when it can.</summary>
-    public string? FindProblem()
+    /// <summary>The first reason this character cannot be saved, or null when it can.</summary>
+    public EditProblem? FindProblem()
     {
         if (string.IsNullOrWhiteSpace(Name))
         {
-            return "Give the character a name";
+            return new EditProblem(nameof(Name), "Give the character a name");
         }
 
-        return Age < 0 ? "The age cannot be negative" : null;
+        return Age < 0 ? new EditProblem(nameof(Age), "The age cannot be negative") : null;
     }
 }

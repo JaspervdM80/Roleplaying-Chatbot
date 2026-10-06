@@ -44,9 +44,12 @@ zero-specificity `:where()` so a double tap is two taps, not a zoom.
 
 ## Dialogs on a phone
 
-A long form dialog (character or persona editor) becomes a **full-screen sheet below 599.98px**: full
-width, `overflow: hidden` on the dialog so `.mud-dialog-content` is the one scroller, a real footer
-with the bottom safe-area inset, and the title taking the top inset. A MudBlazor dialog is 64px
+A long form dialog becomes a **full-screen sheet below 599.98px**: full
+width, `overflow: hidden` on the dialog so one element is the scroller, a real footer with the bottom
+safe-area inset, and the title taking the top inset. `EditorSheet` does this for a long authoring
+form and below 959.98px trades its side nav for a row of section chips; a dialog not yet on it uses
+`app-sheet-dialog`. On a phone held sideways the sheet takes the full height and drops the portrait
+row, or the form opens showing little but the portrait. A MudBlazor dialog is 64px
 narrower than the phone by default, which pushes wide content (a date picker) off-screen.
 
 A numeric field's spin buttons are a third of the floor and flush together; hide them on a phone —

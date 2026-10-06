@@ -79,3 +79,15 @@ A circuit outlives a request and a singleton outlives the circuit.
 Dialogs must not close on backdrop click. A generic dialog result cannot tell `default` from
 "cancelled", so a generic prompt helper is constrained to `class`; a value-typed dialog hands back
 `T?`.
+
+**A long authoring form is an `EditorSheet`** (`Components/Shared`), opened with
+`DialogServiceExtensions.EditorOptions`. It owns the header, the section nav, the one scroller and
+the footer, and asks before unsaved edits are lost — from Close, Cancel and Escape alike, which is
+why the dialog's own Escape handling is off.
+
+- **Dirty is a snapshot compare, asked on demand** (`IsDirty` is a `Func<bool>`). A field inside a
+  child component (`AppearanceFields`) re-renders only that child, so it raises `Changed` and the
+  editor re-renders its footer.
+- **A blocked save points at the field.** The entity's `FindProblem()` returns an `EditProblem`
+  naming the property; the field sits in a `data-field="<Property>"` wrapper, and the sheet scrolls
+  to it and marks its section.
