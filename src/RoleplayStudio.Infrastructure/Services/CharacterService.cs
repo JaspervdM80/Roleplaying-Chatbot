@@ -23,8 +23,8 @@ public sealed class CharacterService(IDbContextFactory<ApplicationDbContext> dbF
             character.CopyEditableFieldsFrom(input);
             if (character.FindProblem() is { } problem)
             {
-                logger.LogWarning("Refused to create a character: {Problem}", problem);
-                return Result.Failure<Character>(problem);
+                logger.LogWarning("Refused to create a character: {Problem}", problem.Message);
+                return Result.Failure<Character>(problem.Message);
             }
 
             await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
@@ -47,8 +47,8 @@ public sealed class CharacterService(IDbContextFactory<ApplicationDbContext> dbF
             character.CopyEditableFieldsFrom(input);
             if (character.FindProblem() is { } problem)
             {
-                logger.LogWarning("Refused to save character {CharacterId}: {Problem}", input.Id, problem);
-                return Result.Failure<Character>(problem);
+                logger.LogWarning("Refused to save character {CharacterId}: {Problem}", input.Id, problem.Message);
+                return Result.Failure<Character>(problem.Message);
             }
 
             await db.SaveChangesAsync();

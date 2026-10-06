@@ -1,10 +1,18 @@
-<MudDialog>
+<MudDialog Class="app-confirm-dialog">
     <DialogContent>
         <MudText>@Message</MudText>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
-        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="() => Dialog.Close(true)">@ConfirmText</MudButton>
+        @if (CancelIsMain)
+        {
+            <MudButton Color="Color.Error" OnClick="() => Dialog.Close(true)">@ConfirmText</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="() => Dialog.Cancel()">@CancelText</MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="() => Dialog.Cancel()">@CancelText</MudButton>
+            <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="() => Dialog.Close(true)">@ConfirmText</MudButton>
+        }
     </DialogActions>
 </MudDialog>
 
@@ -17,4 +25,11 @@
 
     [Parameter]
     public string ConfirmText { get; set; } = "Confirm";
+
+    [Parameter]
+    public string CancelText { get; set; } = "Cancel";
+
+    /// <summary>Makes backing out the highlighted choice, for a confirmation that throws work away.</summary>
+    [Parameter]
+    public bool CancelIsMain { get; set; }
 }

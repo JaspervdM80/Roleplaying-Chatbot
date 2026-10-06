@@ -1,0 +1,64 @@
+<MudDialog Class="app-editor-dialog" Gutters="false">
+    <DialogContent>
+        <div class="app-editor" @ref="_root">
+            <header class="app-editor-header">
+                <div class="app-editor-heading">
+                    <span class="app-editor-kind">@Kind</span>
+                    <h2 class="app-editor-title">@Title</h2>
+                </div>
+                <MudIconButton Class="app-editor-close" Icon="@Icons.Material.Filled.Close" aria-label="Close" OnClick="RequestCloseAsync" />
+            </header>
+
+            <nav class="app-editor-chips" aria-label="Sections">
+                @foreach (var info in Sections)
+                {
+                    <button type="button" class="app-editor-chip" data-section="@info.Id" @onclick="() => ShowSectionAsync(info.Id)" @key="info.Id">
+                        @if (info.Id == ProblemSection)
+                        {
+                            <span class="app-editor-problem-dot" role="img" aria-label="Has a problem"></span>
+                        }
+                        @info.ShortTitle
+                    </button>
+                }
+            </nav>
+
+            <div class="app-editor-main">
+                <aside class="app-editor-aside">
+                    @Portrait
+                    <nav class="app-editor-links" aria-label="Sections">
+                        @foreach (var info in Sections)
+                        {
+                            <button type="button" class="app-editor-link" data-section="@info.Id" @onclick="() => ShowSectionAsync(info.Id)" @key="info.Id">
+                                @info.Title
+                                @if (info.Id == ProblemSection)
+                                {
+                                    <span class="app-editor-problem-dot" role="img" aria-label="Has a problem"></span>
+                                }
+                            </button>
+                        }
+                    </nav>
+                </aside>
+
+                <div class="app-editor-body">
+                    @if (Portrait is not null)
+                    {
+                        <div class="app-editor-portrait-row">@Portrait</div>
+                    }
+                    @ChildContent
+                </div>
+            </div>
+
+            <footer class="app-editor-footer">
+                <span class="app-editor-status">
+                    @if (IsDirty())
+                    {
+                        <span class="app-editor-status-dot"></span>
+                        <span>Unsaved changes</span>
+                    }
+                </span>
+                <MudButton Class="app-editor-cancel" OnClick="RequestCloseAsync">Cancel</MudButton>
+                <MudButton Class="app-editor-save" Color="Color.Primary" Variant="Variant.Filled" Disabled="Saving" OnClick="OnSave">Save</MudButton>
+            </footer>
+        </div>
+    </DialogContent>
+</MudDialog>

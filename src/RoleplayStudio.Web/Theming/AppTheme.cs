@@ -35,6 +35,11 @@ public static class AppTheme
     private static readonly string Hover = InkAt(0.06);
     private static readonly string Stripe = InkAt(0.03);
 
+    // A character's colour; Avatar picks one from their id, so it never changes.
+    private static readonly string[] Tones = [Primary, Info, Accent, Success];
+
+    public static int ToneCount => Tones.Length;
+
     public const string Scrim = "rgba(5,3,8,0.7)";
     public const string Shadow = "rgba(0,0,0,0.45)";
 
@@ -83,6 +88,7 @@ public static class AppTheme
             --text-ui: 0.9375rem;
             --text-prose: 1.0625rem;
             --leading-prose: 1.6;
+        {{ToneVariables()}}
         }
         """;
 
@@ -148,11 +154,16 @@ public static class AppTheme
         }
     };
 
-    private static string InkAt(double opacity)
+    private static string ToneVariables() =>
+        string.Concat(Tones.Select((tone, i) => $"--tone-{i}: {tone}; --tone-{i}-tint: {At(tone, 0.18)}; "));
+
+    private static string InkAt(double opacity) => At(Ink, opacity);
+
+    private static string At(string hex, double opacity)
     {
-        var red = Convert.ToInt32(Ink[1..3], 16);
-        var green = Convert.ToInt32(Ink[3..5], 16);
-        var blue = Convert.ToInt32(Ink[5..7], 16);
+        var red = Convert.ToInt32(hex[1..3], 16);
+        var green = Convert.ToInt32(hex[3..5], 16);
+        var blue = Convert.ToInt32(hex[5..7], 16);
 
         return string.Create(CultureInfo.InvariantCulture, $"rgba({red},{green},{blue},{opacity})");
     }

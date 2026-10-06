@@ -1,0 +1,24 @@
+<div class="app-avatar @Class" style="--avatar-size: @(Size)px; @ToneStyle" aria-hidden="true">@Letter</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Guid Id { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Name { get; set; } = "";
+
+    [Parameter]
+    public int Size { get; set; } = 40;
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    // An unsaved character has no id yet, so it waits in a neutral colour rather than showing one that changes on save.
+    private string ToneStyle => Id == Guid.Empty
+        ? "--avatar-ink: var(--ink-muted); --avatar-tint: var(--selected)"
+        : $"--avatar-ink: var(--tone-{Tone}); --avatar-tint: var(--tone-{Tone}-tint)";
+
+    private int Tone => (int)((uint)Id.GetHashCode() % (uint)AppTheme.ToneCount);
+
+    private string Letter => string.IsNullOrWhiteSpace(Name) ? "?" : Name.Trim().EnumerateRunes().First().ToString().ToUpperInvariant();
+}

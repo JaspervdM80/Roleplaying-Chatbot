@@ -1,0 +1,12 @@
+<section id="@Section.Id" class="app-editor-section">
+    <h3 class="app-editor-section-title">@Section.Title</h3>
+    @ChildContent
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public EditorSection Section { get; set; } = null!;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}
