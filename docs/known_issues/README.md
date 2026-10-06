@@ -28,3 +28,13 @@ and the test fixture use the same `IdentitySchemaVersion`.
 **Cause:** the pane does not run where the shell runs, so it cannot reach a localhost server the agent
 started.
 **Rule:** drive the running app with a headless Playwright script from the scratchpad instead.
+
+## Escape does nothing in an editor opened from a row's menu
+
+**Symptom:** an `EditorSheet` opened from a `MudMenuItem` ignores Escape, even with no edits; opened
+from a plain button it closes.
+**Cause:** the menu item awaits its `OnClick` before the menu closes, and the handler awaits the dialog,
+so the menu's popover stays `mud-popover-open` behind the editor. The sheet skips Escape while a
+popover is open, so a dropdown inside the editor gets it first.
+**Rule:** `editor-sheet.js` counts only popovers opened after the editor. Any other Escape or
+outside-click logic that looks for an open popover has to do the same.

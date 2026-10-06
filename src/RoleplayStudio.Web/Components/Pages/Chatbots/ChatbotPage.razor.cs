@@ -79,19 +79,20 @@ public partial class ChatbotPage
         await ShowAndReloadAsync<CastDialog>("", parameters, DialogServiceExtensions.EditorOptions with { MaxWidth = MaxWidth.Small });
     }
 
-    private Task AddScenarioAsync() => OpenScenarioEditorAsync("Add scenario", null);
+    private Task AddScenarioAsync() => OpenScenarioEditorAsync(null);
 
-    private Task EditScenarioAsync(Scenario scenario) => OpenScenarioEditorAsync("Edit scenario", scenario);
+    private Task EditScenarioAsync(Scenario scenario) => OpenScenarioEditorAsync(scenario);
 
-    private async Task OpenScenarioEditorAsync(string title, Scenario? scenario)
+    private async Task OpenScenarioEditorAsync(Scenario? scenario)
     {
         var parameters = new DialogParameters<ScenarioDialog>
         {
             { d => d.ChatbotId, Id },
+            { d => d.ChatbotName, _chatbot!.Name },
             { d => d.Cast, Cast },
             { d => d.Scenario, scenario },
         };
-        await ShowAndReloadAsync<ScenarioDialog>(title, parameters, DialogServiceExtensions.Options);
+        await ShowAndReloadAsync<ScenarioDialog>("", parameters, DialogServiceExtensions.EditorOptions with { MaxWidth = MaxWidth.Small });
     }
 
     private async Task DeleteScenarioAsync(Scenario scenario)

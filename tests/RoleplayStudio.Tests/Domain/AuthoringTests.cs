@@ -14,7 +14,27 @@ public class AuthoringTests
     {
         var scenario = new Scenario { Title = "Picnic", StartingCharacterIds = [Guid.NewGuid()] };
 
-        Assert.NotNull(scenario.FindProblem([Guid.NewGuid()]));
+        Assert.Equal("StartingCharacterIds", scenario.FindProblem([Guid.NewGuid()])?.Field);
+    }
+
+    [Fact]
+    public void A_scenario_problem_names_the_field_the_editor_points_at()
+    {
+        Assert.Equal("Title", new Scenario { Title = " " }.FindProblem([])?.Field);
+        Assert.Null(new Scenario { Title = "Picnic" }.FindProblem([]));
+    }
+
+    [Fact]
+    public void A_scenario_stores_the_same_starting_characters_in_one_order_however_they_were_picked()
+    {
+        var (mira, jun) = (Guid.NewGuid(), Guid.NewGuid());
+        var picked = new Scenario();
+        var repicked = new Scenario();
+
+        picked.CopyEditableFieldsFrom(new Scenario { StartingCharacterIds = [mira, jun] });
+        repicked.CopyEditableFieldsFrom(new Scenario { StartingCharacterIds = [jun, mira, jun] });
+
+        Assert.Equal(picked.StartingCharacterIds, repicked.StartingCharacterIds);
     }
 
     [Fact]

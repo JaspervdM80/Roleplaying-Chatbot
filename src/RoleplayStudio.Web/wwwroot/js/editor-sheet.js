@@ -19,9 +19,13 @@ export function attach(root, editor) {
 
     const isTopmost = () => [...document.querySelectorAll(".mud-dialog-container")].at(-1)?.contains(root);
 
+    // A MudMenu item that opened this editor keeps its menu open until the editor closes, so only later popovers count.
+    const openBefore = new Set(document.querySelectorAll(".mud-popover-open"));
+    const popoverOpen = () => [...document.querySelectorAll(".mud-popover-open")].some(p => !openBefore.has(p));
+
     // Blurring first commits a field still being typed in, so the dirty check sees the last edit.
     const onKeyDown = event => {
-        if (event.key === "Escape" && !event.repeat && !event.defaultPrevented && isTopmost() && !document.querySelector(".mud-popover-open")) {
+        if (event.key === "Escape" && !event.repeat && !event.defaultPrevented && isTopmost() && !popoverOpen()) {
             event.preventDefault();
             document.activeElement?.blur();
             editor.invokeMethodAsync("RequestCloseAsync");

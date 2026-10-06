@@ -7,18 +7,37 @@ using RoleplayStudio.Infrastructure.Data;
 
 namespace RoleplayStudio.Infrastructure.Services;
 
-public sealed record ChatListItem(Guid Id, string Title, string ChatbotName, string PersonaName, int MessageCount, DateTimeOffset LastActivityAt);
+public sealed record ChatListCharacter(Guid Id, string Name);
+
+/// <summary>A chat on the chats list; <see cref="LastLine"/> is the start of the newest message, or null before the first.</summary>
+public sealed record ChatListItem(
+    Guid Id, string ChatbotName, string ScenarioTitle, string PersonaName, IReadOnlyList<ChatListCharacter> Characters, string? LastLine, DateTimeOffset LastActivityAt);
 
 public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> dbFactory, ICurrentUser currentUser, TimeProvider time, ILogger<ChatSessionService> logger)
 {
+    private const int LastLineLength = 160;
+
     public Task<Result<IReadOnlyList<ChatListItem>>> ListAsync(CancellationToken cancellationToken = default) =>
         ServiceOperation.RunOwnerAsync<IReadOnlyList<ChatListItem>>(currentUser, logger, "list chats", cancellationToken, async ownerId =>
         {
             await using var db = await dbFactory.CreateForOwnerAsync(ownerId, cancellationToken);
-            var chats = await db.ChatSessions
+            var rows = await db.ChatSessions
                 .OrderByDescending(s => s.LastActivityAt)
-                .Select(s => new ChatListItem(s.Id, s.Title, s.Scenario.Chatbot.Name, s.Persona.Name, s.Messages.Count, s.LastActivityAt))
+                .Select(s => new
+                {
+                    s.Id,
+                    ChatbotName = s.Scenario.Chatbot.Name,
+                    ScenarioTitle = s.Scenario.Title,
+                    PersonaName = s.Persona.Name,
+                    Characters = s.CharacterStates.OrderBy(c => c.Character.Name).Select(c => new ChatListCharacter(c.CharacterId, c.Character.Name)).ToList(),
+                    Last = s.Messages.OrderByDescending(m => m.Sequence).Select(m => new { m.SpeakerName, Start = m.Content.Substring(0, LastLineLength) }).FirstOrDefault(),
+                    s.LastActivityAt,
+                })
+                .AsSplitQuery()
                 .ToListAsync(cancellationToken);
+            var chats = rows
+                .Select(r => new ChatListItem(r.Id, r.ChatbotName, r.ScenarioTitle, r.PersonaName, r.Characters, r.Last is null ? null : $"{r.Last.SpeakerName}: {r.Last.Start}", r.LastActivityAt))
+                .ToList();
             logger.LogDebug("Listed {ChatCount} chats", chats.Count);
             return Result.Success<IReadOnlyList<ChatListItem>>(chats);
         });

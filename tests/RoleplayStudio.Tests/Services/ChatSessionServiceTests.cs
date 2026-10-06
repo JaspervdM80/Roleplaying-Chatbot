@@ -1,6 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using RoleplayStudio.AI.Chat;
 using RoleplayStudio.Domain.Chats;
+using RoleplayStudio.Domain.Memory;
+using RoleplayStudio.Infrastructure.Data;
 using RoleplayStudio.Tests.Support;
 
 namespace RoleplayStudio.Tests.Services;
@@ -23,6 +26,50 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var opening = Assert.Single(loaded.Messages);
         Assert.Equal("Mira", opening.SpeakerName);
         Assert.Equal(user.Time.GetUtcNow(), loaded.LastActivityAt);
+    }
+
+    [Fact]
+    public async Task The_chats_list_puts_the_latest_activity_first_with_its_chatbot_scenario_persona_and_last_line()
+    {
+        var user = new StudioUser(postgres);
+        var older = await user.ChatAsync("Mira");
+        user.Time.Advance(TimeSpan.FromHours(1));
+        var newer = await user.ChatAsync("Jun");
+        user.Time.Advance(TimeSpan.FromHours(1));
+
+        await user.Sessions.AddUserMessageAsync(older.Id, "Two coffees, please.");
+
+        var chats = (await user.Sessions.ListAsync()).Value;
+        Assert.Equal([older.Id, newer.Id], chats.Select(c => c.Id));
+        var top = chats[0];
+        Assert.Equal(("Seaside Café", "Morning rush", "Sam"), (top.ChatbotName, top.ScenarioTitle, top.PersonaName));
+        Assert.Equal(["Mira"], top.Characters.Select(c => c.Name));
+        Assert.Equal("Sam: Two coffees, please.", top.LastLine);
+        Assert.Equal("Jun: The bell over the door rings.", chats[1].LastLine);
+    }
+
+    [Fact]
+    public async Task Deleting_a_chat_deletes_its_messages_character_states_and_memories()
+    {
+        var user = new StudioUser(postgres);
+        var deleted = await user.ChatAsync("Mira");
+        var kept = await user.ChatAsync("Jun");
+        await using (var db = await postgres.DbFactory.CreateForOwnerAsync(user.User.UserId!))
+        {
+            db.Memories.AddRange(
+                new MemoryEntry { SessionId = deleted.Id, Text = "Sam takes their coffee black." },
+                new MemoryEntry { SessionId = kept.Id, Text = "Sam is allergic to cinnamon." });
+            await db.SaveChangesAsync();
+        }
+
+        Assert.True((await user.Sessions.DeleteAsync(deleted.Id)).IsSuccess);
+
+        await using var check = await postgres.DbFactory.CreateForOwnerAsync(user.User.UserId!);
+        Assert.False(await check.Memories.AnyAsync(m => m.SessionId == deleted.Id));
+        Assert.False(await check.Messages.AnyAsync(m => m.SessionId == deleted.Id));
+        Assert.False(await check.CharacterStates.AnyAsync(s => s.SessionId == deleted.Id));
+        Assert.True(await check.Memories.AnyAsync(m => m.SessionId == kept.Id));
+        Assert.Equal([kept.Id], (await user.Sessions.ListAsync()).Value.Select(c => c.Id));
     }
 
     [Fact]

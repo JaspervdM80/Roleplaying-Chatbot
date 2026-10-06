@@ -21,18 +21,20 @@ public class Scenario : Entity
         StartingLocation = TextFields.Clean(other.StartingLocation);
         OpeningMessage = TextFields.Clean(other.OpeningMessage);
         Goals = TextFields.Clean(other.Goals);
-        StartingCharacterIds = other.StartingCharacterIds.Distinct().ToList();
+        StartingCharacterIds = other.StartingCharacterIds.Distinct().Order().ToList();
     }
 
-    /// <summary>The first reason this scenario cannot be saved, as a message template, or null when it can.</summary>
-    public string? FindProblem(IReadOnlyCollection<Guid> castCharacterIds)
+    /// <summary>The first reason this scenario cannot be saved, or null when it can.</summary>
+    public EditProblem? FindProblem(IReadOnlyCollection<Guid> castCharacterIds)
     {
         if (string.IsNullOrWhiteSpace(Title))
         {
-            return "Give the scenario a title";
+            return new EditProblem(nameof(Title), "Give the scenario a title");
         }
 
-        return StartingCharacterIds.All(castCharacterIds.Contains) ? null : "Everyone present at the start must be in the chatbot's cast";
+        return StartingCharacterIds.All(castCharacterIds.Contains)
+            ? null
+            : new EditProblem(nameof(StartingCharacterIds), "Everyone present at the start must be in the chatbot's cast");
     }
 
     /// <summary>Who is present when a chat starts: the chosen starting characters, or the whole cast when none were chosen.</summary>

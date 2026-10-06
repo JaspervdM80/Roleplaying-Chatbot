@@ -154,8 +154,8 @@ public sealed class ChatbotService(IDbContextFactory<ApplicationDbContext> dbFac
             scenario.CopyEditableFieldsFrom(input);
             if (scenario.FindProblem(CastIds(chatbot)) is { } problem)
             {
-                logger.LogWarning("Refused to create a scenario in chatbot {ChatbotId}: {Problem}", chatbotId, problem);
-                return Result.Failure<Scenario>(problem);
+                logger.LogWarning("Refused to create a scenario in chatbot {ChatbotId}: {Problem}", chatbotId, problem.Message);
+                return Result.Failure<Scenario>(problem.Message);
             }
 
             db.Scenarios.Add(scenario);
@@ -178,8 +178,8 @@ public sealed class ChatbotService(IDbContextFactory<ApplicationDbContext> dbFac
             scenario.CopyEditableFieldsFrom(input);
             if (scenario.FindProblem(CastIds(chatbot)) is { } problem)
             {
-                logger.LogWarning("Refused to save scenario {ScenarioId}: {Problem}", input.Id, problem);
-                return Result.Failure<Scenario>(problem);
+                logger.LogWarning("Refused to save scenario {ScenarioId}: {Problem}", input.Id, problem.Message);
+                return Result.Failure<Scenario>(problem.Message);
             }
 
             await db.SaveChangesAsync();

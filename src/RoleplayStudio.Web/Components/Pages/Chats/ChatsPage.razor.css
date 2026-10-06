@@ -1,0 +1,224 @@
+.chats-heading {
+    margin: 0 0 12px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+}
+
+.chats-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface-card);
+    overflow: hidden;
+    /* The layout's main column is a flex item that would otherwise grow to fit an unbroken last line. */
+    contain: inline-size;
+}
+
+.chats-row {
+    display: flex;
+    align-items: center;
+}
+
+.chats-row + .chats-row {
+    border-top: 1px solid var(--line);
+}
+
+.chats-link {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 64px;
+    box-sizing: border-box;
+    padding: 14px 8px 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.chats-faces {
+    position: relative;
+    width: 108px;
+    flex-shrink: 0;
+    display: flex;
+}
+
+.chats-faces ::deep .app-avatar {
+    box-sizing: border-box;
+    border: 2px solid var(--surface-card);
+}
+
+.chats-faces ::deep .app-avatar + .app-avatar {
+    margin-left: -12px;
+}
+
+.chats-more {
+    display: none;
+}
+
+.chats-beyond {
+    margin-left: 4px;
+    align-self: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ink-subtle);
+}
+
+.chats-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.chats-title {
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.chats-chatbot,
+.chats-scenario {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chats-chatbot {
+    font-weight: 600;
+}
+
+.chats-scenario {
+    font-size: 0.8125rem;
+    color: var(--ink-subtle);
+}
+
+.chats-last {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-prose);
+    color: var(--ink-muted);
+}
+
+.chats-persona {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface-raised);
+    color: var(--ink-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.chats-when {
+    width: 72px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 0.8125rem;
+    color: var(--ink-subtle);
+}
+
+.chats-row ::deep .chats-menu {
+    flex-shrink: 0;
+    margin-right: 6px;
+}
+
+@media (hover: hover) {
+    .chats-link:hover {
+        background: var(--hover);
+    }
+}
+
+@media (max-width: 599.98px) {
+    .chats-link {
+        padding: 10px 0 10px 12px;
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr) auto;
+        grid-template-areas:
+            "faces chatbot when"
+            "faces scenario persona"
+            "faces last last";
+        align-items: center;
+        column-gap: 12px;
+        row-gap: 2px;
+    }
+
+    .chats-faces {
+        grid-area: faces;
+        width: 48px;
+        height: 48px;
+    }
+
+    .chats-faces ::deep .app-avatar {
+        width: 40px;
+        height: 40px;
+        border: 0;
+    }
+
+    .chats-faces ::deep .app-avatar + .app-avatar {
+        display: none;
+    }
+
+    .chats-more {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 24px;
+        height: 24px;
+        box-sizing: border-box;
+        border: 2px solid var(--surface-card);
+        border-radius: 50%;
+        background: var(--surface-raised);
+        color: var(--ink-muted);
+        display: grid;
+        place-items: center;
+        font-size: 0.625rem;
+        font-weight: 700;
+    }
+
+    .chats-beyond {
+        display: none;
+    }
+
+    .chats-text,
+    .chats-title {
+        display: contents;
+    }
+
+    .chats-chatbot {
+        grid-area: chatbot;
+    }
+
+    .chats-scenario {
+        grid-area: scenario;
+    }
+
+    .chats-last {
+        grid-area: last;
+    }
+
+    .chats-persona {
+        grid-area: persona;
+        justify-self: end;
+        padding: 2px 8px;
+    }
+
+    .chats-when {
+        grid-area: when;
+        width: auto;
+        font-size: 0.75rem;
+    }
+
+    .chats-row ::deep .chats-menu {
+        margin-right: 0;
+    }
+}

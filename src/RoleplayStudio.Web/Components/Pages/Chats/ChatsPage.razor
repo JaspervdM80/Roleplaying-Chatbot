@@ -22,23 +22,50 @@ else if (_chats.Count == 0)
 }
 else
 {
-    <MudStack Spacing="2">
-        @foreach (var chat in _chats)
-        {
-            <MudPaper Class="app-list-card pa-3" Outlined="true" @key="chat.Id">
-                <div class="app-list-card-main">
-                    <MudText Typo="Typo.h6" HtmlTag="h2">@chat.Title</MudText>
-                    <MudText Typo="Typo.body2" Class="app-list-card-detail">
-                        @chat.ChatbotName · as @chat.PersonaName · @Wording.Plural(chat.MessageCount, "message") · @chat.LastActivityAt.ToLocalTime().ToString("g")
-                    </MudText>
-                </div>
-                <div class="app-list-card-actions">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@AppRoutes.Chat(chat.Id)">Continue</MudButton>
-                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="@($"More actions for {chat.Title}")" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-                        <MudMenuItem OnClick="() => DeleteAsync(chat)">Delete</MudMenuItem>
+    <section aria-labelledby="chats-continue">
+        <h2 id="chats-continue" class="chats-heading">Continue</h2>
+        <ul class="chats-list">
+            @foreach (var chat in _chats)
+            {
+                <li class="chats-row" @key="chat.Id">
+                    <a class="chats-link" href="@AppRoutes.Chat(chat.Id)">
+                        <span class="chats-faces">
+                            @if (chat.Characters.Count == 0)
+                            {
+                                <Avatar Id="chat.Id" Name="@chat.ChatbotName" Size="36" />
+                            }
+                            @foreach (var character in chat.Characters.Take(3))
+                            {
+                                <Avatar Id="character.Id" Name="@character.Name" Size="36" />
+                            }
+                            @if (chat.Characters.Count > 1)
+                            {
+                                <span class="chats-more" aria-hidden="true">+@(chat.Characters.Count - 1)</span>
+                            }
+                            @if (chat.Characters.Count > 3)
+                            {
+                                <span class="chats-beyond" aria-hidden="true">+@(chat.Characters.Count - 3)</span>
+                            }
+                        </span>
+                        <span class="chats-text">
+                            <span class="chats-title">
+                                <span class="chats-chatbot">@chat.ChatbotName</span>
+                                <span class="chats-scenario">@chat.ScenarioTitle</span>
+                            </span>
+                            @if (chat.LastLine is not null)
+                            {
+                                <span class="chats-last">@chat.LastLine</span>
+                            }
+                        </span>
+                        <span class="chats-persona">as @chat.PersonaName</span>
+                        <span class="chats-when">@Wording.Ago(chat.LastActivityAt, Time)</span>
+                    </a>
+                    <MudMenu Class="chats-menu" Icon="@Icons.Material.Filled.MoreVert" AriaLabel="@($"More actions for {chat.ChatbotName}: {chat.ScenarioTitle}")"
+                             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                        <MudMenuItem OnClick="() => DeleteAsync(chat)">Delete chat</MudMenuItem>
                     </MudMenu>
-                </div>
-            </MudPaper>
-        }
-    </MudStack>
+                </li>
+            }
+        </ul>
+    </section>
 }
