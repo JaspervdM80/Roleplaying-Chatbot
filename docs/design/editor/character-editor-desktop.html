@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
 <style>
 body{margin:0;background:#0b0910}
-:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--surface-sunken:#0b0910;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--ink-faint:rgba(236,230,242,.36);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--hover:rgba(236,230,242,.06);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--surface-sunken:#0b0910;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--ink-faint:rgba(236,230,242,.36);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--hover:rgba(236,230,242,.06);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82);--scrim:rgba(5,3,8,.7);--shadow:rgba(0,0,0,.45)}
 a{color:#f0739b}a:hover{color:#f59ab6}
 </style>
 </head>
@@ -35,9 +35,9 @@ a{color:#f0739b}a:hover{color:#f59ab6}
     </div>
   </main>
 
-  <div style="position: absolute; inset: 0; background: rgba(5,4,8,.66)"></div>
+  <div style="position: absolute; inset: 0; background: var(--scrim)"></div>
 
-  <section role="dialog" aria-label="Edit character" style="position: absolute; left: 160px; top: 40px; width: 960px; height: 720px; display: flex; flex-direction: column; background: var(--surface-card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,.5); overflow: hidden">
+  <section role="dialog" aria-label="Edit character" style="position: absolute; left: 160px; top: 40px; width: 960px; height: 720px; display: flex; flex-direction: column; background: var(--surface-card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 24px 64px var(--shadow); overflow: hidden">
 
     <header style="flex-shrink: 0; height: 68px; box-sizing: border-box; padding: 0 12px 0 28px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line)">
       <div style="display: flex; flex-direction: column; flex-grow: 1">
