@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using RoleplayStudio.AI.Chat;
+using RoleplayStudio.AI.Scene;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Services;
@@ -19,6 +20,7 @@ public partial class ChatPage
     private IReadOnlyList<ModelProfile> _chatModels = [];
     private string? _draft;
     private bool _streaming;
+    private bool _sceneToggled;
     private CancellationTokenSource? _stop;
     private ChatTranscript? _transcript;
 
@@ -32,6 +34,9 @@ public partial class ChatPage
     private ModelProfileService Profiles { get; set; } = null!;
 
     [Inject]
+    private SceneNotifier SceneNotifier { get; set; } = null!;
+
+    [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject]
@@ -41,6 +46,8 @@ public partial class ChatPage
     public Guid Id { get; set; }
 
     private bool CanSend => _session is not null && !_streaming && !string.IsNullOrWhiteSpace(_draft);
+
+    protected override void OnInitialized() => SceneNotifier.Changed += OnSceneChanged;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -157,10 +164,31 @@ public partial class ChatPage
 
     private void Stop() => _stop?.Cancel();
 
+    private void ToggleScene() => _sceneToggled = !_sceneToggled;
+
+    private void OnSceneChanged(Guid sessionId)
+    {
+        if (sessionId == Id)
+        {
+            _ = InvokeAsync(ReloadSceneAsync);
+        }
+    }
+
+    private async Task ReloadSceneAsync()
+    {
+        var result = await Sessions.GetSceneAsync(Id, Cancellation);
+        if (result.IsSuccess && _session?.Id == result.Value.Id)
+        {
+            _session.Scene = result.Value.Scene;
+            _session.CharacterStates = result.Value.CharacterStates;
+            StateHasChanged();
+        }
+    }
+
     public override void Dispose()
     {
+        SceneNotifier.Changed -= OnSceneChanged;
         _stop?.Cancel();
         base.Dispose();
     }
-
 }

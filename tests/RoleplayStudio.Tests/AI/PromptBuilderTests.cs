@@ -17,12 +17,14 @@ public class PromptBuilderTests
         IReadOnlyList<PresentCharacter> present,
         IReadOnlyList<Message>? messages = null,
         SessionSummary? summary = null,
-        IReadOnlyList<MemoryEntry>? memories = null) => new(
+        IReadOnlyList<MemoryEntry>? memories = null,
+        IReadOnlyList<PresentCharacter>? metEarlier = null) => new(
         new Chatbot { Name = "Seaside Café", WorldDescription = "A quiet harbour town." },
         new Scenario { Title = "Morning rush" },
         new Persona { Name = "Sam" },
         new SceneState { Location = "Behind the counter" },
         present,
+        metEarlier ?? [],
         summary ?? new SessionSummary(),
         memories ?? [],
         messages ?? []);
@@ -39,6 +41,15 @@ public class PromptBuilderTests
         Assert.Contains("A quiet harbour town.", system.Text);
         Assert.Contains("raincoat", system.Text);
         Assert.Contains("Behind the counter", system.Text);
+    }
+
+    [Fact]
+    public void Someone_met_earlier_is_named_for_the_story_but_not_voiced()
+    {
+        var system = PromptBuilder.Build(Input([Present("Mira")], metEarlier: [Present("Thorne")]), Roomy)[0].Text;
+
+        Assert.Contains("- Thorne", system);
+        Assert.Contains("Write as Mira", system);
     }
 
     [Fact]

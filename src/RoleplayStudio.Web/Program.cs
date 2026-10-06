@@ -6,6 +6,8 @@ using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Playground;
 using RoleplayStudio.AI.Providers;
+using RoleplayStudio.AI.Scene;
+using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Infrastructure.Data;
 using RoleplayStudio.Infrastructure.Services;
 using RoleplayStudio.Web.Components;
@@ -75,9 +77,11 @@ builder.Services.AddScoped<ChatSessionService>();
 builder.Services.AddScoped<ChatTurnService>();
 builder.Services.AddSingleton<MemoryEmbeddings>();
 builder.Services.AddScoped<MemoryRecall>();
-builder.Services.AddSingleton<MemoryQueue>();
+builder.Services.AddSingleton<UpkeepQueue>();
 builder.Services.AddSingleton<MemoryUpkeep>();
-builder.Services.AddHostedService<MemoryWorker>();
+builder.Services.AddSingleton<SceneNotifier>();
+builder.Services.AddSingleton<SceneUpkeep>();
+builder.Services.AddHostedService<UpkeepWorker>();
 
 var app = builder.Build();
 

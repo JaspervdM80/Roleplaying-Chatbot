@@ -95,7 +95,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<Character>(e =>
         {
             e.HasIndex(x => x.OwnerId);
-            e.Property(x => x.Name).HasMaxLength(100);
+            e.Property(x => x.Name).HasMaxLength(Character.MaxNameLength);
             e.OwnsOne(x => x.Appearance, o => o.ToJson());
             e.OwnsOne(x => x.DefaultOutfit, o => o.ToJson());
         });

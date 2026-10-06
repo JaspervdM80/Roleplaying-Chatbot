@@ -51,8 +51,9 @@ becomes narration rather than a new character.
 
 ## Background work never blocks the user
 
-Memory extraction, summarization and image generation run **after** the reply is saved, through a
-bounded `Channel<T>` read by a `BackgroundService`:
+Scene tracking, memory extraction, summarization and image generation run **after** the reply is
+saved, through a bounded `Channel<T>` (`UpkeepQueue`) read by a `BackgroundService` (`UpkeepWorker`),
+which runs each step in turn so one failing does not stop the next:
 
 - **The producer only `TryWrite`s and returns.** A chat turn never waits on extraction, and a failing
   job never fails the turn.
@@ -67,6 +68,23 @@ bounded `Channel<T>` read by a `BackgroundService`:
 - In-process only: one app instance. Scaling out needs a real queue.
 - Jobs for one session are processed in order, or a summary can be written over messages a later
   extraction has not seen.
+
+## Scene tracking
+
+- **The scene follows the story.** `SceneUpkeep` asks the utility model, after each turn, for the
+  place, time and mood, who is present, and what changed about anyone's clothes, looks or feelings.
+  `SceneTracking` holds the prompt, the parse and `Apply`, all pure. It moves
+  `SceneState.TrackedUpToSequence` like extraction moves its marker, and announces the change through
+  `SceneNotifier`.
+- **A newcomer becomes a real `Character`**, owned by the chat's owner and added to the chatbot's
+  cast with the role the model gave. A name already in the cast or met in the chat (exactly, or by a
+  first name only one character has) is that character, never a copy. The persona, and a name no
+  newcomer entry describes, are never made into characters.
+- **Leaving is not forgetting.** Who is present is replaced wholesale; a `CharacterState` stays for
+  anyone who leaves, so they come back in the clothes they left in. The chat prompt names them under
+  "Met earlier".
+- An update without a `present` list leaves who is present alone; a field the model left out keeps
+  its value, and an outfit piece given as empty is taken off.
 
 ## Memory
 

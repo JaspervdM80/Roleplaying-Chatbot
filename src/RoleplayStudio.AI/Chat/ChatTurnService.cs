@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Providers;
+using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Infrastructure.Services;
@@ -12,7 +13,7 @@ public sealed class ChatTurnService(
     ModelProfileService profiles,
     IChatClientFactory clients,
     MemoryRecall recall,
-    MemoryQueue memoryQueue,
+    UpkeepQueue upkeepQueue,
     ICurrentUser currentUser,
     ILogger<ChatTurnService> logger)
 {
@@ -78,13 +79,13 @@ public sealed class ChatTurnService(
             });
         });
 
-    /// <summary>Saves a streamed reply, then queues memory upkeep for the chat without waiting on it.</summary>
+    /// <summary>Saves a streamed reply, then queues scene and memory upkeep for the chat without waiting on it.</summary>
     public async Task<Result<Message>> SaveReplyAsync(Guid sessionId, string text)
     {
         var saved = await sessions.AddReplyAsync(sessionId, text);
         if (saved.IsSuccess && await currentUser.GetUserIdAsync() is { Length: > 0 } ownerId)
         {
-            memoryQueue.Enqueue(new MemoryJob(ownerId, sessionId));
+            upkeepQueue.Enqueue(new UpkeepJob(ownerId, sessionId));
         }
 
         return saved;
@@ -96,6 +97,7 @@ public sealed class ChatTurnService(
         session.Persona,
         session.Scene,
         session.PresentStates(session.CharacterStates).Select(s => new PresentCharacter(s.Character, s)).ToList(),
+        session.AbsentStates(session.CharacterStates).Select(s => new PresentCharacter(s.Character, s)).ToList(),
         session.Summary,
         memories,
         session.Messages);
