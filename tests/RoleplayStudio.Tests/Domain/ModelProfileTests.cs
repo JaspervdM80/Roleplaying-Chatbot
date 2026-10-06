@@ -17,6 +17,20 @@ public class ModelProfileTests
     public void A_complete_profile_has_no_problem() => Assert.Null(Valid().FindProblem());
 
     [Theory]
+    [InlineData(ModelRole.Chat, false)]
+    [InlineData(ModelRole.Utility, false)]
+    [InlineData(ModelRole.Embedding, false)]
+    [InlineData(ModelRole.Image, true)]
+    public void Only_an_image_model_may_use_an_image_provider(ModelRole role, bool allowed)
+    {
+        var profile = Valid();
+        profile.Role = role;
+        profile.Provider = ProviderKind.Runware;
+
+        Assert.Equal(allowed, profile.FindProblem() is null);
+    }
+
+    [Theory]
     [InlineData("ConnectionStrings:roleplaydb")]
     [InlineData("providers:OpenRouter:ApiKey")]
     [InlineData("Providers:")]

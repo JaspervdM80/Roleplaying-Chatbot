@@ -30,7 +30,7 @@ public sealed record PromptBudget(int ContextWindow, int ReplyTokens)
     public static PromptBudget For(ModelProfile profile) =>
         new(profile.ContextWindow ?? DefaultContextWindow, profile.MaxOutputTokens ?? DefaultReplyTokens);
 
-    public int PromptTokens => Math.Max(ContextWindow - ReplyTokens, ContextWindow / 2);
+    public int PromptTokens => Math.Max(ContextWindow - ReplyTokens, 0);
     public int SummaryTokens => PromptTokens * 15 / 100;
     public int MemoryTokens => PromptTokens * 15 / 100;
 }

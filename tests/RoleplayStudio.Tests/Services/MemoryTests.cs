@@ -100,6 +100,37 @@ public class MemoryTests(PostgresFixture postgres)
     }
 
     [Fact]
+    public async Task A_job_queued_for_another_owner_leaves_the_chat_untouched()
+    {
+        var owner = new StudioUser(postgres);
+        var other = new StudioUser(postgres);
+        var session = await owner.ChatAsync();
+        await owner.UtilityModelAsync();
+        await other.UtilityModelAsync();
+        await TalkAsync(owner, session.Id, 10, new string('x', 1_500));
+
+        await other.Upkeep(Utility(MemoriesJson)).RunAsync(new MemoryJob(other.User.UserId!, session.Id), default);
+
+        var (reloaded, memories) = await ReloadAsync(owner, session.Id);
+        Assert.Empty(memories);
+        Assert.Equal((0L, 0L, ""), (reloaded.MemoriesExtractedUpToSequence, reloaded.Summary.CoveredUpToSequence, reloaded.Summary.Text));
+    }
+
+    [Fact]
+    public async Task A_memory_saved_without_a_vector_is_still_recalled_beside_vector_hits()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync();
+        await user.EmbeddingModelAsync();
+        await SeedAsync(user, session.Id, ("Sam takes their coffee black.", FakeEmbeddingGenerator.Axis(0), false), ("Mira is saving for a boat.", null, false));
+
+        var recalled = await user.Recall(new FakeChatClientFactory(new FakeChatClient([]), ByTopic()))
+            .RecallAsync(session.Id, [new Message { Sequence = 1, SpeakerName = "Sam", Content = "Coffee, please." }]);
+
+        Assert.Equal(["Sam takes their coffee black.", "Mira is saving for a boat."], recalled.Value.Select(m => m.Text));
+    }
+
+    [Fact]
     public async Task Without_a_utility_model_upkeep_leaves_the_chat_untouched()
     {
         var user = new StudioUser(postgres);
@@ -143,7 +174,7 @@ public class MemoryTests(PostgresFixture postgres)
         var sibling = await user.ChatAsync("Jun");
         var stranger = await other.ChatAsync("Mira");
         await user.EmbeddingModelAsync();
-        // Enough closer neighbours elsewhere to fill the index's whole candidate list before this chat's rows.
+        // Closer neighbours in another chat of the same user and in another user's chat.
         var crowd = Enumerable.Range(0, 120).Select(i => ($"Jun's regular orders coffee {i}.", (float[]?)FakeEmbeddingGenerator.Axis(0), false)).ToArray();
         await SeedAsync(user, sibling.Id, crowd);
         await SeedAsync(other, stranger.Id, crowd);

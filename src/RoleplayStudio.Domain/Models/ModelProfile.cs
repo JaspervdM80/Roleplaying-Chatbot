@@ -77,14 +77,9 @@ public class ModelProfile : OwnedEntity
             return "Enter the model id";
         }
 
-        if (Role is ModelRole.Chat or ModelRole.Utility && !CanChat(Provider))
+        if (Role is not ModelRole.Image && !CanChat(Provider))
         {
-            return "Chat and utility models need an OpenAI-compatible or Ollama provider";
-        }
-
-        if (Role == ModelRole.Embedding && !CanChat(Provider))
-        {
-            return "Embedding models need an OpenAI-compatible or Ollama provider";
+            return "Chat, utility and embedding models need an OpenAI-compatible or Ollama provider";
         }
 
         if (BaseUrl is not null && !(Uri.TryCreate(BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"))

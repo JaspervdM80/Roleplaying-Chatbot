@@ -20,7 +20,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Applicatio
             .BuildServiceProvider();
 
         return new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseNpgsql(connectionString, npgsql => npgsql.UseVector())
+            .UseNpgsql(connectionString, npgsql => npgsql.UseVector().EnableRetryOnFailure())
             .UseApplicationServiceProvider(identityServices)
             .Options;
     }

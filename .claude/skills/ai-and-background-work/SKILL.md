@@ -56,10 +56,11 @@ bounded `Channel<T>` read by a `BackgroundService`:
 
 - **The producer only `TryWrite`s and returns.** A chat turn never waits on extraction, and a failing
   job never fails the turn.
-- **A job has no user and no circuit.** It carries the owner id captured from `ICurrentUser` when it
-  was queued, beside the session id, and opens a context scoped to that owner — so a mismatched pair
-  finds no session, and no unfiltered read is needed. It works within that owner's rows (the `ef-core-and-queries` skill). It cannot take a scoped
-  service — it creates its own scope or context per job.
+- **A job has no user and no circuit.** It carries the owner id captured from `ICurrentUser` when
+  it was queued, beside the session id, and opens a context scoped to that owner — so a mismatched
+  pair finds no session, and no unfiltered read is needed. It works within that owner's rows (the
+  `ef-core-and-queries` skill). It cannot take a scoped service — it creates its own scope or
+  context per job.
 - **It never throws out of the loop.** One bad job is logged and dropped; the reader keeps going.
 - Completion is announced through a singleton notifier; pages subscribe and re-enter with
   `InvokeAsync` (the `razor-pages-and-circuit` skill).
@@ -79,7 +80,8 @@ bounded `Channel<T>` read by a `BackgroundService`:
   calls `ChatSessionService.AddReplyAsync` directly saves a reply no memory will ever see.
 - **Recall never fails a turn.** Pinned memories come first; without an embedding model the most
   important memories stand in for the closest. A vector of the wrong dimension is dropped and the
-  memory kept without one — never padded or cut.
+  memory kept without one — never padded or cut — and a memory without a vector competes in
+  recall on importance alone.
 
 ## Cost and latency
 
