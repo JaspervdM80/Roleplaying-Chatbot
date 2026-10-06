@@ -24,8 +24,8 @@ public class Chatbot : OwnedEntity
         DefaultChatModelProfileId = other.DefaultChatModelProfileId;
     }
 
-    /// <summary>The first reason this chatbot cannot be saved, as a message template, or null when it can.</summary>
-    public string? FindProblem() => string.IsNullOrWhiteSpace(Name) ? "Give the chatbot a name" : null;
+    /// <summary>The first reason this chatbot cannot be saved, or null when it can.</summary>
+    public EditProblem? FindProblem() => string.IsNullOrWhiteSpace(Name) ? new EditProblem(nameof(Name), "Give the chatbot a name") : null;
 }
 
 public class ChatbotCharacter

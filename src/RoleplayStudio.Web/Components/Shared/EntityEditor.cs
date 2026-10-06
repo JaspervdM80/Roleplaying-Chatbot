@@ -8,7 +8,7 @@ using RoleplayStudio.Infrastructure.Services;
 namespace RoleplayStudio.Web.Components.Shared;
 
 /// <summary>The state behind an <see cref="EditorSheet"/>: a copy to edit, the dirty check, the field a blocked save points at, and saving.</summary>
-public abstract class EntityEditor<T> : ComponentBase where T : Entity, new()
+public abstract class EntityEditor<T> : CancellableComponent where T : Entity, new()
 {
     private string _saved = "";
 
@@ -16,7 +16,7 @@ public abstract class EntityEditor<T> : ComponentBase where T : Entity, new()
     private IMudDialogInstance Dialog { get; set; } = null!;
 
     [Inject]
-    private ISnackbar Snackbar { get; set; } = null!;
+    protected ISnackbar Snackbar { get; set; } = null!;
 
     protected EditorSheet Sheet { get; set; } = null!;
 

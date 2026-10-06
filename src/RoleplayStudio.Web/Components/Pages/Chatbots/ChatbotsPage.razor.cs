@@ -40,7 +40,7 @@ public partial class ChatbotsPage
 
     private async Task AddAsync()
     {
-        var dialog = await Dialogs.ShowAsync<ChatbotDialog>("Add chatbot", DialogServiceExtensions.Options);
+        var dialog = await Dialogs.ShowAsync<ChatbotDialog>("", DialogServiceExtensions.EditorOptions);
         if (await dialog.Result is { Canceled: false, Data: Chatbot created })
         {
             Navigation.NavigateTo(AppRoutes.Chatbot(created.Id));

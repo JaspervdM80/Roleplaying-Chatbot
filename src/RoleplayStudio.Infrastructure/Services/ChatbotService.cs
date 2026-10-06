@@ -216,7 +216,7 @@ public sealed class ChatbotService(IDbContextFactory<ApplicationDbContext> dbFac
     {
         if (chatbot.FindProblem() is { } problem)
         {
-            return problem;
+            return problem.Message;
         }
 
         if (chatbot.DefaultChatModelProfileId is { } profileId && !await db.ModelProfiles.AnyAsync(p => p.Id == profileId && p.Role == ModelRole.Chat))

@@ -52,6 +52,14 @@ public partial class EditorSheet : IAsyncDisposable
     [Parameter]
     public RenderFragment? Portrait { get; set; }
 
+    /// <summary>Stays above the scroller, like a search field over a list.</summary>
+    [Parameter]
+    public RenderFragment? Toolbar { get; set; }
+
+    /// <summary>Replaces the footer's "Unsaved changes" line.</summary>
+    [Parameter]
+    public RenderFragment? Status { get; set; }
+
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 

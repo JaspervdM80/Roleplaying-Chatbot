@@ -1,7 +1,14 @@
 @inherits CancellableComponent
+@using RoleplayStudio.Domain.Authoring
 
-<MudDialog Class="app-sheet-dialog">
-    <DialogContent>
+<EditorSheet Kind="@ChatbotName" Title="Cast" Sections="[]" IsDirty="IsDirty" DiscardMessage="Your changes to the cast haven't been saved."
+             Saving="_saving" OnSave="SaveAsync">
+    <Toolbar>
+        <MudTextField @bind-Value="_search" Immediate="true" Placeholder="Find a character" Variant="Variant.Outlined"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" aria-label="Find a character" Disabled="_rows is not { Count: > 0 }" />
+    </Toolbar>
+    <Status>@CastCount</Status>
+    <ChildContent>
         @if (_rows is null)
         {
             <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
@@ -10,24 +17,36 @@
         {
             <MudText>You have no characters yet. Create some on the <MudLink Href="@AppRoutes.Characters">Characters</MudLink> page first.</MudText>
         }
+        else if (Shown.Count == 0)
+        {
+            <MudText Class="app-list-card-detail">No character matches “@_search.Trim()”.</MudText>
+        }
         else
         {
-            <MudStack Spacing="2">
-                @foreach (var row in _rows)
+            <ul class="cast-list">
+                @foreach (var row in Shown)
                 {
-                    <div class="cast-row" @key="row.Character.Id">
-                        <MudCheckBox @bind-Value="row.InCast" Label="@row.Character.Name" Color="Color.Primary" />
+                    <li class="cast-row" data-picked="@row.InCast" @key="row.Character.Id">
+                        <label class="cast-pick">
+                            <Avatar Id="row.Character.Id" Name="@row.Character.Name" />
+                            <span class="cast-text">
+                                <span class="cast-name">@row.Character.Name</span>
+                                @if (row.Character.ShortDescription is not null)
+                                {
+                                    <span class="cast-detail">@row.Character.ShortDescription</span>
+                                }
+                            </span>
+                            <input type="checkbox" class="cast-check" @bind="row.InCast" />
+                        </label>
                         @if (row.InCast)
                         {
-                            <MudTextField @bind-Value="row.Role" Label="Role" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="The café owner" />
+                            <div class="cast-role">
+                                <MudTextField @bind-Value="row.Role" Label="Role in this chatbot" Placeholder="Optional, like “the cook”" Variant="Variant.Outlined" />
+                            </div>
                         }
-                    </div>
+                    </li>
                 }
-            </MudStack>
+            </ul>
         }
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_saving || _rows is null" OnClick="SaveAsync">Save</MudButton>
-    </DialogActions>
-</MudDialog>
+    </ChildContent>
+</EditorSheet>

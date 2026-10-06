@@ -1,11 +1,69 @@
-.cast-row {
+.cast-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0 8px;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.cast-row ::deep .mud-input-control {
-    flex: 1 1 200px;
+.cast-row {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.cast-row[data-picked] {
+    background: var(--picked);
+    border-color: var(--picked-line);
+}
+
+.cast-pick {
+    min-height: 64px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+}
+
+.cast-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.cast-name {
+    font-weight: 600;
+}
+
+.cast-detail {
+    font-size: 0.8125rem;
+    color: var(--ink-subtle);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cast-check {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    margin: 0;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.cast-role {
+    margin: 0 16px 14px 70px;
+}
+
+.cast-role ::deep .mud-input-control {
     margin-top: 0;
+}
+
+@media (max-width: 599.98px) {
+    .cast-role {
+        margin-left: 16px;
+    }
 }

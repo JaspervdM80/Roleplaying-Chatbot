@@ -96,3 +96,7 @@ why the dialog's own Escape handling is off.
 - **A blocked save points at the field.** The entity's `FindProblem()` returns an `EditProblem`
   naming the property; the field sits in a `data-field="<Property>"` wrapper, and the sheet scrolls
   to it and marks its section.
+- **A picker that is not one entity's form** (the cast) uses the sheet too, with no sections: it
+  drops the nav, `Toolbar` holds what stays above the scroller (a search field), and `Status`
+  replaces the footer's "Unsaved changes" line, hidden on a phone like the line it replaces. It still
+  passes its own `IsDirty`.
