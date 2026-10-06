@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scenario editor, phone</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div role="dialog" aria-label="Edit scenario" style="width: 375px; height: 812px; display: flex; flex-direction: column; background: var(--surface-card); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <header style="flex-shrink: 0; height: 104px; box-sizing: border-box; padding: 44px 4px 0 4px; display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--line)">
+    <button type="button" aria-label="Close" style="width: 44px; height: 44px; border: 0; border-radius: 10px; background: none; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">Scenario · The Lantern Inn</span>
+      <h1 style="margin: 0; font-size: 17px; font-weight: 700">Snowed in at the pass</h1>
+    </div>
+  </header>
+
+
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; box-sizing: border-box; padding: 24px 16px 0; display: flex; flex-direction: column; gap: 20px">
+      <label style="position: relative; display: block">
+        <span style="position: absolute; top: -8px; left: 10px; padding: 0 4px; background: var(--surface-card); font-size: 12px; color: var(--ink-subtle)">Title *</span>
+        <span style="display: block; box-sizing: border-box; height: 52px; padding: 15px 14px; border: 1px solid var(--line-strong); border-radius: 10px; font-size: 16px">Snowed in at the pass</span>
+      </label>
+      <label style="position: relative; display: block">
+        <span style="position: absolute; top: -8px; left: 10px; padding: 0 4px; background: var(--surface-card); font-size: 12px; color: var(--ink-subtle)">Premise</span>
+        <span style="display: block; box-sizing: border-box; min-height: 124px; padding: 14px; line-height: 1.5; border: 1px solid var(--line-strong); border-radius: 10px; font-size: 16px">A blizzard has closed the pass. The inn is full, the fire is low, and someone has taken the cellar key.</span>
+        <span style="display: block; margin: 6px 14px 0; font-size: 12px; color: var(--ink-subtle)">What is going on when the chat starts.</span>
+      </label>
+      <label style="position: relative; display: block">
+        <span style="position: absolute; top: -8px; left: 10px; padding: 0 4px; background: var(--surface-card); font-size: 12px; color: var(--ink-subtle)">Where it starts</span>
+        <span style="display: block; box-sizing: border-box; height: 52px; padding: 15px 14px; border: 1px solid var(--line-strong); border-radius: 10px; font-size: 16px">The common room, late evening</span>
+      </label>
+
+    <section aria-labelledby="present-title" style="display: flex; flex-direction: column; gap: 10px">
+      <h2 id="present-title" style="margin: 0; font-size: 16px; font-weight: 700">Who is there at the start</h2>
+      <p style="margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-subtle)">Thorne joins later. Pick nobody to start with the whole cast.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button type="button" aria-pressed="true" style="height: 44px; box-sizing: border-box; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(240,115,155,.14); border: 1px solid rgba(240,115,155,.4); color: var(--ink); font-weight: 600; font: inherit; font-size: 15px; display: flex; align-items: center; gap: 8px">
+          <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: linear-gradient(165deg, #4a2a44 0%, #1b1424 100%)"><svg width="32" height="32" viewBox="18 26 84 84"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.4)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.3)"/></svg></span>
+          Mira
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0739b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+        <button type="button" aria-pressed="true" style="height: 44px; box-sizing: border-box; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(240,115,155,.14); border: 1px solid rgba(240,115,155,.4); color: var(--ink); font-weight: 600; font: inherit; font-size: 15px; display: flex; align-items: center; gap: 8px">
+          <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(242,181,107,.18); color: rgb(242,181,107); display: grid; place-items: center; font-size: 13px; font-weight: 700">B</span>
+          Old Bess
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0739b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+        <button type="button" aria-pressed="false" style="height: 44px; box-sizing: border-box; padding: 0 14px 0 6px; border-radius: 999px; background: none; border: 1px solid var(--line); color: var(--ink-muted); font-weight: 500; font: inherit; font-size: 15px; display: flex; align-items: center; gap: 8px">
+          <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: linear-gradient(165deg, #24304a 0%, #1b1424 100%)"><svg width="32" height="32" viewBox="18 26 84 84"><circle cx="60" cy="60" r="25" fill="rgba(124,183,255,.4)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(124,183,255,.3)"/></svg></span>
+          Thorne
+          
+        </button>
+      </div>
+    </section>
+
+      <label style="position: relative; display: block">
+        <span style="position: absolute; top: -8px; left: 10px; padding: 0 4px; background: var(--surface-card); font-size: 12px; color: var(--ink-subtle)">Opening message</span>
+        <span style="display: block; box-sizing: border-box; min-height: 100px; padding: 14px; line-height: 1.5; border: 1px solid var(--line-strong); border-radius: 10px; font-size: 16px"><em style="color: var(--ink-soft)">The door bangs open on a gust of snow.</em></span>
+      </label>
+  </div>
+
+  <footer style="flex-shrink: 0; box-sizing: border-box; padding: 12px 16px calc(12px + 22px); display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); background: var(--surface-card)">
+    <button type="button" style="flex: 1 1 0; height: 48px; border: 1px solid var(--line-strong); border-radius: 10px; background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600">Cancel</button>
+    <button type="button" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 10px; background: var(--primary); color: var(--on-primary); font: inherit; font-size: 16px; font-weight: 600">Save</button>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pictures in the chat, desktop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#0b0910}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--surface-sunken:#0b0910;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--ink-faint:rgba(236,230,242,.36);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--hover:rgba(236,230,242,.06);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+a{color:#f0739b}a:hover{color:#f59ab6}
+</style>
+</head>
+<body>
+<div style="width: 1280px; height: 800px; display: flex; background: var(--surface-page); color: var(--ink); font-family: var(--font-ui); overflow: hidden">
+
+  <nav aria-label="Main" style="width: 64px; flex-shrink: 0; box-sizing: border-box; padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--surface-card); border-right: 1px solid var(--line)">
+    <div style="width: 32px; height: 32px; margin-bottom: 14px; border-radius: 9px; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-family: var(--font-prose); font-size: 21px; font-weight: 700; font-style: italic">R</div>
+    <a href="#" aria-label="Chats" aria-current="page" style="width: 44px; height: 44px; border-radius: 10px; background: var(--selected); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0739b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+    </a>
+    <a href="#" aria-label="Chatbots" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </a>
+    <a href="#" aria-label="Characters" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </a>
+    <a href="#" aria-label="Personas" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+    </a>
+    <div style="flex-grow: 1"></div>
+    <a href="#" aria-label="Models" style="width: 44px; height: 44px; border-radius: 10px; color: var(--ink-muted); display: grid; place-items: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>
+    </a>
+    <a href="#" aria-label="Account" style="width: 36px; height: 36px; margin-top: 4px; border-radius: 50%; background: var(--surface-raised); color: var(--accent); display: grid; place-items: center; text-decoration: none; font-size: 13px; font-weight: 700">S</a>
+  </nav>
+
+  <section aria-label="Chat" style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+    <header style="flex-shrink: 0; height: 64px; box-sizing: border-box; padding: 0 16px 0 28px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line)">
+      <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+        <h1 style="margin: 0; font-size: 17px; font-weight: 700">The Lantern Inn</h1>
+        <span style="font-size: 13px; color: var(--ink-subtle)">Snowed in at the pass · playing Wren</span>
+      </div>
+      <button type="button" style="height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #5fd39a"></span>
+        Mistral Nemo · OpenRouter
+      </button>
+      <button type="button" aria-pressed="false" style="height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: none; color: var(--ink-muted); font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg>
+        Scene
+      </button>
+      <button type="button" aria-label="Chat options" style="width: 40px; height: 40px; border: 0; border-radius: 10px; background: none; color: var(--ink-muted); display: grid; place-items: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+      </button>
+    </header>
+
+    <div style="flex-grow: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 28px">
+      <div style="width: 100%; max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; padding-bottom: 20px">
+
+        <article aria-label="Earlier turn" style="display: flex; flex-direction: column; gap: 14px">
+          <p style="margin: 0 0 0 48px; font-family: var(--font-prose); font-size: 17px; line-height: 1.6; font-style: italic; color: var(--ink-soft)">The door bangs open on a gust of snow. Every head in the common room turns.</p>
+          <div style="margin-left: 48px">
+          <figure style="margin: 0; display: flex; flex-direction: column; gap: 6px">
+            <a href="image-viewer-desktop.html" aria-label="Open picture: The common room, snowed in" style="display: block; width: 448px; height: 252px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line)"><svg width="448" height="252" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display: block"><defs><radialGradient id="hearth1" cx=".76" cy=".78" r=".55"><stop offset="0" stop-color="#f2b56b" stop-opacity=".7"/><stop offset=".5" stop-color="#f0739b" stop-opacity=".18"/><stop offset="1" stop-color="#f0739b" stop-opacity="0"/></radialGradient></defs><rect width="160" height="90" fill="#1d1826"/><rect x="16" y="12" width="28" height="34" rx="2" fill="#3b4b70"/><path d="M30 12v34M16 29h28" stroke="#1d1826" stroke-width="1.5"/><g fill="#fff" opacity=".75"><circle cx="21" cy="18" r=".8"/><circle cx="36" cy="22" r=".7"/><circle cx="25" cy="36" r=".8"/><circle cx="40" cy="40" r=".7"/></g><rect y="66" width="160" height="24" fill="#150f16"/><rect width="160" height="90" fill="url(#hearth1)"/><rect x="108" y="48" width="30" height="22" rx="2" fill="#2a1a1c"/><path d="M114 70c2-8 6-12 9-16 3 4 7 8 9 16z" fill="#f2b56b"/><g fill="rgba(5,4,8,.55)"><circle cx="66" cy="50" r="6"/><path d="M56 72c1-10 5-15 10-15s9 5 10 15z"/><circle cx="88" cy="48" r="6"/><path d="M78 72c1-10 5-16 10-16s9 6 10 16z"/></g><rect x="50" y="64" width="56" height="4" rx="1" fill="#3a2a2c"/></svg></a>
+            <figcaption style="font-size: 12px; color: var(--ink-subtle)">The common room, snowed in</figcaption>
+          </figure>
+          </div>
+        </article>
+
+        <div style="align-self: flex-end; max-width: 78%; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+          <span style="font-size: 13px; font-weight: 600; color: var(--ink-subtle)">Wren</span>
+          <p style="margin: 0; padding: 12px 16px; border-radius: 16px 16px 4px 16px; background: rgba(240,115,155,.12); border: 1px solid rgba(240,115,155,.24); font-family: var(--font-prose); font-size: 17px; line-height: 1.6">"I'll take the loft. With or without the cartographer."</p>
+        </div>
+
+        <article aria-label="Latest turn" style="display: flex; flex-direction: column; gap: 14px">
+          <div style="display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 12px">
+            <div aria-hidden="true" style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: linear-gradient(165deg, #4a2a44 0%, #1b1424 100%)"><svg width="36" height="36" viewBox="18 26 84 84" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(240,115,155,.4)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(240,115,155,.3)"/></svg></div>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 14px; font-weight: 600; color: var(--primary)">Mira</span>
+              <p style="margin: 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.6">"Then it's settled." <em style="color: var(--ink-soft)">She unhooks a lantern and starts up the stairs, skirts gathered in one hand.</em></p>
+            </div>
+          </div>
+          <div style="margin-left: 48px; display: flex; gap: 16px; align-items: flex-start">
+          <figure aria-busy="true" style="margin: 0; display: flex; flex-direction: column; gap: 6px">
+            <div role="status" style="position: relative; width: 240px; height: 320px; box-sizing: border-box; border: 1px dashed var(--line-strong); border-radius: 12px; overflow: hidden; background: linear-gradient(110deg, rgba(236,230,242,.03) 20%, rgba(236,230,242,.09) 40%, rgba(236,230,242,.03) 60%), var(--surface-raised); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--ink-muted)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" opacity=".9"/></svg>
+              <span style="font-size: 13px; font-weight: 600">Drawing the picture…</span>
+              <span style="max-width: 80%; text-align: center; font-size: 12px; line-height: 1.4; color: var(--ink-subtle)">Mira on the loft stairs, lantern in hand, in her green wool dress</span>
+              <button type="button" style="position: absolute; right: 6px; bottom: 6px; height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--ink-muted); font: inherit; font-size: 13px; font-weight: 600">Cancel</button>
+            </div>
+          </figure>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div style="flex-shrink: 0; padding: 0 28px 18px">
+      <div style="max-width: 720px; margin: 0 auto; display: flex; align-items: flex-end; gap: 10px; padding: 8px 8px 8px 16px; box-sizing: border-box; border-radius: 14px; background: var(--surface-card); border: 1px solid var(--line-strong)">
+        <span style="flex-grow: 1; padding: 9px 0; font-family: var(--font-prose); font-size: 17px; line-height: 1.5; color: var(--ink-faint)">Write as Wren. *Actions in asterisks.*</span>
+        <button type="button" aria-label="Send" style="width: 44px; height: 44px; border: 0; border-radius: 10px; background: var(--primary); color: var(--on-primary); display: grid; place-items: center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <aside aria-label="Pictures in this chat" style="width: 300px; flex-shrink: 0; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 14px; background: var(--surface-card); border-left: 1px solid var(--line); overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle)">Pictures · 6</h2>
+      <a href="gallery-phone.html" style="height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 600; text-decoration: none">See all</a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px">
+      <div aria-busy="true" style="height: 168px; box-sizing: border-box; border: 1px dashed var(--line-strong); border-radius: 10px; background: var(--surface-raised); display: grid; place-items: center; color: var(--ink-muted)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" opacity=".9"/></svg></div>
+      <a href="image-viewer-desktop.html" aria-label="The common room, snowed in" style="height: 168px; border-radius: 10px; overflow: hidden"><svg width="126" height="168" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display: block"><defs><radialGradient id="hearth2" cx=".76" cy=".78" r=".55"><stop offset="0" stop-color="#f2b56b" stop-opacity=".7"/><stop offset=".5" stop-color="#f0739b" stop-opacity=".18"/><stop offset="1" stop-color="#f0739b" stop-opacity="0"/></radialGradient></defs><rect width="160" height="90" fill="#1d1826"/><rect x="16" y="12" width="28" height="34" rx="2" fill="#3b4b70"/><path d="M30 12v34M16 29h28" stroke="#1d1826" stroke-width="1.5"/><g fill="#fff" opacity=".75"><circle cx="21" cy="18" r=".8"/><circle cx="36" cy="22" r=".7"/><circle cx="25" cy="36" r=".8"/><circle cx="40" cy="40" r=".7"/></g><rect y="66" width="160" height="24" fill="#150f16"/><rect width="160" height="90" fill="url(#hearth2)"/><rect x="108" y="48" width="30" height="22" rx="2" fill="#2a1a1c"/><path d="M114 70c2-8 6-12 9-16 3 4 7 8 9 16z" fill="#f2b56b"/><g fill="rgba(5,4,8,.55)"><circle cx="66" cy="50" r="6"/><path d="M56 72c1-10 5-15 10-15s9 5 10 15z"/><circle cx="88" cy="48" r="6"/><path d="M78 72c1-10 5-16 10-16s9 6 10 16z"/></g><rect x="50" y="64" width="56" height="4" rx="1" fill="#3a2a2c"/></svg></a>
+      <a href="#" aria-label="Thorne at the corner table" style="height: 168px; border-radius: 10px; overflow: hidden"><div aria-hidden="true" style="width: 126px; height: 168px; background: linear-gradient(165deg, #24304a 0%, #241a2e 55%, #17121f 100%)"><svg width="126" height="168" viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice" style="display: block"><circle cx="60" cy="60" r="25" fill="rgba(124,183,255,.34)"/><path d="M12 160c4-40 24-62 48-62s44 22 48 62z" fill="rgba(124,183,255,.26)"/></svg></div></a>
+      <a href="#" aria-label="The pass at dusk" style="height: 168px; border-radius: 10px; overflow: hidden"><svg width="126" height="168" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display: block"><defs><linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c3756"/><stop offset="1" stop-color="#7d8db3"/></linearGradient></defs><rect width="160" height="90" fill="url(#sky3)"/><path d="M0 62 34 28l22 20 26-30 34 34 18-14 26 24v28H0z" fill="#46506e"/><path d="M0 72c30-8 60-6 90-2s50 2 70-4v24H0z" fill="#d9deea"/><rect x="104" y="52" width="26" height="20" fill="#2a2030"/><path d="M100 54h34l-17-12z" fill="#e7ebf3"/><rect x="113" y="60" width="7" height="7" fill="#f2b56b"/><g fill="#fff" opacity=".7"><circle cx="20" cy="14" r=".9"/><circle cx="48" cy="22" r=".7"/><circle cx="76" cy="10" r=".9"/><circle cx="96" cy="30" r=".7"/><circle cx="132" cy="16" r=".9"/><circle cx="150" cy="36" r=".7"/><circle cx="62" cy="40" r=".8"/></g></svg></a>
+    </div>
+    <p style="margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-subtle)">The scene panel's Pictures section. Newest first; a picture still being drawn sits at the front.</p>
+  </aside>
+</div>
+</body>
+</html>
