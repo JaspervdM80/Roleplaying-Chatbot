@@ -22,6 +22,14 @@ If resx localization is added, `MSB3568` (duplicate resource name) must be promo
 `MSBuildWarningsAsErrors` too — `TreatWarningsAsErrors` does not cover `MSB####` codes, and a
 colliding key otherwise builds green and silently shows the wrong text (the `localization` skill).
 
+## CI
+
+`.github/workflows/ci.yml` runs a Release build and `dotnet test` on every pull request and push to
+`main`, as the **Build and test** check, which the `main` ruleset must list as required. It runs on
+`ubuntu-latest` because Testcontainers needs the runner's Linux Docker. Never add a `paths:` filter: a
+required check that never reports blocks the merge forever. Renaming the job renames the check, so the
+ruleset must change with it.
+
 ## The SDK
 
 `global.json` pins the SDK with `rollForward: latestFeature`. A Claude Code web container installs
