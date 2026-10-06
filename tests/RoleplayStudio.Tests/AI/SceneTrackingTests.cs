@@ -104,6 +104,36 @@ public class SceneTrackingTests
     }
 
     [Fact]
+    public void The_persona_named_by_first_name_alone_is_not_made_into_a_character()
+    {
+        var (session, cast) = MiraAlone();
+
+        var created = SceneTracking.Apply(session, cast, Parsed("""{"present":["Sam","Mira"],"newcomers":[{"name":"Sam"}]}"""), "Sam Carter", Now);
+
+        Assert.Empty(created);
+        Assert.Equal([Mira.Id], session.Scene.PresentCharacterIds);
+    }
+
+    [Fact]
+    public void A_newcomer_name_longer_than_a_character_name_can_be_is_cut_to_fit()
+    {
+        var (session, cast) = MiraAlone();
+        var name = new string('n', Character.MaxNameLength + 50);
+
+        var (character, _) = Assert.Single(SceneTracking.Apply(session, cast, Parsed($$"""{"newcomers":[{"name":"{{name}}"}]}"""), "Sam", Now));
+
+        Assert.Equal(Character.MaxNameLength, character.Name.Length);
+    }
+
+    [Fact]
+    public void An_age_written_as_text_is_still_read()
+    {
+        var newcomer = Assert.Single(Parsed("""{"newcomers":[{"name":"Old Bess","age":"61"}]}""").Newcomers);
+
+        Assert.Equal(61, newcomer.Age);
+    }
+
+    [Fact]
     public void The_prompt_names_who_is_here_who_left_and_who_has_not_been_met()
     {
         var (session, cast) = MiraAlone();

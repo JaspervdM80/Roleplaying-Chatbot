@@ -68,6 +68,23 @@ public class SceneTests(PostgresFixture postgres)
     }
 
     [Fact]
+    public async Task The_scene_reloads_without_messages_for_its_owner_and_is_not_found_for_anyone_else()
+    {
+        var owner = new StudioUser(postgres);
+        var other = new StudioUser(postgres);
+        var session = await owner.ChatAsync("Mira");
+
+        var mine = await owner.Sessions.GetSceneAsync(session.Id);
+        var theirs = await other.Sessions.GetSceneAsync(session.Id);
+
+        Assert.True(mine.IsSuccess, mine.Error);
+        Assert.Equal("Mira", Assert.Single(mine.Value.PresentCharacters(mine.Value.CharacterStates)).Name);
+        Assert.Empty(mine.Value.Messages);
+        Assert.True(theirs.IsFailure);
+        Assert.False(theirs.IsCancelled);
+    }
+
+    [Fact]
     public async Task A_job_queued_for_another_owner_leaves_the_chat_untouched_and_creates_nobody()
     {
         var owner = new StudioUser(postgres);
