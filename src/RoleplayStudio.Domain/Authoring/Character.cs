@@ -3,6 +3,7 @@ namespace RoleplayStudio.Domain.Authoring;
 public class Character : OwnedEntity
 {
     public const int MinimumAge = 12;
+    public const int MaxNameLength = 100;
 
     public string Name { get; set; } = "";
     public int Age { get; set; } = MinimumAge;

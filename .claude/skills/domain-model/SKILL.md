@@ -47,7 +47,9 @@ no characters" — and the director prompt silently loses its cast.
   memory extraction. Rewriting history (edit, regenerate, branch) must move both back.
 - **`MemoryEntry.Embedding` has a fixed dimension** (`EmbeddingDimensions`). See the `migrations`
   skill before changing the embedding model.
-- **Who is present is `Scene.PresentCharacterIds`**, read through `ChatSession.PresentStates`. The
+- **Who is present is `Scene.PresentCharacterIds`**, set only through `ChatSession.SetPresent` and read
+  through `ChatSession.PresentStates`. A `CharacterState` exists for everyone met in the chat, present
+  or not (`AbsentStates`); scene tracking keeps both up to date. The
   prompt and the speaker a reply is saved under both go through it, so they cannot disagree. Until
   speaker tags are parsed, a reply belongs to the one character present, otherwise to the narrator
   (`ChatSession.ReplySpeaker`).

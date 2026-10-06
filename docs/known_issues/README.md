@@ -49,3 +49,14 @@ the test fixture's options (from `DesignTimeDbContextFactory`) had none, so test
 **Rule:** open a transaction inside `db.Database.CreateExecutionStrategy().ExecuteAsync(...)`, and
 keep `EnableRetryOnFailure()` in `DesignTimeDbContextFactory.CreateOptions` so tests run under the
 same strategy as the app.
+
+## A child row added to a loaded parent's collection is saved as an update
+
+**Symptom:** `SaveChangesAsync` throws `DbUpdateConcurrencyException` ("expected to affect 1 row, but
+actually affected 0") after a domain method added a `CharacterState` to a tracked session's
+`CharacterStates`.
+**Cause:** every `Entity` makes its own `Guid` id, and EF treats a key that is already set on an entity
+it finds through a navigation as an existing row, so it issues an `UPDATE` for a row that is not there.
+Adding a whole new graph (`db.ChatSessions.Add`) is fine; growing one that was loaded is not.
+**Rule:** add a new child row to its `DbSet` explicitly (`db.CharacterStates.AddRange(...)`), as
+`SceneUpkeep` does with the states a scene update creates.

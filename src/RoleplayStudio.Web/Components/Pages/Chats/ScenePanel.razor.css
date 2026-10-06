@@ -1,0 +1,174 @@
+.scene-host {
+    display: contents;
+}
+
+.scene {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-card);
+}
+
+.scene-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 8px 8px 0 20px;
+}
+
+.scene-title {
+    margin: 0;
+    flex-grow: 1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-subtle);
+}
+
+.scene-body {
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.scene-facts {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 8px 12px;
+    font-size: 0.875rem;
+}
+
+.scene-facts dt {
+    color: var(--ink-subtle);
+}
+
+.scene-facts dd {
+    margin: 0;
+}
+
+.scene-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.scene-you {
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.scene-heading {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-subtle);
+}
+
+.scene-empty {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--ink-subtle);
+}
+
+.scene-person {
+    display: flex;
+    gap: 12px;
+}
+
+.scene-person-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.scene-person-name {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 8px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.scene-person-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--accent);
+}
+
+.scene-person-wearing {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ink-muted);
+}
+
+.scene-met .scene-person {
+    opacity: 0.72;
+}
+
+.scene-scrim {
+    display: none;
+}
+
+@media (min-width: 960px) {
+    .scene {
+        width: 320px;
+        flex-shrink: 0;
+        border-left: 1px solid var(--line);
+    }
+
+    .scene-header {
+        padding: 20px 20px 0;
+    }
+
+    .scene-host ::deep .scene-close {
+        display: none;
+    }
+
+    .scene-toggled .scene {
+        display: none;
+    }
+}
+
+@media (max-width: 959.98px) {
+    .scene-host:not(.scene-toggled) {
+        display: none;
+    }
+
+    .scene-scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1300;
+        background: var(--scrim);
+    }
+
+    .scene {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1301;
+        max-height: 85dvh;
+        border-radius: 20px 20px 0 0;
+        border-top: 1px solid var(--line-strong);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .scene-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: normal;
+        text-transform: none;
+        color: var(--ink);
+    }
+}

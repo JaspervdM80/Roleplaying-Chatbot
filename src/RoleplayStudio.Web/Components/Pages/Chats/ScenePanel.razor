@@ -1,0 +1,104 @@
+@using RoleplayStudio.Domain.Chats
+
+<div class="scene-host @(Toggled ? "scene-toggled" : null)">
+    <div class="scene-scrim" @onclick="OnClose"></div>
+    <aside class="scene" aria-labelledby="scene-title">
+        <div class="scene-header">
+            <h2 id="scene-title" class="scene-title">Scene</h2>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" aria-label="Close the scene" OnClick="OnClose" Class="scene-close" />
+        </div>
+
+        <div class="scene-body">
+            @if (Session.Scene is { Location: null, TimeOfDay: null, Mood: null })
+            {
+                <p class="scene-empty">Where and when this is fills in as the story goes.</p>
+            }
+            else
+            {
+                <dl class="scene-facts">
+                    @if (Session.Scene.Location is { } location)
+                    {
+                        <dt>Where</dt><dd>@location</dd>
+                    }
+                    @if (Session.Scene.TimeOfDay is { } time)
+                    {
+                        <dt>When</dt><dd>@time</dd>
+                    }
+                    @if (Session.Scene.Mood is { } mood)
+                    {
+                        <dt>Mood</dt><dd>@mood</dd>
+                    }
+                </dl>
+            }
+
+            <section class="scene-group" aria-labelledby="scene-present">
+                <h3 id="scene-present" class="scene-heading">Present</h3>
+                @if (_present.Count == 0)
+                {
+                    <p class="scene-empty">Nobody else is here.</p>
+                }
+                @foreach (var state in _present)
+                {
+                    @Person(state.Character.Id, state.Character.Name, state.Status, state.CurrentOutfit.Summarize())
+                }
+            </section>
+
+            @if (_metEarlier.Count > 0)
+            {
+                <section class="scene-group scene-met" aria-labelledby="scene-met">
+                    <h3 id="scene-met" class="scene-heading">Met earlier</h3>
+                    @foreach (var state in _metEarlier)
+                    {
+                        @Person(state.Character.Id, state.Character.Name, state.Status, state.CurrentOutfit.Summarize())
+                    }
+                </section>
+            }
+
+            <section class="scene-group scene-you" aria-labelledby="scene-you">
+                <h3 id="scene-you" class="scene-heading">You</h3>
+                @Person(Session.Persona.Id, Session.Persona.Name, null, Session.Persona.DefaultOutfit.Summarize())
+            </section>
+        </div>
+    </aside>
+</div>
+
+@code {
+    private IReadOnlyList<CharacterState> _present = [];
+    private IReadOnlyList<CharacterState> _metEarlier = [];
+
+    [Parameter, EditorRequired]
+    public ChatSession Session { get; set; } = null!;
+
+    /// <summary>Flips the default: shown beside the chat on a wide screen, opened over it on a narrow one.</summary>
+    [Parameter]
+    public bool Toggled { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _present = Session.PresentStates(Session.CharacterStates);
+        _metEarlier = Session.AbsentStates(Session.CharacterStates);
+    }
+
+    private static RenderFragment Person(Guid id, string name, string? status, string? wearing) => __builder =>
+    {
+        <div class="scene-person">
+            <Avatar Id="id" Name="@name" />
+            <div class="scene-person-text">
+                <div class="scene-person-name">
+                    <span>@name</span>
+                    @if (status is not null)
+                    {
+                        <span class="scene-person-status">@status</span>
+                    }
+                </div>
+                @if (wearing is not null)
+                {
+                    <span class="scene-person-wearing">@wearing</span>
+                }
+            </div>
+        </div>
+    };
+}

@@ -34,15 +34,9 @@ public class ChatSession : OwnedEntity
             PersonaId = persona.Id,
             ChatModelProfileId = chatModelProfileId,
             LastActivityAt = now,
-            Scene = new SceneState
-            {
-                Location = TextFields.Clean(scenario.StartingLocation),
-                PresentCharacterIds = present.Select(c => c.Id).ToList(),
-            },
-            CharacterStates = present
-                .Select(c => new CharacterState { CharacterId = c.Id, CurrentOutfit = c.DefaultOutfit.Copy(), UpdatedAt = now })
-                .ToList(),
+            Scene = new SceneState { Location = TextFields.Clean(scenario.StartingLocation) },
         };
+        session.SetPresent(present, now);
 
         if (TextFields.Clean(scenario.OpeningMessage) is { } opening)
         {
@@ -60,6 +54,21 @@ public class ChatSession : OwnedEntity
 
         return session;
     }
+
+    /// <summary>Puts exactly these characters in the scene; anyone who leaves keeps their state for when they come back.</summary>
+    public void SetPresent(IReadOnlyList<Character> present, DateTimeOffset now)
+    {
+        foreach (var character in present.Where(c => CharacterStates.All(s => s.CharacterId != c.Id)))
+        {
+            CharacterStates.Add(new CharacterState { CharacterId = character.Id, CurrentOutfit = character.DefaultOutfit.Copy(), UpdatedAt = now });
+        }
+
+        Scene.PresentCharacterIds = present.Select(c => c.Id).Distinct().ToList();
+    }
+
+    /// <summary>Characters met earlier in this chat who are not in the scene now.</summary>
+    public IReadOnlyList<CharacterState> AbsentStates(IReadOnlyList<CharacterState> states) =>
+        states.Where(s => !Scene.PresentCharacterIds.Contains(s.CharacterId)).OrderBy(s => s.Character.Name).ToList();
 
     /// <summary>The states of the characters in the scene now, in the order they appear in it.</summary>
     public IReadOnlyList<CharacterState> PresentStates(IReadOnlyList<CharacterState> states) =>
@@ -84,6 +93,9 @@ public class SceneState
     public string? TimeOfDay { get; set; }
     public string? Mood { get; set; }
     public List<Guid> PresentCharacterIds { get; set; } = [];
+
+    /// <summary>The last message scene tracking has read; later messages may have moved people, clothes or the place.</summary>
+    public long TrackedUpToSequence { get; set; }
 }
 
 /// <summary>Rolling summary of the messages that no longer fit in the short-term window.</summary>

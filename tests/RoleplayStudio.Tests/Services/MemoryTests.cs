@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pgvector;
 using RoleplayStudio.AI.Memory;
+using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Infrastructure.Data;
@@ -58,7 +59,7 @@ public class MemoryTests(PostgresFixture postgres)
         await user.EmbeddingModelAsync();
         await TalkAsync(user, session.Id, 2);
 
-        await user.Upkeep(Utility(MemoriesJson, embeddings: ByTopic())).RunAsync(new MemoryJob(user.User.UserId!, session.Id), default);
+        await user.Upkeep(Utility(MemoriesJson, embeddings: ByTopic())).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
 
         var (reloaded, memories) = await ReloadAsync(user, session.Id);
         var memory = Assert.Single(memories);
@@ -77,7 +78,7 @@ public class MemoryTests(PostgresFixture postgres)
         await user.UtilityModelAsync();
         await TalkAsync(user, session.Id, 2);
 
-        await user.Upkeep(Utility("I could not find anything memorable, sorry!")).RunAsync(new MemoryJob(user.User.UserId!, session.Id), default);
+        await user.Upkeep(Utility("I could not find anything memorable, sorry!")).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
 
         var (reloaded, memories) = await ReloadAsync(user, session.Id);
         Assert.Empty(memories);
@@ -92,7 +93,7 @@ public class MemoryTests(PostgresFixture postgres)
         await user.UtilityModelAsync();
         await TalkAsync(user, session.Id, 2);
 
-        await user.Upkeep(Utility(MemoriesJson)).RunAsync(new MemoryJob(user.User.UserId!, session.Id), default);
+        await user.Upkeep(Utility(MemoriesJson)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
         var recalled = await user.Recall(Utility(MemoriesJson)).RecallAsync(session.Id, []);
 
         Assert.Null(Assert.Single((await ReloadAsync(user, session.Id)).Memories).Embedding);
@@ -109,7 +110,7 @@ public class MemoryTests(PostgresFixture postgres)
         await other.UtilityModelAsync();
         await TalkAsync(owner, session.Id, 10, new string('x', 1_500));
 
-        await other.Upkeep(Utility(MemoriesJson)).RunAsync(new MemoryJob(other.User.UserId!, session.Id), default);
+        await other.Upkeep(Utility(MemoriesJson)).RunAsync(new UpkeepJob(other.User.UserId!, session.Id), default);
 
         var (reloaded, memories) = await ReloadAsync(owner, session.Id);
         Assert.Empty(memories);
@@ -137,7 +138,7 @@ public class MemoryTests(PostgresFixture postgres)
         var session = await user.ChatAsync();
         await TalkAsync(user, session.Id, 10);
 
-        await user.Upkeep(Utility(MemoriesJson)).RunAsync(new MemoryJob(user.User.UserId!, session.Id), default);
+        await user.Upkeep(Utility(MemoriesJson)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
 
         var (reloaded, memories) = await ReloadAsync(user, session.Id);
         Assert.Empty(memories);
@@ -153,7 +154,7 @@ public class MemoryTests(PostgresFixture postgres)
         var line = new string('x', 1_500);
         await TalkAsync(user, session.Id, 10, line);
 
-        await user.Upkeep(Utility(MemoriesJson)).RunAsync(new MemoryJob(user.User.UserId!, session.Id), default);
+        await user.Upkeep(Utility(MemoriesJson)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
 
         var (reloaded, _) = await ReloadAsync(user, session.Id);
         Assert.Equal("Sam came in for coffee.", reloaded.Summary.Text);
@@ -229,7 +230,7 @@ public class MemoryTests(PostgresFixture postgres)
         Assert.True((await turns.SaveReplyAsync(session.Id, "Black, as always.")).IsSuccess);
 
         Assert.Contains("Sam takes their coffee black.", chat.LastMessages![0].Text);
-        Assert.True(user.MemoryQueue.Reader.TryRead(out var job));
-        Assert.Equal(new MemoryJob(user.User.UserId!, session.Id), job);
+        Assert.True(user.UpkeepQueue.Reader.TryRead(out var job));
+        Assert.Equal(new UpkeepJob(user.User.UserId!, session.Id), job);
     }
 }

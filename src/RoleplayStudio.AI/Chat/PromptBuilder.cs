@@ -18,6 +18,7 @@ public sealed record PromptInput(
     Persona Persona,
     SceneState Scene,
     IReadOnlyList<PresentCharacter> Present,
+    IReadOnlyList<PresentCharacter> MetEarlier,
     SessionSummary Summary,
     IReadOnlyList<MemoryEntry> Memories,
     IReadOnlyList<Message> Messages);
@@ -96,6 +97,8 @@ public static partial class PromptBuilder
                 Labelled("Changes since the start", state.AppearanceChanges)));
         }
 
+        Section(text, "Met earlier, not here now", MetEarlier(input.MetEarlier));
+
         Section(text, "Scenario", Join(
             input.Scenario.Title,
             input.Scenario.Premise,
@@ -111,6 +114,11 @@ public static partial class PromptBuilder
         text.Append(Instruction(input));
         return text.ToString();
     }
+
+    private static string? MetEarlier(IReadOnlyList<PresentCharacter> characters) =>
+        characters.Count == 0
+            ? null
+            : string.Join("\n", characters.Select(c => $"- {c.Character.Name}{(string.IsNullOrWhiteSpace(c.Character.ShortDescription) ? "" : $": {c.Character.ShortDescription.Trim()}")}"));
 
     private static string? Memories(IReadOnlyList<MemoryEntry> memories, int tokens)
     {

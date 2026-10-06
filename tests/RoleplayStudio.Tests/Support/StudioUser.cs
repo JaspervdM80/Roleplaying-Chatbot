@@ -3,6 +3,8 @@ using Microsoft.Extensions.Time.Testing;
 using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Providers;
+using RoleplayStudio.AI.Scene;
+using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Models;
@@ -22,7 +24,7 @@ public sealed class StudioUser(PostgresFixture postgres)
     public ChatSessionService Sessions => new(postgres.DbFactory, User, Time, NullLogger<ChatSessionService>.Instance);
     public ModelProfileService Profiles => new(postgres.DbFactory, User, NullLogger<ModelProfileService>.Instance);
 
-    public MemoryQueue MemoryQueue { get; } = new(NullLogger<MemoryQueue>.Instance);
+    public UpkeepQueue UpkeepQueue { get; } = new(NullLogger<UpkeepQueue>.Instance);
 
     public MemoryRecall Recall(IChatClientFactory clients) =>
         new(postgres.DbFactory, User, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), Time, NullLogger<MemoryRecall>.Instance);
@@ -30,8 +32,11 @@ public sealed class StudioUser(PostgresFixture postgres)
     public MemoryUpkeep Upkeep(IChatClientFactory clients) =>
         new(postgres.DbFactory, clients, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), Time, NullLogger<MemoryUpkeep>.Instance);
 
+    public SceneUpkeep SceneUpkeep(IChatClientFactory clients, SceneNotifier? notifier = null) =>
+        new(postgres.DbFactory, clients, notifier ?? new SceneNotifier(), Time, NullLogger<SceneUpkeep>.Instance);
+
     public ChatTurnService Turns(IChatClientFactory clients) =>
-        new(Sessions, Profiles, clients, Recall(clients), MemoryQueue, User, NullLogger<ChatTurnService>.Instance);
+        new(Sessions, Profiles, clients, Recall(clients), UpkeepQueue, User, NullLogger<ChatTurnService>.Instance);
 
     public async Task<Persona> PersonaAsync(string name = "Sam") => (await Personas.CreateAsync(new Persona { Name = name })).Value;
 

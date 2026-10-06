@@ -5,44 +5,52 @@
 <PageTitle>@(_session?.Title ?? "Chat") · Roleplay Studio</PageTitle>
 
 <div class="chat">
-    @if (_session is null)
-    {
-        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-    }
-    else
-    {
-        <div class="chat-header">
-            <div class="chat-header-title">
-                <MudText Typo="Typo.h6" HtmlTag="h1">@_session.Title</MudText>
-                <MudText Typo="Typo.body2" Class="app-list-card-detail">
-                    <MudLink Href="@AppRoutes.Chatbot(_session.Scenario.ChatbotId)">@_session.Scenario.Chatbot.Name</MudLink> · as @_session.Persona.Name
-                </MudText>
-            </div>
-            <MudSelect T="Guid?" Value="_session.ChatModelProfileId" ValueChanged="SetModelAsync" Label="Model" Variant="Variant.Outlined" Margin="Margin.Dense"
-                       Disabled="_streaming" Class="chat-model">
-                @foreach (var profile in _chatModels)
-                {
-                    <MudSelectItem T="Guid?" Value="profile.Id">@profile.Name</MudSelectItem>
-                }
-            </MudSelect>
-        </div>
-    }
-
-    <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming" />
-
-    <div class="chat-input">
-        <MudTextField @bind-Value="_draft" Placeholder="Say something…" Lines="1" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
-                      Immediate="true" Disabled="_streaming || _session is null" OnKeyDown="OnDraftKeyDown" aria-label="Message" />
-        @if (_streaming)
+    <div class="chat-main">
+        @if (_session is null)
         {
-            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="Stop">Stop</MudButton>
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
         }
         else
         {
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="!CanSend" OnClick="SendAsync">Send</MudButton>
-            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="More chat actions" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.BottomRight" Disabled="_session is null">
-                <MudMenuItem OnClick="ContinueAsync">Let them continue</MudMenuItem>
-            </MudMenu>
+            <div class="chat-header">
+                <div class="chat-header-title">
+                    <MudText Typo="Typo.h6" HtmlTag="h1">@_session.Title</MudText>
+                    <MudText Typo="Typo.body2" Class="app-list-card-detail">
+                        <MudLink Href="@AppRoutes.Chatbot(_session.Scenario.ChatbotId)">@_session.Scenario.Chatbot.Name</MudLink> · as @_session.Persona.Name
+                    </MudText>
+                </div>
+                <MudSelect T="Guid?" Value="_session.ChatModelProfileId" ValueChanged="SetModelAsync" Label="Model" Variant="Variant.Outlined" Margin="Margin.Dense"
+                           Disabled="_streaming" Class="chat-model">
+                    @foreach (var profile in _chatModels)
+                    {
+                        <MudSelectItem T="Guid?" Value="profile.Id">@profile.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.ViewSidebar" OnClick="ToggleScene" Class="chat-scene-toggle">Scene</MudButton>
+            </div>
         }
+
+        <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming" />
+
+        <div class="chat-input">
+            <MudTextField @bind-Value="_draft" Placeholder="Say something…" Lines="1" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+                          Immediate="true" Disabled="_streaming || _session is null" OnKeyDown="OnDraftKeyDown" aria-label="Message" />
+            @if (_streaming)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="Stop">Stop</MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="!CanSend" OnClick="SendAsync">Send</MudButton>
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="More chat actions" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.BottomRight" Disabled="_session is null">
+                    <MudMenuItem OnClick="ContinueAsync">Let them continue</MudMenuItem>
+                </MudMenu>
+            }
+        </div>
     </div>
+
+    @if (_session is not null)
+    {
+        <ScenePanel Session="_session" Toggled="_sceneToggled" OnClose="ToggleScene" />
+    }
 </div>

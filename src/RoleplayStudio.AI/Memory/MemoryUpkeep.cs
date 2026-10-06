@@ -1,12 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using RoleplayStudio.AI.Providers;
+using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
-using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Data;
-using RoleplayStudio.Infrastructure.Services;
 
 namespace RoleplayStudio.AI.Memory;
 
@@ -20,7 +18,7 @@ public sealed class MemoryUpkeep(
 {
     private const int KnownMemoriesShown = 40;
 
-    public async Task RunAsync(MemoryJob job, CancellationToken cancellationToken)
+    public async Task RunAsync(UpkeepJob job, CancellationToken cancellationToken)
     {
         await using var db = await dbFactory.CreateForOwnerAsync(job.OwnerId, cancellationToken);
         var session = await db.ChatSessions
@@ -34,21 +32,12 @@ public sealed class MemoryUpkeep(
             return;
         }
 
-        var utility = await db.ModelProfiles.PreferredFor(ModelRole.Utility).AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+        using var utility = await UtilityModel.OpenAsync(db, clients, logger, cancellationToken);
         if (utility is null)
         {
-            logger.LogDebug("No utility model; skipped memory upkeep for chat {SessionId}", job.SessionId);
             return;
         }
 
-        var created = clients.Create(utility);
-        if (created.IsFailure)
-        {
-            logger.LogWarning("Utility model profile {ProfileId} cannot be turned into a client", utility.Id);
-            return;
-        }
-
-        using var client = created.Value;
         var from = Math.Min(session.MemoriesExtractedUpToSequence, session.Summary.CoveredUpToSequence);
         var messages = await db.Messages
             .Where(m => m.SessionId == session.Id && m.Sequence > from)
@@ -56,11 +45,11 @@ public sealed class MemoryUpkeep(
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
-        await ExtractAsync(db, session, messages, utility, client, cancellationToken);
-        await SummarizeAsync(db, session, messages, utility, client, cancellationToken);
+        await ExtractAsync(db, session, messages, utility, cancellationToken);
+        await SummarizeAsync(db, session, messages, utility, cancellationToken);
     }
 
-    private async Task ExtractAsync(ApplicationDbContext db, ChatSession session, IReadOnlyList<Message> messages, ModelProfile utility, IChatClient client, CancellationToken cancellationToken)
+    private async Task ExtractAsync(ApplicationDbContext db, ChatSession session, IReadOnlyList<Message> messages, UtilityModel utility, CancellationToken cancellationToken)
     {
         var pending = messages.Where(m => m.Sequence > session.MemoriesExtractedUpToSequence).Take(MemoryExtraction.MaxMessages).ToList();
         if (pending.Count < MemoryExtraction.MinNewMessages)
@@ -75,7 +64,7 @@ public sealed class MemoryUpkeep(
             .Select(m => m.Text)
             .ToListAsync(cancellationToken);
         var characters = session.CharacterStates.Select(s => s.Character).ToList();
-        var reply = await AskAsync(client, utility, MemoryExtraction.Prompt(pending, known, session.Persona.Name, characters), cancellationToken);
+        var reply = await utility.AskAsync(MemoryExtraction.Prompt(pending, known, session.Persona.Name, characters), cancellationToken);
         if (reply.IsFailure)
         {
             return;
@@ -110,7 +99,7 @@ public sealed class MemoryUpkeep(
         logger.LogInformation("Extracted {MemoryCount} memories from chat {SessionId} up to message {Sequence}", extracted?.Count ?? 0, session.Id, pending[^1].Sequence);
     }
 
-    private async Task SummarizeAsync(ApplicationDbContext db, ChatSession session, IReadOnlyList<Message> messages, ModelProfile utility, IChatClient client, CancellationToken cancellationToken)
+    private async Task SummarizeAsync(ApplicationDbContext db, ChatSession session, IReadOnlyList<Message> messages, UtilityModel utility, CancellationToken cancellationToken)
     {
         var fold = SessionSummarizing.ToFold(messages, session.Summary.CoveredUpToSequence);
         if (fold.Count == 0)
@@ -118,7 +107,7 @@ public sealed class MemoryUpkeep(
             return;
         }
 
-        var reply = await AskAsync(client, utility, SessionSummarizing.Prompt(session.Summary.Text, fold, session.Persona.Name), cancellationToken);
+        var reply = await utility.AskAsync(SessionSummarizing.Prompt(session.Summary.Text, fold, session.Persona.Name), cancellationToken);
         if (reply.IsFailure)
         {
             return;
@@ -134,8 +123,4 @@ public sealed class MemoryUpkeep(
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Summarized chat {SessionId} up to message {Sequence}", session.Id, fold[^1].Sequence);
     }
-
-    private Task<Result<string>> AskAsync(IChatClient client, ModelProfile utility, IReadOnlyList<ChatMessage> prompt, CancellationToken cancellationToken) =>
-        ProviderErrors.TranslateAsync(utility, logger, async () =>
-            Result.Success((await client.GetResponseAsync(prompt, ChatClientFactory.OptionsFor(utility), cancellationToken)).Text));
 }

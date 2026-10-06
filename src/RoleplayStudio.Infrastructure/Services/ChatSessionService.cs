@@ -56,6 +56,19 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
             return session ?? NotFound(id).To<ChatSession>();
         });
 
+    /// <summary>The session as <see cref="GetAsync"/> loads it but without its messages, for refreshing the scene.</summary>
+    public Task<Result<ChatSession>> GetSceneAsync(Guid id, CancellationToken cancellationToken = default) =>
+        ServiceOperation.RunOwnerAsync(currentUser, logger, "load the scene", cancellationToken, async ownerId =>
+        {
+            await using var db = await dbFactory.CreateForOwnerAsync(ownerId, cancellationToken);
+            var session = await db.ChatSessions
+                .WithScenarioAndPersona()
+                .AsNoTracking()
+                .AsSplitQuery()
+                .SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
+            return session ?? NotFound(id).To<ChatSession>();
+        });
+
     public Task<Result<ChatSession>> StartAsync(Guid chatbotId, Guid scenarioId, Guid personaId) =>
         ServiceOperation.RunOwnerAsync(currentUser, logger, "start the chat", CancellationToken.None, async ownerId =>
         {

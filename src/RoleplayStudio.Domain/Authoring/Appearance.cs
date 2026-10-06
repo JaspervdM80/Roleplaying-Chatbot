@@ -59,4 +59,11 @@ public class Outfit
         ("Footwear", Footwear),
         ("Accessories", Accessories),
         ("Notes", Notes));
+
+    /// <summary>The pieces worn, comma-separated for a one-line glance; null when nothing is known.</summary>
+    public string? Summarize()
+    {
+        var pieces = new[] { Top, Bottom, Footwear, Accessories }.Select(TextFields.Clean).OfType<string>().ToList();
+        return pieces.Count == 0 ? TextFields.Clean(Notes) : string.Join(", ", pieces);
+    }
 }
