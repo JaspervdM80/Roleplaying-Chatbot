@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&amp;display=swap">
 <style>
 body{margin:0;background:#0b0910}
-:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82)}
+:root{--surface-page:#110e17;--surface-card:#1a1622;--surface-raised:#241f2e;--primary:#f0739b;--on-primary:#1d0a13;--accent:#f2b56b;--info:#7cb7ff;--error:#ff6b7a;--ink:rgba(236,230,242,.92);--ink-muted:rgba(236,230,242,.7);--ink-subtle:rgba(236,230,242,.52);--line:rgba(236,230,242,.12);--line-strong:rgba(236,230,242,.22);--selected:rgba(236,230,242,.12);--font-ui:'Figtree',system-ui,sans-serif;--font-prose:'Atkinson Hyperlegible',system-ui,sans-serif;--ink-soft:rgba(236,230,242,.82);--scrim:rgba(5,3,8,.7);--shadow:rgba(0,0,0,.45)}
 a{color:#f0739b}a:hover{color:#f59ab6}
 </style>
 </head>
@@ -87,8 +87,8 @@ a{color:#f0739b}a:hover{color:#f59ab6}
     <button type="button" style="flex: 1 1 0; height: 48px; border: 0; border-radius: 10px; background: var(--primary); color: var(--on-primary); font: inherit; font-size: 16px; font-weight: 600">Save</button>
   </footer>
 </div>
-<div style="position: absolute; inset: 0; background: rgba(5,4,8,.66)"></div>
-<section role="alertdialog" aria-labelledby="discard-title" style="position: absolute; left: 24px; right: 24px; top: 290px; box-sizing: border-box; padding: 24px 20px 16px; border-radius: 16px; background: var(--surface-raised); border: 1px solid var(--line); color: var(--ink); font-family: var(--font-ui); box-shadow: 0 24px 64px rgba(0,0,0,.5)">
+<div style="position: absolute; inset: 0; background: var(--scrim)"></div>
+<section role="alertdialog" aria-labelledby="discard-title" style="position: absolute; left: 24px; right: 24px; top: 290px; box-sizing: border-box; padding: 24px 20px 16px; border-radius: 16px; background: var(--surface-raised); border: 1px solid var(--line); color: var(--ink); font-family: var(--font-ui); box-shadow: 0 24px 64px var(--shadow)">
   <h2 id="discard-title" style="margin: 0 0 8px; font-size: 18px; font-weight: 700">Discard your changes?</h2>
   <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: var(--ink-muted)">Your edits to Mira haven't been saved.</p>
   <div style="display: flex; flex-direction: column; gap: 8px">
