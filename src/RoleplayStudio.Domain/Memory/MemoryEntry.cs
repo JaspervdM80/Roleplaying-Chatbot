@@ -15,6 +15,8 @@ public enum MemoryType
 public class MemoryEntry : Entity
 {
     public const int EmbeddingDimensions = 768;
+    public const int MinImportance = 1;
+    public const int MaxImportance = 10;
 
     public Guid SessionId { get; set; }
     public MemoryType Type { get; set; }

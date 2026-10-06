@@ -63,7 +63,9 @@ var hits = await db.Memories
     .ToListAsync(cancellationToken);
 ```
 
-Re-rank by importance and recency **in memory** after the vector query. Changing the embedding model
+Re-rank by importance and recency **in memory** after the vector query. HNSW filters *after* its
+search, so a session filter can leave fewer than k rows when other chats' memories are closer; the
+recall query runs in a transaction with `SET LOCAL hnsw.iterative_scan = relaxed_order` for that. Changing the embedding model
 changes the dimension: that is a migration plus a re-embed of every memory, never a silent mix of two
 models' vectors in one column.
 

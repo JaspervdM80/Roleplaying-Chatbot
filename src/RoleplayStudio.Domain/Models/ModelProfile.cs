@@ -82,6 +82,11 @@ public class ModelProfile : OwnedEntity
             return "Chat and utility models need an OpenAI-compatible or Ollama provider";
         }
 
+        if (Role == ModelRole.Embedding && !CanChat(Provider))
+        {
+            return "Embedding models need an OpenAI-compatible or Ollama provider";
+        }
+
         if (BaseUrl is not null && !(Uri.TryCreate(BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"))
         {
             return "The base URL must be an http or https address";

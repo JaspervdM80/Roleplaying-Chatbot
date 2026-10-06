@@ -43,7 +43,8 @@ no characters" — and the director prompt silently loses its cast.
 - **`Message.Sequence` orders a session**, unique per session — never `CreatedAt`, which ties under
   a fast stream and moves with clock skew.
 - **`SessionSummary.CoveredUpToSequence`** marks which messages the summary already contains; the
-  short-term window starts after it. Rewriting history (edit, regenerate, branch) must move it back.
+  short-term window starts after it. `ChatSession.MemoriesExtractedUpToSequence` does the same for
+  memory extraction. Rewriting history (edit, regenerate, branch) must move both back.
 - **`MemoryEntry.Embedding` has a fixed dimension** (`EmbeddingDimensions`). See the `migrations`
   skill before changing the embedding model.
 - **Who is present is `Scene.PresentCharacterIds`**, read through `ChatSession.PresentStates`. The

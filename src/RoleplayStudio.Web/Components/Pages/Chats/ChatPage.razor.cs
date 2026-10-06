@@ -144,7 +144,7 @@ public partial class ChatPage
         if (reply.Text.Trim().Length > 0)
         {
             // Saved even when stopped or the user left: what was streamed is what they saw.
-            var saved = await Sessions.AddReplyAsync(Id, reply.Text);
+            var saved = await Turns.SaveReplyAsync(Id, reply.Text);
             if (Snackbar.Report(saved))
             {
                 _turns.Add(new ChatTurnView(false, saved.Value.SpeakerName, saved.Value.Content));

@@ -1,6 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
-using RoleplayStudio.AI.Chat;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Infrastructure.Data;
@@ -154,7 +152,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var session = await user.ChatAsync();
         await user.Sessions.AddUserMessageAsync(session.Id, "A latte, please.");
         var client = new FakeChatClient(["Coming ", "up."]);
-        var turns = new ChatTurnService(user.Sessions, user.Profiles, new FakeChatClientFactory(client), NullLogger<ChatTurnService>.Instance);
+        var turns = user.Turns(new FakeChatClientFactory(client));
         var streamed = "";
 
         var result = await turns.StreamReplyAsync(session.Id, text => streamed += text);
@@ -171,7 +169,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var user = new StudioUser(postgres);
         var session = await user.ChatAsync();
         await user.Sessions.SetModelAsync(session.Id, null);
-        var turns = new ChatTurnService(user.Sessions, user.Profiles, new FakeChatClientFactory(new FakeChatClient(["Hi"])), NullLogger<ChatTurnService>.Instance);
+        var turns = user.Turns(new FakeChatClientFactory(new FakeChatClient(["Hi"])));
 
         var result = await turns.StreamReplyAsync(session.Id, _ => { });
 
