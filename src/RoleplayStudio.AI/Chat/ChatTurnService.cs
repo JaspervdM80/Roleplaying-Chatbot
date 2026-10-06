@@ -1,11 +1,20 @@
 using Microsoft.Extensions.Logging;
+using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Domain.Chats;
+using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Infrastructure.Services;
 
 namespace RoleplayStudio.AI.Chat;
 
-public sealed class ChatTurnService(ChatSessionService sessions, ModelProfileService profiles, IChatClientFactory clients, ILogger<ChatTurnService> logger)
+public sealed class ChatTurnService(
+    ChatSessionService sessions,
+    ModelProfileService profiles,
+    IChatClientFactory clients,
+    MemoryRecall recall,
+    MemoryQueue memoryQueue,
+    ICurrentUser currentUser,
+    ILogger<ChatTurnService> logger)
 {
     /// <summary>
     /// Streams the next reply to the chat as it stands into <paramref name="onText"/>. Saving it is the caller's
@@ -41,8 +50,16 @@ public sealed class ChatTurnService(ChatSessionService sessions, ModelProfileSer
                 return created;
             }
 
+            var recalled = await recall.RecallAsync(sessionId, session.Messages, cancellationToken);
+            if (recalled.IsCancelled)
+            {
+                return recalled;
+            }
+
+            // Memories enrich a reply; failing to recall them must not stop one.
+            var memories = recalled.IsSuccess ? recalled.Value : [];
             using var client = created.Value;
-            var messages = SessionPrompt.Build(InputFor(session));
+            var messages = PromptBuilder.Build(InputFor(session, memories), PromptBudget.For(profile));
 
             return await ProviderErrors.TranslateAsync(profile, logger, async () =>
             {
@@ -61,11 +78,25 @@ public sealed class ChatTurnService(ChatSessionService sessions, ModelProfileSer
             });
         });
 
-    private static SessionPromptInput InputFor(ChatSession session) => new(
+    /// <summary>Saves a streamed reply, then queues memory upkeep for the chat without waiting on it.</summary>
+    public async Task<Result<Message>> SaveReplyAsync(Guid sessionId, string text)
+    {
+        var saved = await sessions.AddReplyAsync(sessionId, text);
+        if (saved.IsSuccess && await currentUser.GetUserIdAsync() is { Length: > 0 } ownerId)
+        {
+            memoryQueue.Enqueue(new MemoryJob(ownerId, sessionId));
+        }
+
+        return saved;
+    }
+
+    private static PromptInput InputFor(ChatSession session, IReadOnlyList<MemoryEntry> memories) => new(
         session.Scenario.Chatbot,
         session.Scenario,
         session.Persona,
         session.Scene,
         session.PresentStates(session.CharacterStates).Select(s => new PresentCharacter(s.Character, s)).ToList(),
+        session.Summary,
+        memories,
         session.Messages);
 }

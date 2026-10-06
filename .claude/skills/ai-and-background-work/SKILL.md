@@ -56,15 +56,32 @@ bounded `Channel<T>` read by a `BackgroundService`:
 
 - **The producer only `TryWrite`s and returns.** A chat turn never waits on extraction, and a failing
   job never fails the turn.
-- **A job has no user and no circuit.** It carries the session id; it reads the session's `OwnerId`
-  and works within that owner's rows (the `ef-core-and-queries` skill). It cannot take a scoped
-  service — it creates its own scope or context per job.
+- **A job has no user and no circuit.** It carries the owner id captured from `ICurrentUser` when
+  it was queued, beside the session id, and opens a context scoped to that owner — so a mismatched
+  pair finds no session, and no unfiltered read is needed. It works within that owner's rows (the
+  `ef-core-and-queries` skill). It cannot take a scoped service — it creates its own scope or
+  context per job.
 - **It never throws out of the loop.** One bad job is logged and dropped; the reader keeps going.
 - Completion is announced through a singleton notifier; pages subscribe and re-enter with
   `InvokeAsync` (the `razor-pages-and-circuit` skill).
 - In-process only: one app instance. Scaling out needs a real queue.
 - Jobs for one session are processed in order, or a summary can be written over messages a later
   extraction has not seen.
+
+## Memory
+
+- **Short-term memory is the messages after `Summary.CoveredUpToSequence`.** Upkeep folds the oldest
+  of them into the summary once they outgrow a threshold (`SessionSummarizing`), a bounded piece per
+  job; the prompt never sends a message the summary covers.
+- **Extraction moves `ChatSession.MemoriesExtractedUpToSequence`.** A provider failure leaves it, so
+  the next turn retries; unreadable JSON moves it past those messages, so a model that cannot write
+  the JSON does not pay for them every turn.
+- **A reply is saved through `ChatTurnService.SaveReplyAsync`**, which queues the upkeep. A page that
+  calls `ChatSessionService.AddReplyAsync` directly saves a reply no memory will ever see.
+- **Recall never fails a turn.** Pinned memories come first; without an embedding model the most
+  important memories stand in for the closest. A vector of the wrong dimension is dropped and the
+  memory kept without one — never padded or cut — and a memory without a vector competes in
+  recall on importance alone.
 
 ## Cost and latency
 

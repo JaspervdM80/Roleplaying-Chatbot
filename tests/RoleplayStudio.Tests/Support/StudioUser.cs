@@ -1,5 +1,8 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
+using RoleplayStudio.AI.Chat;
+using RoleplayStudio.AI.Memory;
+using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Models;
@@ -19,6 +22,17 @@ public sealed class StudioUser(PostgresFixture postgres)
     public ChatSessionService Sessions => new(postgres.DbFactory, User, Time, NullLogger<ChatSessionService>.Instance);
     public ModelProfileService Profiles => new(postgres.DbFactory, User, NullLogger<ModelProfileService>.Instance);
 
+    public MemoryQueue MemoryQueue { get; } = new(NullLogger<MemoryQueue>.Instance);
+
+    public MemoryRecall Recall(IChatClientFactory clients) =>
+        new(postgres.DbFactory, User, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), Time, NullLogger<MemoryRecall>.Instance);
+
+    public MemoryUpkeep Upkeep(IChatClientFactory clients) =>
+        new(postgres.DbFactory, clients, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), Time, NullLogger<MemoryUpkeep>.Instance);
+
+    public ChatTurnService Turns(IChatClientFactory clients) =>
+        new(Sessions, Profiles, clients, Recall(clients), MemoryQueue, User, NullLogger<ChatTurnService>.Instance);
+
     public async Task<Persona> PersonaAsync(string name = "Sam") => (await Personas.CreateAsync(new Persona { Name = name })).Value;
 
     public async Task<Character> CharacterAsync(string name, string? top = null) =>
@@ -26,6 +40,12 @@ public sealed class StudioUser(PostgresFixture postgres)
 
     public async Task<ModelProfile> ChatModelAsync(bool isDefault = true) =>
         (await Profiles.CreateAsync(new ModelProfile { Name = "Local", Role = ModelRole.Chat, Provider = ProviderKind.Ollama, ModelId = "mistral-nemo", IsDefault = isDefault })).Value;
+
+    public async Task<ModelProfile> UtilityModelAsync() =>
+        (await Profiles.CreateAsync(new ModelProfile { Name = "Utility", Role = ModelRole.Utility, Provider = ProviderKind.Ollama, ModelId = "qwen3", IsDefault = true })).Value;
+
+    public async Task<ModelProfile> EmbeddingModelAsync() =>
+        (await Profiles.CreateAsync(new ModelProfile { Name = "Embeddings", Role = ModelRole.Embedding, Provider = ProviderKind.Ollama, ModelId = "nomic-embed-text", IsDefault = true })).Value;
 
     public async Task<Chatbot> ChatbotAsync(params Character[] cast)
     {

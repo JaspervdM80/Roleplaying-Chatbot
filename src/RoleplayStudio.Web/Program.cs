@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using RoleplayStudio.AI.Chat;
+using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Playground;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Infrastructure.Data;
@@ -72,6 +73,11 @@ builder.Services.AddScoped<CharacterService>();
 builder.Services.AddScoped<ChatbotService>();
 builder.Services.AddScoped<ChatSessionService>();
 builder.Services.AddScoped<ChatTurnService>();
+builder.Services.AddSingleton<MemoryEmbeddings>();
+builder.Services.AddScoped<MemoryRecall>();
+builder.Services.AddSingleton<MemoryQueue>();
+builder.Services.AddSingleton<MemoryUpkeep>();
+builder.Services.AddHostedService<MemoryWorker>();
 
 var app = builder.Build();
 

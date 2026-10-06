@@ -17,6 +17,9 @@ public class ChatSession : OwnedEntity
     public SceneState Scene { get; set; } = new();
     public SessionSummary Summary { get; set; } = new();
 
+    /// <summary>The last message memory extraction has read; later messages have not been mined for memories yet.</summary>
+    public long MemoriesExtractedUpToSequence { get; set; }
+
     public List<Message> Messages { get; set; } = [];
     public List<CharacterState> CharacterStates { get; set; } = [];
 

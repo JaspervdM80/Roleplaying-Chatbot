@@ -13,6 +13,8 @@ namespace RoleplayStudio.AI.Providers;
 public interface IChatClientFactory
 {
     Result<IChatClient> Create(ModelProfile profile);
+
+    Result<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGenerator(ModelProfile profile);
 }
 
 public sealed class ChatClientFactory(IConfiguration configuration) : IChatClientFactory
@@ -35,6 +37,27 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
         };
     }
 
+    public Result<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGenerator(ModelProfile profile)
+    {
+        if (profile.FindProblem() is { } problem)
+        {
+            return Result.Failure<IEmbeddingGenerator<string, Embedding<float>>>(problem);
+        }
+
+        switch (profile.Provider)
+        {
+            case ProviderKind.OpenAICompatible:
+                var connection = OpenAIConnection(profile);
+                return connection.IsSuccess
+                    ? Result.Success(new OpenAI.Embeddings.EmbeddingClient(profile.ModelId, connection.Value.Key, connection.Value.Options).AsIEmbeddingGenerator())
+                    : connection.To<IEmbeddingGenerator<string, Embedding<float>>>();
+            case ProviderKind.Ollama:
+                return Result.Success<IEmbeddingGenerator<string, Embedding<float>>>(new OllamaApiClient(OllamaHttp(profile), profile.ModelId));
+            default:
+                return Result.Failure<IEmbeddingGenerator<string, Embedding<float>>>("{0} models cannot embed text", profile.Provider);
+        }
+    }
+
     public static ChatOptions OptionsFor(ModelProfile profile) => new()
     {
         Temperature = (float?)profile.Temperature,
@@ -42,6 +65,14 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
     };
 
     private Result<IChatClient> CreateOpenAICompatible(ModelProfile profile)
+    {
+        var connection = OpenAIConnection(profile);
+        return connection.IsSuccess
+            ? Result.Success(new OpenAI.Chat.ChatClient(profile.ModelId, connection.Value.Key, connection.Value.Options).AsIChatClient())
+            : connection.To<IChatClient>();
+    }
+
+    private Result<(ApiKeyCredential Key, OpenAIClientOptions Options)> OpenAIConnection(ModelProfile profile)
     {
         string apiKey;
         if (profile.ApiKeySetting is null)
@@ -51,12 +82,12 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
         }
         else if (configuration[profile.ApiKeySetting] is not { Length: > 0 } configured)
         {
-            return Result.Failure<IChatClient>("The setting {0} has no value; add the API key with dotnet user-secrets", profile.ApiKeySetting);
+            return Result.Failure<(ApiKeyCredential, OpenAIClientOptions)>("The setting {0} has no value; add the API key with dotnet user-secrets", profile.ApiKeySetting);
         }
         else if (KeyHostSetting(profile.ApiKeySetting) is var hostSetting && !SameHost(configuration[hostSetting], profile.BaseUrl!))
         {
             // Keys are shared by every user of the app, so one may only travel to the host configured beside it.
-            return Result.Failure<IChatClient>("The key in {0} may only be sent to the address in {1}", profile.ApiKeySetting, hostSetting);
+            return Result.Failure<(ApiKeyCredential, OpenAIClientOptions)>("The key in {0} may only be sent to the address in {1}", profile.ApiKeySetting, hostSetting);
         }
         else
         {
@@ -68,8 +99,7 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
             Endpoint = new Uri(profile.BaseUrl!),
             Transport = new HttpClientPipelineTransport(new HttpClient(Handler, disposeHandler: false)),
         };
-        var client = new OpenAI.Chat.ChatClient(profile.ModelId, new ApiKeyCredential(apiKey), options);
-        return Result.Success(client.AsIChatClient());
+        return Result.Success((new ApiKeyCredential(apiKey), options));
     }
 
     private static string KeyHostSetting(string apiKeySetting) => $"{apiKeySetting[..apiKeySetting.LastIndexOf(':')]}:BaseUrl";
@@ -80,15 +110,16 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
         && configured.Scheme == requested.Scheme
         && string.Equals(configured.Authority, requested.Authority, StringComparison.OrdinalIgnoreCase);
 
+    private static HttpClient OllamaHttp(ModelProfile profile) => new(Handler, disposeHandler: false)
+    {
+        BaseAddress = new Uri(profile.BaseUrl ?? ModelProfile.DefaultOllamaUrl),
+        Timeout = Timeout.InfiniteTimeSpan,
+    };
+
     private static Result<IChatClient> CreateOllama(ModelProfile profile)
     {
-        var http = new HttpClient(Handler, disposeHandler: false)
-        {
-            BaseAddress = new Uri(profile.BaseUrl ?? ModelProfile.DefaultOllamaUrl),
-            Timeout = Timeout.InfiniteTimeSpan,
-        };
         // Thinking models (qwen3) otherwise reason at length before every reply, and the stream shows nothing meanwhile.
-        IChatClient ollama = new OllamaApiClient(http, profile.ModelId);
+        IChatClient ollama = new OllamaApiClient(OllamaHttp(profile), profile.ModelId);
         var client = ollama
             .AsBuilder()
             .ConfigureOptions(options => options.RawRepresentationFactory ??= _ => new ChatRequest { Think = false })
