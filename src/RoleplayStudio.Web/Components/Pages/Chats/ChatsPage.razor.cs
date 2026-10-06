@@ -18,6 +18,9 @@ public partial class ChatsPage
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject]
+    private TimeProvider Time { get; set; } = null!;
+
     protected override Task OnInitializedAsync() => LoadAsync();
 
     private async Task LoadAsync()
@@ -31,7 +34,8 @@ public partial class ChatsPage
 
     private async Task DeleteAsync(ChatListItem chat)
     {
-        if (await Dialogs.ConfirmAsync("Delete chat", $"Delete {chat.Title} and everything said in it?", "Delete")
+        var question = $"Delete your {chat.ScenarioTitle} chat in {chat.ChatbotName}? Everything said in it and everything it remembers goes too.";
+        if (await Dialogs.ConfirmAsync("Delete chat", question, "Delete")
             && Snackbar.Report(await Sessions.DeleteAsync(chat.Id), "Chat deleted"))
         {
             await LoadAsync();

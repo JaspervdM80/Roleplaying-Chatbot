@@ -1,0 +1,52 @@
+.scenario-present {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-margin-top: 16px;
+}
+
+.scenario-present-hint {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ink-subtle);
+}
+
+.scenario-present-problem {
+    color: var(--error);
+}
+
+.scenario-present-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.scenario-present-chip {
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 14px 0 6px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: none;
+    color: var(--ink-muted);
+    font: inherit;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.scenario-present-chip[aria-pressed="true"] {
+    background: var(--picked);
+    border-color: var(--picked-line);
+    color: var(--ink);
+    font-weight: 600;
+}
+
+@media (hover: hover) {
+    .scenario-present-chip[aria-pressed="false"]:hover {
+        background: var(--hover);
+    }
+}

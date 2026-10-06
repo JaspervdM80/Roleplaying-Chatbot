@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Infrastructure.Services;
 using RoleplayStudio.Web.Components.Shared;
@@ -8,62 +7,60 @@ namespace RoleplayStudio.Web.Components.Pages.Chatbots;
 
 public partial class ScenarioDialog
 {
-    private readonly HashSet<Guid> _starting = [];
-    private Scenario _scenario = new();
-    private bool _saving;
-
-    [CascadingParameter]
-    private IMudDialogInstance Dialog { get; set; } = null!;
+    private static readonly Dictionary<string, EditorSection> Fields = [];
 
     [Inject]
     private ChatbotService Chatbots { get; set; } = null!;
-
-    [Inject]
-    private ISnackbar Snackbar { get; set; } = null!;
 
     [Parameter, EditorRequired]
     public Guid ChatbotId { get; set; }
 
     [Parameter, EditorRequired]
+    public string ChatbotName { get; set; } = "";
+
+    [Parameter, EditorRequired]
     public IReadOnlyList<Character> Cast { get; set; } = [];
 
-    /// <summary>The scenario to edit; it is copied, so cancelling leaves the caller's instance untouched.</summary>
     [Parameter]
     public Scenario? Scenario { get; set; }
 
-    protected override void OnInitialized()
+    protected override Scenario? Original => Scenario;
+
+    protected override IReadOnlyDictionary<string, EditorSection> FieldSections => Fields;
+
+    protected override string Noun => "scenario";
+
+    protected override string NameOf(Scenario entity) => entity.Title;
+
+    protected override void CopyEditableFields(Scenario target, Scenario source) => target.CopyEditableFieldsFrom(source);
+
+    protected override EditProblem? FindProblem(Scenario entity) => entity.FindProblem(Cast.Select(c => c.Id).ToList());
+
+    protected override Task<Result<Scenario>> StoreAsync(Scenario entity, bool isNew) =>
+        isNew ? Chatbots.AddScenarioAsync(ChatbotId, entity) : Chatbots.UpdateScenarioAsync(ChatbotId, entity);
+
+    private string PresentHint
     {
-        if (Scenario is not null)
+        get
         {
-            _scenario = new Scenario { Id = Scenario.Id };
-            _scenario.CopyEditableFieldsFrom(Scenario);
-            _starting.UnionWith(Scenario.StartingCharacterIds);
+            var later = Cast.Where(c => !Edited.StartingCharacterIds.Contains(c.Id)).Select(c => c.Name).ToList();
+            if (later.Count == 0 || later.Count == Cast.Count)
+            {
+                return "Pick nobody to start with the whole cast.";
+            }
+
+            var names = later.Count == 1 ? later[0] : $"{string.Join(", ", later[..^1])} and {later[^1]}";
+            return $"{names} {(later.Count == 1 ? "joins" : "join")} later. Pick nobody to start with the whole cast.";
         }
     }
 
-    private void Toggle(Guid characterId, bool present)
+    private void Toggle(Guid characterId)
     {
-        if (present)
+        if (!Edited.StartingCharacterIds.Remove(characterId))
         {
-            _starting.Add(characterId);
+            Edited.StartingCharacterIds.Add(characterId);
         }
-        else
-        {
-            _starting.Remove(characterId);
-        }
-    }
 
-    private async Task SaveAsync()
-    {
-        _saving = true;
-        _scenario.StartingCharacterIds = Cast.Select(c => c.Id).Where(_starting.Contains).ToList();
-        var result = Scenario is null
-            ? await Chatbots.AddScenarioAsync(ChatbotId, _scenario)
-            : await Chatbots.UpdateScenarioAsync(ChatbotId, _scenario);
-        _saving = false;
-        if (Snackbar.Report(result, "Scenario saved"))
-        {
-            Dialog.Close(result.Value);
-        }
+        Changed();
     }
 }

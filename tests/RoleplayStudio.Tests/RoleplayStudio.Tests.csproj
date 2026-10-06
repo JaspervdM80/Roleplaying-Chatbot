@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\RoleplayStudio.Domain\RoleplayStudio.Domain.csproj" />
     <ProjectReference Include="..\..\src\RoleplayStudio.Infrastructure\RoleplayStudio.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\RoleplayStudio.AI\RoleplayStudio.AI.csproj" />
+    <ProjectReference Include="..\..\src\RoleplayStudio.Web\RoleplayStudio.Web.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,33 +1,46 @@
-<MudDialog Class="app-sheet-dialog">
-    <DialogContent>
-        <MudStack Spacing="2">
-            <MudTextField @bind-Value="_scenario.Title" Label="Title" Required="true" MaxLength="200" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="_scenario.Premise" Label="Premise" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
-                          HelperText="What is going on when the chat starts." />
-            <MudTextField @bind-Value="_scenario.StartingLocation" Label="Where it starts" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="_scenario.OpeningMessage" Label="Opening message" Lines="3" Sizing="InputSizing.Auto" MaxLines="12" Variant="Variant.Outlined"
-                          HelperText="The first message of every chat, before you say anything." />
-            <MudTextField @bind-Value="_scenario.Goals" Label="Goals" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
-                          HelperText="Where the story could go. Optional." />
-            <div>
-                <MudText Typo="Typo.subtitle2" HtmlTag="h3">Who is there at the start</MudText>
-                @if (Cast.Count == 0)
-                {
-                    <MudText Typo="Typo.body2" Class="app-list-card-detail">The cast is empty, so the chat starts with nobody but you.</MudText>
-                }
-                else
-                {
-                    <MudText Typo="Typo.body2" Class="app-list-card-detail">Tick nobody to start with the whole cast.</MudText>
+@inherits EntityEditor<Scenario>
+@using RoleplayStudio.Domain.Authoring
+
+<EditorSheet @ref="Sheet" Kind="@($"{Kind} · {ChatbotName}")" Title="@Title" Sections="[]" IsDirty="IsDirty" DiscardMessage="@DiscardMessage"
+             Saving="Saving" OnSave="SaveAsync">
+    <div class="app-editor-section">
+        <div data-field="@nameof(Scenario.Title)">
+            <MudTextField @bind-Value="Edited.Title" @bind-Value:after="Changed" Label="Title" Required="true" MaxLength="200" Variant="Variant.Outlined"
+                          Error="IsProblem(nameof(Scenario.Title))" ErrorText="@Problem?.Message" />
+        </div>
+        <MudTextField @bind-Value="Edited.Premise" Label="Premise" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
+                      HelperText="What is going on when the chat starts." />
+        <MudTextField @bind-Value="Edited.StartingLocation" Label="Where it starts" Variant="Variant.Outlined" />
+
+        <section class="scenario-present" aria-labelledby="scenario-present-title" data-field="@nameof(Scenario.StartingCharacterIds)">
+            <h3 id="scenario-present-title" class="app-editor-section-title">Who is there at the start</h3>
+            @if (Cast.Count == 0)
+            {
+                <p class="scenario-present-hint">The cast is empty, so the chat starts with nobody but you.</p>
+            }
+            else
+            {
+                <p class="scenario-present-hint @(IsProblem(nameof(Scenario.StartingCharacterIds)) ? "scenario-present-problem" : null)">@(IsProblem(nameof(Scenario.StartingCharacterIds)) ? Problem!.Message : PresentHint)</p>
+                <div class="scenario-present-chips">
                     @foreach (var character in Cast)
                     {
-                        <MudCheckBox T="bool" Value="_starting.Contains(character.Id)" ValueChanged="on => Toggle(character.Id, on)" Label="@character.Name" Color="Color.Primary" @key="character.Id" />
+                        var present = Edited.StartingCharacterIds.Contains(character.Id);
+                        <button type="button" class="scenario-present-chip" aria-pressed="@(present ? "true" : "false")" @onclick="() => Toggle(character.Id)" @key="character.Id">
+                            <Avatar Id="character.Id" Name="@character.Name" Size="32" />
+                            @character.Name
+                            @if (present)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                            }
+                        </button>
                     }
-                }
-            </div>
-        </MudStack>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="_saving" OnClick="SaveAsync">Save</MudButton>
-    </DialogActions>
-</MudDialog>
+                </div>
+            }
+        </section>
+
+        <MudTextField @bind-Value="Edited.OpeningMessage" Label="Opening message" Lines="3" Sizing="InputSizing.Auto" MaxLines="12" Variant="Variant.Outlined"
+                      HelperText="The first message of every chat, before you say anything." />
+        <MudTextField @bind-Value="Edited.Goals" Label="Goals" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+                      HelperText="Where the story could go. Optional." />
+    </div>
+</EditorSheet>

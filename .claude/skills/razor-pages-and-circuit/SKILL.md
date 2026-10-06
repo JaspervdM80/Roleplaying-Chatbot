@@ -100,3 +100,8 @@ why the dialog's own Escape handling is off.
   drops the nav, `Toolbar` holds what stays above the scroller (a search field), and `Status`
   replaces the footer's "Unsaved changes" line, hidden on a phone like the line it replaces. It still
   passes its own `IsDirty`.
+- **A form too short for a nav** (a scenario) passes no sections either and wraps its fields in one
+  `app-editor-section` for the spacing; a blocked save still finds the field by `data-field`.
+- **An editor opened from a `MudMenuItem` leaves that menu open until it closes** (the item awaits
+  its handler). `editor-sheet.js` therefore counts only popovers opened after the editor when deciding
+  whether Escape is the sheet's; see `docs/known_issues`.
