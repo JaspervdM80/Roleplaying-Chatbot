@@ -127,7 +127,7 @@ the same rules:
 
 The image prompt is written by the utility model from the character's `Appearance`, the session's
 `CharacterState.CurrentOutfit`, `SceneState` and a few related memories, then sent to the
-`IImageGenerator`. It always describes the character as an adult. Store the final prompt, seed,
+`IImageGenerator`. Store the final prompt, seed,
 provider and source memory ids on `GeneratedImage`, so an image can be explained and regenerated.
 Files go through `IImageStore`, never a path built in a page.
 
@@ -153,9 +153,6 @@ Files go through `IImageStore`, never a path built in a page.
   `Compose`. Stable looks come from the `Character`, clothes and changes from the chat's
   `CharacterState`; a portrait wears the default outfit. A picture is of the moment it was asked on:
   the messages up to that one go in, not later ones.
-- **Adults only, enforced in code as well as asked for.** `ImagePrompts.AgeFor` never sends an age
-  under 18 to the prompt writer, `Compose` adds "adult" whenever people are in the picture, and every
-  request carries `AdultsOnlyNegative`. A change that drops any of the three needs a reason.
 - **The reference portrait** (`Character.ReferenceImageId`) is sent only to a profile with
   `AcceptsReferenceImage`, together with the character's `ImageSeed`. A character's first portrait
   becomes the reference and gives them its seed; the user can pick another picture of them. The avatar
