@@ -552,3 +552,38 @@ h1:focus {
         display: none;
     }
 }
+
+.app-pick-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.app-pick-chip {
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 14px 0 6px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: none;
+    color: var(--ink-muted);
+    font: inherit;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.app-pick-chip[aria-pressed="true"] {
+    background: var(--picked);
+    border-color: var(--picked-line);
+    color: var(--ink);
+    font-weight: 600;
+}
+
+@media (hover: hover) {
+    .app-pick-chip[aria-pressed="false"]:hover {
+        background: var(--hover);
+    }
+}

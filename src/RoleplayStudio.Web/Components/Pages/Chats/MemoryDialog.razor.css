@@ -1,18 +1,23 @@
-.scenario-present {
+.memory-importance {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.memory-characters {
     display: flex;
     flex-direction: column;
     gap: 10px;
     scroll-margin-top: 16px;
 }
 
-.scenario-present-hint {
+.memory-hint {
     margin: 0;
     font-size: 0.8125rem;
     line-height: 1.45;
     color: var(--ink-subtle);
 }
 
-.scenario-present-problem {
+.memory-problem {
     color: var(--error);
 }
-

@@ -1,0 +1,151 @@
+.memories-page {
+    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.memories-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.memories-section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 16px;
+    margin-bottom: 12px;
+}
+
+.memories-heading {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+}
+
+.memories-summary {
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface-card);
+}
+
+.memories-summary-text {
+    margin: 0 0 8px;
+    font-family: var(--font-prose);
+    line-height: var(--leading-prose);
+    white-space: pre-line;
+}
+
+.memories-summary-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.memories-empty {
+    margin: 0;
+    color: var(--ink-subtle);
+}
+
+.memories-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--ink-subtle);
+}
+
+.memories-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.memories-filters ::deep .memories-search {
+    flex: 2 1 240px;
+}
+
+.memories-filters ::deep .memories-filter {
+    flex: 1 1 160px;
+}
+
+.memories-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface-card);
+    overflow: hidden;
+}
+
+.memories-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px 8px 14px 18px;
+}
+
+.memories-row + .memories-row {
+    border-top: 1px solid var(--line);
+}
+
+.memories-row-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.memories-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    font-size: 0.75rem;
+    color: var(--ink-subtle);
+}
+
+.memories-type {
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+}
+
+.memories-pinned {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.memories-text {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.memories-about {
+    color: var(--ink-muted);
+    font-weight: 500;
+}
+
+.memories-row-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 599.98px) {
+    .memories-row {
+        padding-left: 14px;
+    }
+}

@@ -60,3 +60,13 @@ it finds through a navigation as an existing row, so it issues an `UPDATE` for a
 Adding a whole new graph (`db.ChatSessions.Add`) is fine; growing one that was loaded is not.
 **Rule:** add a new child row to its `DbSet` explicitly (`db.CharacterStates.AddRange(...)`), as
 `SceneUpkeep` does with the states a scene update creates.
+
+## An editor reports unsaved changes the moment it opens
+
+**Symptom:** the memory editor showed "Unsaved changes" with nothing touched, and Escape asked to
+discard instead of closing.
+**Cause:** `EntityEditor` decides dirty by comparing JSON snapshots of fresh `new T()` copies, and
+`MemoryEntry.CreatedAt` defaults to `DateTimeOffset.UtcNow`, so every snapshot carried a new time. The
+editor resets the timestamps of an `OwnedEntity` only.
+**Rule:** an editor whose entity has a property initialised from the clock copies it in
+`CopyEditableFields` (as `MemoryDialog` does), so the snapshot is stable.

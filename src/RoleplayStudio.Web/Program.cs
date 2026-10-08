@@ -77,6 +77,8 @@ builder.Services.AddScoped<ChatSessionService>();
 builder.Services.AddScoped<ChatTurnService>();
 builder.Services.AddSingleton<MemoryEmbeddings>();
 builder.Services.AddScoped<MemoryRecall>();
+builder.Services.AddScoped<MemoryService>();
+builder.Services.AddSingleton<MemoryNotifier>();
 builder.Services.AddSingleton<UpkeepQueue>();
 builder.Services.AddSingleton<MemoryUpkeep>();
 builder.Services.AddSingleton<SceneNotifier>();

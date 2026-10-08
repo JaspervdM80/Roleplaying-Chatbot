@@ -1,0 +1,137 @@
+@page "/chats/{Id:guid}/memories"
+@attribute [Authorize]
+@inherits CancellableComponent
+@using RoleplayStudio.Domain.Memory
+
+<PageTitle>Memories · @(_session?.Title ?? "Chat") · Roleplay Studio</PageTitle>
+
+@if (_session is null || _memories is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <div class="memories-page">
+        <div class="app-page-heading">
+            <div class="memories-title">
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="@AppRoutes.Chat(Id)" aria-label="Back to the chat" />
+                <div>
+                    <MudText Typo="Typo.h4" HtmlTag="h1">Memories</MudText>
+                    <MudText Typo="Typo.body2" Class="app-list-card-detail">@_session.Title · as @_session.Persona.Name</MudText>
+                </div>
+            </div>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddAsync">Add memory</MudButton>
+        </div>
+
+        <section class="memories-summary" aria-labelledby="memories-summary-title">
+            <div class="memories-section-heading">
+                <h2 id="memories-summary-title" class="memories-heading">Story so far</h2>
+                @if (!_editingSummary)
+                {
+                    <div class="app-list-card-actions">
+                        <MudButton Variant="Variant.Text" OnClick="EditSummary" Disabled="_rebuilding">Edit</MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="RebuildSummaryAsync" Disabled="_rebuilding">@(_rebuilding ? "Rebuilding…" : "Rebuild")</MudButton>
+                    </div>
+                }
+            </div>
+            @if (_editingSummary)
+            {
+                <MudTextField @bind-Value="_summaryDraft" Label="Summary" Lines="6" Sizing="InputSizing.Auto" MaxLines="20" Variant="Variant.Outlined"
+                              HelperText="Sent to the model in place of the messages it covers." />
+                <div class="memories-summary-actions">
+                    <MudButton Variant="Variant.Text" OnClick="CancelSummary">Cancel</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSummaryAsync">Save</MudButton>
+                </div>
+            }
+            else if (string.IsNullOrWhiteSpace(_session.Summary.Text))
+            {
+                <p class="memories-empty">Nothing summarized yet. Until a chat gets long, the model reads all of it.</p>
+            }
+            else
+            {
+                <p class="memories-summary-text">@_session.Summary.Text</p>
+                <p class="memories-meta">Covers messages 1 to @_session.Summary.CoveredUpToSequence</p>
+            }
+        </section>
+
+        <section aria-labelledby="memories-list-title">
+            <div class="memories-section-heading">
+                <h2 id="memories-list-title" class="memories-heading">Remembered</h2>
+                <span class="memories-meta">@CountLine</span>
+            </div>
+
+            @if (_memories.Count == 0)
+            {
+                <p class="memories-empty">Nothing yet. Memories are picked out of the chat as it goes, or add one yourself.</p>
+            }
+            else
+            {
+                <div class="memories-filters">
+                    <MudTextField @bind-Value="_search" Placeholder="Search memories" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Clearable="true" aria-label="Search memories"
+                                  Class="memories-search" />
+                    <MudSelect T="MemoryType?" @bind-Value="_type" Label="Kind" Variant="Variant.Outlined" Margin="Margin.Dense" Class="memories-filter">
+                        <MudSelectItem T="MemoryType?" Value="null">Every kind</MudSelectItem>
+                        @foreach (var type in Enum.GetValues<MemoryType>())
+                        {
+                            <MudSelectItem T="MemoryType?" Value="type">@type</MudSelectItem>
+                        }
+                    </MudSelect>
+                    @if (_characters.Count > 0)
+                    {
+                        <MudSelect T="Guid?" @bind-Value="_characterId" Label="About" Variant="Variant.Outlined" Margin="Margin.Dense" Class="memories-filter">
+                            <MudSelectItem T="Guid?" Value="null">Anyone</MudSelectItem>
+                            @foreach (var character in _characters)
+                            {
+                                <MudSelectItem T="Guid?" Value="character.Id">@character.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                </div>
+
+                @if (Shown.Count == 0)
+                {
+                    <p class="memories-empty">No memory matches.</p>
+                }
+                else
+                {
+                    <ul class="memories-list">
+                        @foreach (var memory in Shown)
+                        {
+                            <li class="memories-row" @key="memory.Id">
+                                <div class="memories-row-main">
+                                    <div class="memories-tags">
+                                        <span class="memories-type">@memory.Type</span>
+                                        <span>Importance @memory.Importance</span>
+                                        @if (memory.IsPinned)
+                                        {
+                                            <span class="memories-pinned">Pinned</span>
+                                        }
+                                    </div>
+                                    <p class="memories-text">@memory.Text</p>
+                                    <div class="memories-meta">
+                                        @foreach (var name in NamesOf(memory))
+                                        {
+                                            <span class="memories-about">@name</span>
+                                        }
+                                        <span>@SourceLine(memory)</span>
+                                    </div>
+                                </div>
+                                <div class="memories-row-actions">
+                                    <MudIconButton Icon="@(memory.IsPinned ? Icons.Material.Filled.PushPin : Icons.Material.Outlined.PushPin)"
+                                                   Color="@(memory.IsPinned ? Color.Primary : Color.Default)" aria-pressed="@(memory.IsPinned ? "true" : "false")"
+                                                   aria-label="Pin: always in the prompt" OnClick="() => TogglePinAsync(memory)" />
+                                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="More actions for this memory" AnchorOrigin="Origin.BottomRight"
+                                             TransformOrigin="Origin.TopRight">
+                                        <MudMenuItem OnClick="() => EditAsync(memory)">Edit</MudMenuItem>
+                                        <MudMenuItem OnClick="() => DeleteAsync(memory)">Delete</MudMenuItem>
+                                    </MudMenu>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            }
+        </section>
+    </div>
+}

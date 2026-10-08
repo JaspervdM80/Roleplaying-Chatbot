@@ -1,0 +1,22 @@
+<button type="button" class="app-pick-chip" aria-pressed="@(Picked ? "true" : "false")" @onclick="OnToggle">
+    <Avatar Id="Id" Name="@Name" Size="32" />
+    @Name
+    @if (Picked)
+    {
+        <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+    }
+</button>
+
+@code {
+    [Parameter, EditorRequired]
+    public Guid Id { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Name { get; set; } = "";
+
+    [Parameter]
+    public bool Picked { get; set; }
+
+    [Parameter]
+    public EventCallback OnToggle { get; set; }
+}
