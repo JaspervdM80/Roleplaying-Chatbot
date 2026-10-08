@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using OllamaSharp;
 using OllamaSharp.Models.Chat;
 using OpenAI;
+using RoleplayStudio.AI.Images;
+using IImageGenerator = RoleplayStudio.AI.Images.IImageGenerator;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Services;
 
@@ -15,6 +17,8 @@ public interface IChatClientFactory
     Result<IChatClient> Create(ModelProfile profile);
 
     Result<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGenerator(ModelProfile profile);
+
+    Result<IImageGenerator> CreateImageGenerator(ModelProfile profile);
 }
 
 public sealed class ChatClientFactory(IConfiguration configuration) : IChatClientFactory
@@ -58,6 +62,30 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
         }
     }
 
+    public Result<IImageGenerator> CreateImageGenerator(ModelProfile profile)
+    {
+        if (profile.FindProblem() is { } problem)
+        {
+            return Result.Failure<IImageGenerator>(problem);
+        }
+
+        if (profile.Provider != ProviderKind.Runware)
+        {
+            return Result.Failure<IImageGenerator>("{0} models cannot draw images", profile.Provider);
+        }
+
+        var baseUrl = profile.Address!;
+        if (profile.ApiKeySetting is null)
+        {
+            return Result.Failure<IImageGenerator>("Runware needs an API key setting, such as Providers:Runware:ApiKey");
+        }
+
+        var key = ApiKey(profile.ApiKeySetting, baseUrl);
+        return key.IsSuccess
+            ? Result.Success<IImageGenerator>(new RunwareImageGenerator(new HttpClient(Handler, disposeHandler: false) { Timeout = TimeSpan.FromMinutes(2) }, new Uri(baseUrl), key.Value, profile.ModelId))
+            : key.To<IImageGenerator>();
+    }
+
     public static ChatOptions OptionsFor(ModelProfile profile) => new()
     {
         Temperature = (float?)profile.Temperature,
@@ -74,24 +102,11 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
 
     private Result<(ApiKeyCredential Key, OpenAIClientOptions Options)> OpenAIConnection(ModelProfile profile)
     {
-        string apiKey;
-        if (profile.ApiKeySetting is null)
+        // Local OpenAI-compatible servers take no key, but the SDK refuses an empty credential.
+        var key = profile.ApiKeySetting is null ? Result.Success("none") : ApiKey(profile.ApiKeySetting, profile.BaseUrl!);
+        if (key.IsFailure)
         {
-            // Local OpenAI-compatible servers take no key, but the SDK refuses an empty credential.
-            apiKey = "none";
-        }
-        else if (configuration[profile.ApiKeySetting] is not { Length: > 0 } configured)
-        {
-            return Result.Failure<(ApiKeyCredential, OpenAIClientOptions)>("The setting {0} has no value; add the API key with dotnet user-secrets", profile.ApiKeySetting);
-        }
-        else if (KeyHostSetting(profile.ApiKeySetting) is var hostSetting && !SameHost(configuration[hostSetting], profile.BaseUrl!))
-        {
-            // Keys are shared by every user of the app, so one may only travel to the host configured beside it.
-            return Result.Failure<(ApiKeyCredential, OpenAIClientOptions)>("The key in {0} may only be sent to the address in {1}", profile.ApiKeySetting, hostSetting);
-        }
-        else
-        {
-            apiKey = configured;
+            return key.To<(ApiKeyCredential, OpenAIClientOptions)>();
         }
 
         var options = new OpenAIClientOptions
@@ -99,7 +114,21 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
             Endpoint = new Uri(profile.BaseUrl!),
             Transport = new HttpClientPipelineTransport(new HttpClient(Handler, disposeHandler: false)),
         };
-        return Result.Success((new ApiKeyCredential(apiKey), options));
+        return Result.Success((new ApiKeyCredential(key.Value), options));
+    }
+
+    private Result<string> ApiKey(string setting, string baseUrl)
+    {
+        if (configuration[setting] is not { Length: > 0 } configured)
+        {
+            return Result.Failure<string>("The setting {0} has no value; add the API key with dotnet user-secrets", setting);
+        }
+
+        // Keys are shared by every user of the app, so one may only travel to the host configured beside it.
+        var hostSetting = KeyHostSetting(setting);
+        return SameHost(configuration[hostSetting], baseUrl)
+            ? Result.Success(configured)
+            : Result.Failure<string>("The key in {0} may only be sent to the address in {1}", setting, hostSetting);
     }
 
     private static string KeyHostSetting(string apiKeySetting) => $"{apiKeySetting[..apiKeySetting.LastIndexOf(':')]}:BaseUrl";
@@ -112,7 +141,7 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
 
     private static HttpClient OllamaHttp(ModelProfile profile) => new(Handler, disposeHandler: false)
     {
-        BaseAddress = new Uri(profile.BaseUrl ?? ModelProfile.DefaultOllamaUrl),
+        BaseAddress = new Uri(profile.Address!),
         Timeout = Timeout.InfiniteTimeSpan,
     };
 

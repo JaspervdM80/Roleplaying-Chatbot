@@ -21,6 +21,8 @@ public class UpkeepWorkerTests(PostgresFixture postgres)
             Interlocked.Increment(ref _calls) == 1 ? throw new InvalidOperationException("Provider exploded") : inner.Create(profile);
 
         public Result<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGenerator(ModelProfile profile) => inner.CreateEmbeddingGenerator(profile);
+
+        public Result<RoleplayStudio.AI.Images.IImageGenerator> CreateImageGenerator(ModelProfile profile) => inner.CreateImageGenerator(profile);
     }
 
     private async Task<string> SummaryAsync(StudioUser user, Guid sessionId)

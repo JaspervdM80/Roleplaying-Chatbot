@@ -1,0 +1,7 @@
+.app-model-test-picture {
+    display: block;
+    width: min(100%, 256px);
+    aspect-ratio: 1;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}

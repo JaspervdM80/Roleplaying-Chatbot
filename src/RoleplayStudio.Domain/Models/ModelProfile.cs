@@ -38,7 +38,21 @@ public class ModelProfile : OwnedEntity
 
     public const string DefaultOllamaUrl = "http://localhost:11434";
 
+    public const string DefaultRunwareUrl = "https://api.runware.ai/v1";
+
     public static bool CanChat(ProviderKind provider) => provider is ProviderKind.OpenAICompatible or ProviderKind.Ollama;
+
+    public static bool CanDraw(ProviderKind provider) => provider is ProviderKind.Runware;
+
+    /// <summary>Where a provider is reached when the profile names no base URL; null when it must name one.</summary>
+    public static string? DefaultAddress(ProviderKind provider) => provider switch
+    {
+        ProviderKind.Ollama => DefaultOllamaUrl,
+        ProviderKind.Runware => DefaultRunwareUrl,
+        _ => null,
+    };
+
+    public string? Address => BaseUrl ?? DefaultAddress(Provider);
 
     public bool IsChatModel => Role == ModelRole.Chat && CanChat(Provider);
 
@@ -80,6 +94,11 @@ public class ModelProfile : OwnedEntity
         if (Role is not ModelRole.Image && !CanChat(Provider))
         {
             return "Chat, utility and embedding models need an OpenAI-compatible or Ollama provider";
+        }
+
+        if (Role is ModelRole.Image && !CanDraw(Provider))
+        {
+            return "Image models need an image provider such as Runware";
         }
 
         if (BaseUrl is not null && !(Uri.TryCreate(BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"))

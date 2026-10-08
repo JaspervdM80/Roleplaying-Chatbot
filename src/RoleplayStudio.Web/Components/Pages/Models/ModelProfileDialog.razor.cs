@@ -33,6 +33,17 @@ public partial class ModelProfileDialog
 
     private bool IsNew => Profile is null;
 
+    private bool IsImage => _profile.Role == ModelRole.Image;
+
+    private string BaseUrlPlaceholder => ModelProfile.DefaultAddress(_profile.Provider) ?? "https://openrouter.ai/api/v1";
+
+    private string ModelIdPlaceholder => _profile.Provider switch
+    {
+        ProviderKind.Ollama => "qwen3:8b",
+        ProviderKind.Runware => "runware:101@1",
+        _ => "mistralai/mistral-nemo",
+    };
+
     protected override async Task OnInitializedAsync()
     {
         if (Profile is null)
@@ -69,6 +80,16 @@ public partial class ModelProfileDialog
         }
     }
 
+    private async Task ChangeRoleAsync(ModelRole role)
+    {
+        _profile.Role = role;
+        var drawing = role == ModelRole.Image;
+        if (drawing != ModelProfile.CanDraw(_profile.Provider))
+        {
+            await ApplyPresetAsync(ProviderPreset.All.First(p => ModelProfile.CanDraw(p.Provider) == drawing));
+        }
+    }
+
     private async Task ApplyPresetAsync(ProviderPreset preset)
     {
         ApplyPreset(preset);
@@ -78,6 +99,11 @@ public partial class ModelProfileDialog
     private void ApplyPreset(ProviderPreset preset)
     {
         _preset = preset;
+        if (ModelProfile.CanDraw(preset.Provider) != (_profile.Role == ModelRole.Image))
+        {
+            _profile.Role = preset.Role;
+        }
+
         _profile.Provider = preset.Provider;
         _profile.BaseUrl = preset.BaseUrl;
         _profile.ApiKeySetting = preset.ApiKeySetting;

@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.AI;
+using RoleplayStudio.AI.Images;
+using IImageGenerator = RoleplayStudio.AI.Images.IImageGenerator;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Domain.Models;
@@ -91,10 +93,29 @@ public sealed class FakeEmbeddingGenerator(Func<string, float[]> embed) : IEmbed
     }
 }
 
-public sealed class FakeChatClientFactory(IChatClient client, IEmbeddingGenerator<string, Embedding<float>>? embeddings = null) : IChatClientFactory
+/// <summary>Draws a one-pixel PNG for every request and records what it was asked for.</summary>
+public sealed class FakeImageGenerator : IImageGenerator
+{
+    public static readonly byte[] Png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
+
+    public ImageRequest? LastRequest { get; private set; }
+
+    public string ModelId => "fake-diffusion";
+
+    public Task<GeneratedPicture> GenerateAsync(ImageRequest request, CancellationToken cancellationToken = default)
+    {
+        LastRequest = request;
+        return Task.FromResult(new GeneratedPicture(Png, "image/png", request.Seed));
+    }
+}
+
+public sealed class FakeChatClientFactory(IChatClient client, IEmbeddingGenerator<string, Embedding<float>>? embeddings = null, IImageGenerator? images = null) : IChatClientFactory
 {
     public Result<IChatClient> Create(ModelProfile profile) => Result.Success(client);
 
     public Result<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGenerator(ModelProfile profile) =>
         embeddings is null ? Result.Failure<IEmbeddingGenerator<string, Embedding<float>>>("No embeddings in this test") : Result.Success(embeddings);
+
+    public Result<IImageGenerator> CreateImageGenerator(ModelProfile profile) =>
+        images is null ? Result.Failure<IImageGenerator>("No images in this test") : Result.Success(images);
 }

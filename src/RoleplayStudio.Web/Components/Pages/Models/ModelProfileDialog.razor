@@ -13,17 +13,25 @@
                 </MudSelect>
             }
             <MudTextField @bind-Value="_profile.Name" Label="Name" Required="true" MaxLength="100" Variant="Variant.Outlined" />
-            <MudSelect @bind-Value="_profile.Role" Label="Used for" Variant="Variant.Outlined"
-                       HelperText="Chat writes the roleplay; utility does background work such as summaries.">
+            <MudSelect T="ModelRole" Value="_profile.Role" ValueChanged="ChangeRoleAsync" Label="Used for" Variant="Variant.Outlined"
+                       HelperText="Chat writes the roleplay; utility does background work such as summaries; image draws pictures.">
                 <MudSelectItem Value="ModelRole.Chat">Chat</MudSelectItem>
                 <MudSelectItem Value="ModelRole.Utility">Utility</MudSelectItem>
+                <MudSelectItem Value="ModelRole.Image">Image</MudSelectItem>
             </MudSelect>
             <MudSelect @bind-Value="_profile.Provider" @bind-Value:after="LoadOllamaModelsAsync" Label="Provider" Variant="Variant.Outlined">
-                <MudSelectItem Value="ProviderKind.OpenAICompatible">OpenAI-compatible (OpenRouter, Featherless, …)</MudSelectItem>
-                <MudSelectItem Value="ProviderKind.Ollama">Ollama (local)</MudSelectItem>
+                @if (IsImage)
+                {
+                    <MudSelectItem Value="ProviderKind.Runware">Runware</MudSelectItem>
+                }
+                else
+                {
+                    <MudSelectItem Value="ProviderKind.OpenAICompatible">OpenAI-compatible (OpenRouter, Featherless, …)</MudSelectItem>
+                    <MudSelectItem Value="ProviderKind.Ollama">Ollama (local)</MudSelectItem>
+                }
             </MudSelect>
             <MudTextField @bind-Value="_profile.BaseUrl" @bind-Value:after="LoadOllamaModelsAsync" Label="Base URL" Variant="Variant.Outlined" InputType="InputType.Url"
-                          Placeholder="@(_profile.Provider == ProviderKind.Ollama ? ModelProfile.DefaultOllamaUrl : "https://openrouter.ai/api/v1")" />
+                          Placeholder="@BaseUrlPlaceholder" />
             @if (_profile.Provider == ProviderKind.Ollama && _ollamaModels is { Count: > 0 })
             {
                 <MudSelect @bind-Value="_profile.ModelId" Label="Model" Required="true" Variant="Variant.Outlined"
@@ -41,25 +49,28 @@
             else
             {
                 <MudTextField @bind-Value="_profile.ModelId" Label="Model id" Required="true" MaxLength="200" Variant="Variant.Outlined"
-                              Placeholder="@(_profile.Provider == ProviderKind.Ollama ? "qwen3:8b" : "mistralai/mistral-nemo")"
-                              HelperText="@(_profile.Provider == ProviderKind.Ollama ? _ollamaProblem : null)" />
+                              Placeholder="@ModelIdPlaceholder"
+                              HelperText="@(_profile.Provider == ProviderKind.Ollama ? _ollamaProblem : IsImage ? "A Runware model id, such as runware:101@1 for FLUX.1 dev." : null)" />
             }
-            @if (_profile.Provider == ProviderKind.OpenAICompatible)
+            @if (_profile.Provider is ProviderKind.OpenAICompatible or ProviderKind.Runware)
             {
                 <MudTextField @bind-Value="_profile.ApiKeySetting" Label="API key setting" Variant="Variant.Outlined" Placeholder="Providers:OpenRouter:ApiKey"
                               HelperText="The name of the setting that holds the key, never the key itself. Set it with dotnet user-secrets." />
             }
-            <MudGrid Spacing="2">
-                <MudItem xs="12" sm="4">
-                    <MudNumericField @bind-Value="_profile.Temperature" Label="Temperature" Min="0" Max="2" Step="0.1" Variant="Variant.Outlined" HideSpinButtons="true" />
-                </MudItem>
-                <MudItem xs="12" sm="4">
-                    <MudNumericField @bind-Value="_profile.MaxOutputTokens" Label="Max reply tokens" Min="1" Variant="Variant.Outlined" HideSpinButtons="true" />
-                </MudItem>
-                <MudItem xs="12" sm="4">
-                    <MudNumericField @bind-Value="_profile.ContextWindow" Label="Context window" Min="1" Variant="Variant.Outlined" HideSpinButtons="true" />
-                </MudItem>
-            </MudGrid>
+            @if (!IsImage)
+            {
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField @bind-Value="_profile.Temperature" Label="Temperature" Min="0" Max="2" Step="0.1" Variant="Variant.Outlined" HideSpinButtons="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField @bind-Value="_profile.MaxOutputTokens" Label="Max reply tokens" Min="1" Variant="Variant.Outlined" HideSpinButtons="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField @bind-Value="_profile.ContextWindow" Label="Context window" Min="1" Variant="Variant.Outlined" HideSpinButtons="true" />
+                    </MudItem>
+                </MudGrid>
+            }
             <MudSwitch @bind-Value="_profile.IsDefault" Color="Color.Primary" Label="Default for this use" />
         </MudStack>
     </DialogContent>

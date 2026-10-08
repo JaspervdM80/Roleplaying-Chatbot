@@ -2,6 +2,7 @@ using System.ClientModel;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using OllamaSharp.Models.Exceptions;
+using RoleplayStudio.AI.Images;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Services;
 
@@ -18,7 +19,7 @@ public static class ProviderErrors
         }
         catch (ClientResultException exception) when (exception.Status == 0)
         {
-            return Log<T>(profile, logger, exception, Result.Failure("Could not reach {0}", profile.BaseUrl ?? ModelProfile.DefaultOllamaUrl));
+            return Log<T>(profile, logger, exception, Result.Failure("Could not reach {0}", profile.Address));
         }
         catch (ClientResultException exception)
         {
@@ -28,7 +29,11 @@ public static class ProviderErrors
         {
             return exception.StatusCode is { } status
                 ? Failure<T>(profile, logger, (int)status, exception)
-                : Log<T>(profile, logger, exception, Result.Failure("Could not reach {0}", profile.BaseUrl ?? ModelProfile.DefaultOllamaUrl));
+                : Log<T>(profile, logger, exception, Result.Failure("Could not reach {0}", profile.Address));
+        }
+        catch (ImageProviderException exception)
+        {
+            return Log<T>(profile, logger, exception, Result.Failure("The image provider refused the request: {0}", exception.Code));
         }
         catch (OllamaException exception)
         {

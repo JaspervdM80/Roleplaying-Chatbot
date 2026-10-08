@@ -31,6 +31,18 @@ public class ModelProfileTests
     }
 
     [Theory]
+    [InlineData(ProviderKind.OpenAICompatible)]
+    [InlineData(ProviderKind.Ollama)]
+    public void An_image_model_needs_a_provider_that_can_draw(ProviderKind provider)
+    {
+        var profile = Valid();
+        profile.Role = ModelRole.Image;
+        profile.Provider = provider;
+
+        Assert.NotNull(profile.FindProblem());
+    }
+
+    [Theory]
     [InlineData("ConnectionStrings:roleplaydb")]
     [InlineData("providers:OpenRouter:ApiKey")]
     [InlineData("Providers:")]
