@@ -43,7 +43,7 @@ place a new required column can be populated *before* its constraint is added.
 - **Changing `MemoryEntry.EmbeddingDimensions` is not a column alter.** Existing vectors cannot be
   cast to another dimension: null them (or drop and re-add the column), rebuild the index, and
   re-embed in a background job. Say so in the pull request.
-- JSON-mapped owned types: adding a property to `Appearance`/`Outfit` needs no migration, but
+- JSON-mapped owned types: adding a property to `SceneState`/`SessionSummary` needs no migration, but
   existing rows read the new property as its default.
 
 ## Check before you trust it

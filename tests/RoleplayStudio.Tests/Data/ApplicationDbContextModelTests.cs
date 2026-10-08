@@ -27,10 +27,8 @@ public class ApplicationDbContextModelTests
     }
 
     [Theory]
-    [InlineData(typeof(Character), nameof(Character.Appearance))]
-    [InlineData(typeof(Character), nameof(Character.DefaultOutfit))]
     [InlineData(typeof(ChatSession), nameof(ChatSession.Scene))]
-    [InlineData(typeof(CharacterState), nameof(CharacterState.CurrentOutfit))]
+    [InlineData(typeof(ChatSession), nameof(ChatSession.Summary))]
     public void Nested_state_is_stored_as_json(Type owner, string navigation)
     {
         using var db = CreateContext();

@@ -96,16 +96,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.HasIndex(x => x.OwnerId);
             e.Property(x => x.Name).HasMaxLength(Character.MaxNameLength);
-            e.OwnsOne(x => x.Appearance, o => o.ToJson());
-            e.OwnsOne(x => x.DefaultOutfit, o => o.ToJson());
         });
 
         builder.Entity<Persona>(e =>
         {
             e.HasIndex(x => x.OwnerId);
             e.Property(x => x.Name).HasMaxLength(100);
-            e.OwnsOne(x => x.Appearance, o => o.ToJson());
-            e.OwnsOne(x => x.DefaultOutfit, o => o.ToJson());
         });
 
         builder.Entity<Chatbot>(e =>
@@ -143,7 +139,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.HasIndex(x => new { x.SessionId, x.CharacterId }).IsUnique();
             e.HasOne(x => x.Character).WithMany().HasForeignKey(x => x.CharacterId).OnDelete(DeleteBehavior.Cascade);
-            e.OwnsOne(x => x.CurrentOutfit, o => o.ToJson());
         });
 
         builder.Entity<MemoryEntry>(e =>

@@ -7,7 +7,7 @@ public class AuthoringTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
 
-    private static Character Character(string name, string? top = null) => new() { Name = name, DefaultOutfit = new Outfit { Top = top } };
+    private static Character Character(string name, string? outfit = null) => new() { Name = name, DefaultOutfit = outfit };
 
     [Fact]
     public void A_scenario_cannot_start_with_someone_outside_the_cast()
@@ -72,18 +72,18 @@ public class AuthoringTests
     public void Editing_copies_cleaned_text_and_turns_blank_fields_into_null()
     {
         var persona = new Persona();
-        persona.CopyEditableFieldsFrom(new Persona { Name = "  Sam ", Description = "   ", Appearance = new Appearance { Hair = " red " } });
+        persona.CopyEditableFieldsFrom(new Persona { Name = "  Sam ", Description = "   ", Appearance = " Red curls " });
 
         Assert.Equal("Sam", persona.Name);
         Assert.Null(persona.Description);
-        Assert.Equal("red", persona.Appearance.Hair);
+        Assert.Equal("Red curls", persona.Appearance);
     }
 
     [Fact]
     public void A_started_chat_dresses_who_is_present_in_their_default_outfit()
     {
-        var mira = Character("Mira", top: "apron");
-        var jun = Character("Jun", top: "hoodie");
+        var mira = Character("Mira", outfit: "An apron");
+        var jun = Character("Jun", outfit: "A hoodie");
         var scenario = new Scenario { Title = "Morning rush", StartingLocation = "Café", StartingCharacterIds = [mira.Id] };
 
         var session = ChatSession.Start(scenario, new Persona { Name = "Sam" }, [mira, jun], null, Now);
@@ -91,11 +91,7 @@ public class AuthoringTests
         Assert.Equal([mira.Id], session.Scene.PresentCharacterIds);
         Assert.Equal("Café", session.Scene.Location);
         var state = Assert.Single(session.CharacterStates);
-        Assert.Equal("apron", state.CurrentOutfit.Top);
-
-        // The session owns its own outfit, so a change during the chat never rewrites the character.
-        state.CurrentOutfit.Top = "raincoat";
-        Assert.Equal("apron", mira.DefaultOutfit.Top);
+        Assert.Equal("An apron", state.CurrentOutfit);
     }
 
     [Fact]

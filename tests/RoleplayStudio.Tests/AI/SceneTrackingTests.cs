@@ -8,8 +8,8 @@ public class SceneTrackingTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
 
-    private static readonly Character Mira = new() { Name = "Mira", DefaultOutfit = new Outfit { Top = "apron", Footwear = "clogs" } };
-    private static readonly Character Thorne = new() { Name = "Thorne Ashby", DefaultOutfit = new Outfit { Top = "oilskin coat" } };
+    private static readonly Character Mira = new() { Name = "Mira", DefaultOutfit = "An apron and clogs" };
+    private static readonly Character Thorne = new() { Name = "Thorne Ashby", DefaultOutfit = "An oilskin coat" };
 
     /// <summary>A chat with Mira present, and Thorne in the cast but not met yet.</summary>
     private static (ChatSession Session, SceneCast Cast) MiraAlone()
@@ -35,14 +35,14 @@ public class SceneTrackingTests
 
         var created = SceneTracking.Apply(session, cast, Parsed("""
             ```json
-            {"present":["Mira","Old Bess"],"newcomers":[{"name":"Old Bess","role":"cook","age":61,"description":"The inn's cook.","appearance":{"hair":"grey bun"},"outfit":{"top":"kitchen whites"}}]}
+            {"present":["Mira","Old Bess"],"newcomers":[{"name":"Old Bess","role":"cook","age":61,"description":"The inn's cook.","appearance":"Stout, with a grey bun","outfit":"Kitchen whites"}]}
             ```
             """), "Sam", Now);
 
         var (bess, role) = Assert.Single(created);
-        Assert.Equal(("Old Bess", "cook", 61, "grey bun", "kitchen whites"), (bess.Name, role, bess.Age, bess.Appearance.Hair, bess.DefaultOutfit.Top));
+        Assert.Equal(("Old Bess", "cook", 61, "Stout, with a grey bun", "Kitchen whites"), (bess.Name, role, bess.Age, bess.Appearance, bess.DefaultOutfit));
         Assert.Equal([Mira.Id, bess.Id], session.Scene.PresentCharacterIds);
-        Assert.Equal("kitchen whites", session.CharacterStates.Single(s => s.CharacterId == bess.Id).CurrentOutfit.Top);
+        Assert.Equal("Kitchen whites", session.CharacterStates.Single(s => s.CharacterId == bess.Id).CurrentOutfit);
     }
 
     [Fact]
@@ -54,31 +54,30 @@ public class SceneTrackingTests
 
         Assert.Empty(created);
         Assert.Equal([Mira.Id, Thorne.Id], session.Scene.PresentCharacterIds);
-        Assert.Equal("oilskin coat", session.CharacterStates.Single(s => s.CharacterId == Thorne.Id).CurrentOutfit.Top);
+        Assert.Equal("An oilskin coat", session.CharacterStates.Single(s => s.CharacterId == Thorne.Id).CurrentOutfit);
     }
 
     [Fact]
     public void Someone_who_leaves_keeps_their_state_for_when_they_come_back()
     {
         var (session, cast) = MiraAlone();
-        SceneTracking.Apply(session, cast, Parsed("""{"changes":[{"name":"Mira","status":"Tired","outfit":{"top":"wool cardigan"}}]}"""), "Sam", Now);
+        SceneTracking.Apply(session, cast, Parsed("""{"changes":[{"name":"Mira","status":"Tired","outfit":"A wool cardigan over her apron"}]}"""), "Sam", Now);
 
         SceneTracking.Apply(session, cast, Parsed("""{"present":[]}"""), "Sam", Now);
 
         Assert.Empty(session.Scene.PresentCharacterIds);
         var mira = Assert.Single(session.AbsentStates(session.CharacterStates));
-        Assert.Equal(("Tired", "wool cardigan"), (mira.Status, mira.CurrentOutfit.Top));
+        Assert.Equal(("Tired", "A wool cardigan over her apron"), (mira.Status, mira.CurrentOutfit));
     }
 
     [Fact]
-    public void An_outfit_change_keeps_pieces_left_out_and_drops_pieces_given_as_empty()
+    public void A_change_without_an_outfit_or_with_an_empty_one_keeps_what_they_wear()
     {
         var (session, cast) = MiraAlone();
 
-        SceneTracking.Apply(session, cast, Parsed("""{"changes":[{"name":"mira","outfit":{"footwear":"","accessories":"red scarf"}}]}"""), "Sam", Now);
+        SceneTracking.Apply(session, cast, Parsed("""{"changes":[{"name":"mira","status":"Warm"},{"name":"Mira","outfit":" "}]}"""), "Sam", Now);
 
-        var outfit = session.CharacterStates.Single().CurrentOutfit;
-        Assert.Equal(("apron", null, "red scarf"), (outfit.Top, outfit.Footwear, outfit.Accessories));
+        Assert.Equal(("Warm", "An apron and clogs"), (session.CharacterStates.Single().Status, session.CharacterStates.Single().CurrentOutfit));
     }
 
     [Fact]
@@ -140,7 +139,7 @@ public class SceneTrackingTests
 
         var story = SceneTracking.Prompt(session, "Sam", cast, [new Message { Sequence = 1, SpeakerName = "Narrator", Content = "The door opens." }])[1].Text;
 
-        Assert.Contains("- Mira (in the scene). Wearing: Top: apron; Footwear: clogs.", story);
+        Assert.Contains("- Mira (in the scene). Wearing: An apron and clogs.", story);
         Assert.Contains("- Thorne Ashby (not met yet).", story);
         Assert.Contains("Narrator: The door opens.", story);
     }

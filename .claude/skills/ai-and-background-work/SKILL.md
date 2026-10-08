@@ -84,7 +84,7 @@ which runs each step in turn so one failing does not stop the next:
   anyone who leaves, so they come back in the clothes they left in. The chat prompt names them under
   "Met earlier".
 - An update without a `present` list leaves who is present alone; a field the model left out keeps
-  its value, and an outfit piece given as empty is taken off.
+  its value. An outfit comes back whole, as everything worn now, and replaces the last one.
 
 ## Memory
 

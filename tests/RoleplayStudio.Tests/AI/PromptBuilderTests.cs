@@ -10,8 +10,8 @@ public class PromptBuilderTests
 {
     private static readonly PromptBudget Roomy = new(32_000, 1_000);
 
-    private static PresentCharacter Present(string name, string? top = null) =>
-        new(new Character { Name = name }, new CharacterState { CurrentOutfit = new Outfit { Top = top } });
+    private static PresentCharacter Present(string name, string? outfit = null) =>
+        new(new Character { Name = name }, new CharacterState { CurrentOutfit = outfit });
 
     private static PromptInput Input(
         IReadOnlyList<PresentCharacter> present,
@@ -35,11 +35,11 @@ public class PromptBuilderTests
     [Fact]
     public void The_system_prompt_describes_the_world_and_what_each_present_character_wears_now()
     {
-        var system = PromptBuilder.Build(Input([Present("Mira", top: "raincoat")]), Roomy)[0];
+        var system = PromptBuilder.Build(Input([Present("Mira", outfit: "A yellow raincoat")]), Roomy)[0];
 
         Assert.Equal(ChatRole.System, system.Role);
         Assert.Contains("A quiet harbour town.", system.Text);
-        Assert.Contains("raincoat", system.Text);
+        Assert.Contains("Wearing now: A yellow raincoat", system.Text);
         Assert.Contains("Behind the counter", system.Text);
     }
 

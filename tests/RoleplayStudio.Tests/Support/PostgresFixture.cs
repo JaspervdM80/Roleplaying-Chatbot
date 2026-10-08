@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using RoleplayStudio.Infrastructure.Data;
 using Testcontainers.PostgreSql;
 
@@ -18,6 +19,10 @@ public sealed class PostgresFixture : IAsyncLifetime
         await using var db = await DbFactory.CreateDbContextAsync();
         await db.Database.MigrateAsync();
     }
+
+    /// <summary>Options for a database of its own in the same container, which migrating creates.</summary>
+    public DbContextOptions<ApplicationDbContext> SeparateDatabase(string name) =>
+        DesignTimeDbContextFactory.CreateOptions(new NpgsqlConnectionStringBuilder(_container.GetConnectionString()) { Database = name }.ConnectionString);
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
 

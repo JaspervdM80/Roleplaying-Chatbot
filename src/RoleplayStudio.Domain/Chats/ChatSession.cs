@@ -60,7 +60,7 @@ public class ChatSession : OwnedEntity
     {
         foreach (var character in present.Where(c => CharacterStates.All(s => s.CharacterId != c.Id)))
         {
-            CharacterStates.Add(new CharacterState { CharacterId = character.Id, CurrentOutfit = character.DefaultOutfit.Copy(), UpdatedAt = now });
+            CharacterStates.Add(new CharacterState { CharacterId = character.Id, CurrentOutfit = character.DefaultOutfit, UpdatedAt = now });
         }
 
         Scene.PresentCharacterIds = present.Select(c => c.Id).Distinct().ToList();
