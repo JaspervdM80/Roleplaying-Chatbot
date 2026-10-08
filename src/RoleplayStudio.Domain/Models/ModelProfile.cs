@@ -33,6 +33,9 @@ public class ModelProfile : OwnedEntity
     public int? ContextWindow { get; set; }
     public bool IsDefault { get; set; }
 
+    /// <summary>The image model draws after a reference picture, so a character's portrait is sent with every picture of them.</summary>
+    public bool AcceptsReferenceImage { get; set; }
+
     // A key outside this section (a connection string, the invite code) must never be sendable to a user-chosen URL.
     public const string ApiKeySettingPrefix = "Providers:";
 
@@ -68,6 +71,7 @@ public class ModelProfile : OwnedEntity
         MaxOutputTokens = other.MaxOutputTokens;
         ContextWindow = other.ContextWindow;
         IsDefault = other.IsDefault;
+        AcceptsReferenceImage = other.AcceptsReferenceImage;
     }
 
     public void Normalize()

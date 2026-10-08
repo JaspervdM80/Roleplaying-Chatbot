@@ -344,6 +344,26 @@ h1:focus {
     gap: 12px;
 }
 
+.app-editor-portrait-picture {
+    overflow: hidden;
+}
+
+.app-editor-portrait-picture img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.app-editor-portrait-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.app-editor-portrait-actions .mud-button-root {
+    min-height: 44px;
+}
+
 .app-editor-portrait-note {
     font-size: 0.8125rem;
     color: var(--ink-subtle);
@@ -473,6 +493,11 @@ h1:focus {
         font-size: 1.3125rem;
     }
 
+    .app-editor-portrait-row .app-editor-portrait-actions {
+        flex-direction: column;
+        justify-content: center;
+    }
+
     .app-editor-portrait-row .app-editor-portrait-note {
         font-size: 0.75rem;
     }
@@ -585,5 +610,281 @@ h1:focus {
 @media (hover: hover) {
     .app-pick-chip[aria-pressed="false"]:hover {
         background: var(--hover);
+    }
+}
+
+.app-avatar-picture {
+    position: relative;
+    overflow: hidden;
+    background: var(--surface-raised);
+}
+
+/* The avatar is the reference portrait's head and shoulders: a square 70% of its width, its top at 16% of its height. */
+.app-avatar-picture img {
+    position: absolute;
+    left: -21.429%;
+    top: -30.476%;
+    width: 142.857%;
+    max-width: none;
+    height: auto;
+}
+
+.app-picture-tile {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface-raised);
+    color: inherit;
+    cursor: zoom-in;
+}
+
+.app-picture-tile img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.app-picture-placeholder {
+    position: relative;
+    box-sizing: border-box;
+    border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+    background: var(--surface-raised);
+    color: var(--ink-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.app-picture-placeholder.app-picture-tile {
+    border-radius: 10px;
+    cursor: default;
+}
+
+.app-picture-placeholder-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.app-picture-placeholder-caption {
+    max-width: 80%;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--ink-subtle);
+}
+
+.app-picture-placeholder .app-picture-placeholder-cancel {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    min-height: 44px;
+}
+
+.mud-dialog.app-viewer-dialog {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.mud-dialog.app-viewer-dialog .app-viewer-content {
+    padding: 0;
+}
+
+.app-viewer {
+    height: min(760px, calc(100dvh - 64px));
+    display: flex;
+}
+
+.app-viewer-stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    background: var(--surface-sunken);
+}
+
+.app-viewer-image {
+    position: absolute;
+    inset: 24px;
+    width: calc(100% - 48px);
+    height: calc(100% - 48px);
+    object-fit: contain;
+}
+
+.app-viewer-stage .app-viewer-move {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--selected);
+}
+
+.app-viewer-stage .app-viewer-previous {
+    left: 12px;
+}
+
+.app-viewer-stage .app-viewer-next {
+    right: 12px;
+}
+
+.app-viewer-aside {
+    width: 340px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    padding: 16px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    overflow-y: auto;
+    background: var(--surface-card);
+    border-left: 1px solid var(--line);
+}
+
+.app-viewer-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.app-viewer-title {
+    flex-grow: 1;
+    min-width: 0;
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.app-viewer-title h2 {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 700;
+}
+
+.app-viewer-title span {
+    font-size: 0.8125rem;
+    color: var(--ink-subtle);
+}
+
+.app-viewer-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.app-viewer-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-subtle);
+}
+
+.app-viewer-person {
+    align-self: flex-start;
+    height: 36px;
+    padding: 0 12px 0 4px;
+    border-radius: 999px;
+    background: var(--surface-raised);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+}
+
+.app-viewer-reference {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.app-viewer-details {
+    padding-top: 4px;
+    border-top: 1px solid var(--line);
+    font-size: 0.875rem;
+}
+
+.app-viewer-details summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--ink-muted);
+    cursor: pointer;
+}
+
+.app-viewer-details p {
+    margin: 0 0 12px;
+    color: var(--ink-soft);
+    overflow-wrap: anywhere;
+}
+
+.app-viewer-details dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 6px 12px;
+}
+
+.app-viewer-details dt {
+    color: var(--ink-subtle);
+}
+
+.app-viewer-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.app-viewer-actions {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+}
+
+.app-viewer-actions .mud-button-root {
+    min-height: 44px;
+    justify-content: flex-start;
+}
+
+@media (max-width: 599.98px) {
+    .mud-dialog.app-viewer-dialog {
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+        height: 100dvh;
+        max-height: 100dvh;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .app-viewer {
+        height: 100dvh;
+        flex-direction: column;
+    }
+
+    .app-viewer-image {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .app-viewer-aside {
+        width: auto;
+        max-height: 50dvh;
+        padding: 8px 16px calc(12px + env(safe-area-inset-bottom));
+        gap: 12px;
+        border-left: 0;
+        border-top: 1px solid var(--line);
     }
 }

@@ -51,9 +51,11 @@ becomes narration rather than a new character.
 
 ## Background work never blocks the user
 
-Scene tracking, memory extraction, summarization and image generation run **after** the reply is
-saved, through a bounded `Channel<T>` (`UpkeepQueue`) read by a `BackgroundService` (`UpkeepWorker`),
-which runs each step in turn so one failing does not stop the next:
+Scene tracking, memory extraction and summarization run **after** the reply is saved, through a
+bounded `Channel<T>` (`UpkeepQueue`) read by a `BackgroundService` (`UpkeepWorker`), which runs each
+step in turn so one failing does not stop the next. Pictures have their own queue and worker
+(`PictureQueue`, `PictureWorker`), so a slow drawing never holds a chat's upkeep back. Both follow
+the same rules:
 
 - **The producer only `TryWrite`s and returns.** A chat turn never waits on extraction, and a failing
   job never fails the turn.
@@ -141,3 +143,21 @@ Files go through `IImageStore`, never a path built in a page.
   through `ImageService.OpenAsync`, so another user's id is a 404; the endpoint hands the request's
   user to the `AuthenticationStateProvider` first, since outside a component nothing else does.
 - Testing an `Image` profile on the models page draws and stores a real picture.
+- **Pages ask through `PictureService`; `PictureDrawing` does the work** in the background. A job
+  carries its owner like an upkeep job and saves with `ImageService.StoreAsync` in a context scoped to
+  that owner. `PictureQueue` also holds what is waiting or being drawn, so a page shows placeholders
+  (with the caption once the prompt is written) and can cancel; `PictureNotifier` announces the caption
+  and the end. Picture this and portraits are refused up front without an image model, or without a
+  utility model to write the prompt.
+- **`ImagePrompts` is pure**: the brief (`PictureBrief`), the utility-model prompt, the parse and
+  `Compose`. Stable looks come from the `Character`, clothes and changes from the chat's
+  `CharacterState`; a portrait wears the default outfit. A picture is of the moment it was asked on:
+  the messages up to that one go in, not later ones.
+- **Adults only, enforced in code as well as asked for.** `ImagePrompts.AgeFor` never sends an age
+  under 18 to the prompt writer, `Compose` adds "adult" whenever people are in the picture, and every
+  request carries `AdultsOnlyNegative`. A change that drops any of the three needs a reason.
+- **The reference portrait** (`Character.ReferenceImageId`) is sent only to a profile with
+  `AcceptsReferenceImage`, together with the character's `ImageSeed`. A character's first portrait
+  becomes the reference and gives them its seed; the user can pick another picture of them. The avatar
+  is that portrait cropped in CSS (`.app-avatar-picture`), never a second stored image. Drawing again
+  keeps the prompt and takes a new seed, since the stored one would give back the same picture.

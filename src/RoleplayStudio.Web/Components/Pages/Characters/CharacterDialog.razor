@@ -4,10 +4,7 @@
 <EditorSheet @ref="Sheet" Kind="@Kind" Title="@Title" Sections="Sections" IsDirty="IsDirty" DiscardMessage="@DiscardMessage"
              ProblemSection="@ProblemSection" Saving="Saving" OnSave="SaveAsync">
     <Portrait>
-        <div class="app-editor-portrait">
-            <Avatar Id="Character?.Id ?? Guid.Empty" Name="@Edited.Name" Size="96" Class="app-editor-portrait-letter" />
-            <span class="app-editor-portrait-note">No portrait yet</span>
-        </div>
+        <CharacterPortrait CharacterId="Character?.Id" Name="@Edited.Name" ReferenceImageId="Character?.ReferenceImageId" />
     </Portrait>
     <ChildContent>
         <EditorSectionBlock Section="Identity">

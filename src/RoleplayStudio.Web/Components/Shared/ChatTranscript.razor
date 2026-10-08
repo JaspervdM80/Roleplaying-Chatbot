@@ -3,9 +3,15 @@
 <div class="chat-messages" @ref="_messageList" aria-live="polite">
     @foreach (var turn in Turns)
     {
-        <div class="@(turn.FromUser ? "chat-turn chat-turn-user" : "chat-turn")" @key="turn">
-            <div class="chat-turn-speaker">@turn.Speaker</div>
-            <div class="chat-turn-text">@turn.Text</div>
+        <div class="chat-entry" @key="turn">
+            <div class="@(turn.FromUser ? "chat-turn chat-turn-user" : "chat-turn")">
+                <div class="chat-turn-speaker">@turn.Speaker</div>
+                <div class="chat-turn-text">@turn.Text</div>
+            </div>
+            @if (TurnFooter is not null && turn.MessageId is not null)
+            {
+                @TurnFooter(turn)
+            }
         </div>
     }
     @if (Streaming && Turns.Count > 0 && Turns[^1] is { FromUser: false, Text.Length: 0 })

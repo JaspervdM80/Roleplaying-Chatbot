@@ -1,0 +1,152 @@
+@using RoleplayStudio.AI.Images
+@using RoleplayStudio.Domain.Media
+@using RoleplayStudio.Infrastructure.Services
+
+<MudDialog Class="app-viewer-dialog" ContentClass="app-viewer-content">
+    <DialogContent>
+        <div class="app-viewer">
+            <div class="app-viewer-stage">
+                <img src="@ImageEndpoints.Url(Current.Id)" alt="@(Current.Caption ?? "Picture")" class="app-viewer-image" />
+                @if (_images.Count > 1)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" aria-label="Previous picture" OnClick="() => Move(-1)" Class="app-viewer-move app-viewer-previous" />
+                    <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" aria-label="Next picture" OnClick="() => Move(1)" Class="app-viewer-move app-viewer-next" />
+                }
+            </div>
+
+            <aside class="app-viewer-aside" aria-label="About this picture">
+                <div class="app-viewer-header">
+                    <div class="app-viewer-title">
+                        <h2>@(Current.Caption ?? (Current.IsPortrait ? "Portrait" : "Picture"))</h2>
+                        <span>@(_index + 1) of @_images.Count · @Wording.Ago(Current.CreatedAt, Time)</span>
+                    </div>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" aria-label="Close" OnClick="Close" />
+                </div>
+
+                @if (Current.CharacterId is { } characterId && Names.TryGetValue(characterId, out var name))
+                {
+                    <div class="app-viewer-group">
+                        <span class="app-viewer-label">In the picture</span>
+                        <span class="app-viewer-person">
+                            <Avatar Id="characterId" Name="@name" Size="28" />
+                            @name
+                            @if (IsReference)
+                            {
+                                <span class="app-viewer-reference">Reference</span>
+                            }
+                        </span>
+                    </div>
+                }
+
+                <details class="app-viewer-details">
+                    <summary>Prompt and settings</summary>
+                    <p>@Current.Prompt</p>
+                    <dl>
+                        <dt>Model</dt><dd>@Current.Provider · @Current.Model</dd>
+                        <dt>Seed</dt><dd>@Current.Seed</dd>
+                        <dt>Size</dt><dd>@Current.Width × @Current.Height</dd>
+                    </dl>
+                </details>
+
+                <div class="app-viewer-actions">
+                    @if (Current.CharacterId is not null && !IsReference)
+                    {
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.StarBorder" OnClick="SetReferenceAsync">Use as reference</MudButton>
+                    }
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RedrawAsync">Draw it again</MudButton>
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Download" Href="@ImageEndpoints.DownloadUrl(Current.Id)">Download</MudButton>
+                    <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Delete" OnClick="DeleteAsync">Delete</MudButton>
+                </div>
+            </aside>
+        </div>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    private List<GeneratedImage> _images = [];
+    private HashSet<Guid> _references = [];
+    private int _index;
+
+    [CascadingParameter]
+    private IMudDialogInstance Dialog { get; set; } = null!;
+
+    [Inject]
+    private ImageService ImageService { get; set; } = null!;
+
+    [Inject]
+    private PictureService Pictures { get; set; } = null!;
+
+    [Inject]
+    private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject]
+    private TimeProvider Time { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<GeneratedImage> Images { get; set; } = [];
+
+    [Parameter]
+    public int Index { get; set; }
+
+    /// <summary>The names of the characters the pictures may show.</summary>
+    [Parameter]
+    public IReadOnlyDictionary<Guid, string> Names { get; set; } = new Dictionary<Guid, string>();
+
+    [Parameter]
+    public IReadOnlySet<Guid> ReferenceIds { get; set; } = new HashSet<Guid>();
+
+    private GeneratedImage Current => _images[_index];
+
+    private bool IsReference => _references.Contains(Current.Id);
+
+    protected override void OnInitialized()
+    {
+        _images = [.. Images];
+        _references = [.. ReferenceIds];
+        _index = Math.Clamp(Index, 0, _images.Count - 1);
+    }
+
+    private void Move(int step) => _index = (_index + step + _images.Count) % _images.Count;
+
+    private void Close() => Dialog.Close();
+
+    private async Task SetReferenceAsync()
+    {
+        var picture = Current;
+        if (Snackbar.Report(await ImageService.SetReferenceAsync(picture.Id), "Later pictures are drawn after this one"))
+        {
+            _references.RemoveWhere(id => _images.Any(i => i.Id == id && i.CharacterId == picture.CharacterId));
+            _references.Add(picture.Id);
+        }
+    }
+
+    private async Task RedrawAsync()
+    {
+        if (Snackbar.Report(await Pictures.RedrawAsync(Current.Id)))
+        {
+            Close();
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        var picture = Current;
+        if (!await Dialogs.ConfirmAsync("Delete picture", "Delete this picture? It cannot be brought back.", "Delete")
+            || !Snackbar.Report(await ImageService.DeleteAsync(picture.Id), "Picture deleted"))
+        {
+            return;
+        }
+
+        _images.Remove(picture);
+        if (_images.Count == 0)
+        {
+            Close();
+            return;
+        }
+
+        _index = Math.Min(_index, _images.Count - 1);
+    }
+}

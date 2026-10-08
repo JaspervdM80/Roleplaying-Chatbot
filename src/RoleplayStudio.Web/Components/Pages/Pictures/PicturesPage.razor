@@ -1,0 +1,70 @@
+@page "/characters/{CharacterId:guid}/pictures"
+@page "/chats/{SessionId:guid}/pictures"
+@attribute [Authorize]
+@inherits CancellableComponent
+
+<PageTitle>@(_title ?? "Pictures") · Roleplay Studio</PageTitle>
+
+<div class="pictures-header">
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="@BackUrl" aria-label="@BackLabel" Class="pictures-back" />
+    @if (_character is not null)
+    {
+        <Avatar Id="_character.Id" Name="@_character.Name" ImageId="_character.ReferenceImageId" Size="48" />
+    }
+    <div class="pictures-title">
+        <MudText Typo="Typo.h5" HtmlTag="h1">@(_character?.Name ?? "Pictures")</MudText>
+        <MudText Typo="Typo.body2" Class="app-list-card-detail">@_subtitle</MudText>
+    </div>
+    @if (_character is not null)
+    {
+        <MudButton Variant="Variant.Outlined" OnClick="EditCharacterAsync">Edit character</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="DrawPortraitAsync">Generate portrait</MudButton>
+    }
+</div>
+
+@if (_pictures is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <div role="group" aria-label="Show" class="pictures-filters">
+        @foreach (var filter in _filters)
+        {
+            <MudButton Variant="Variant.Outlined" aria-pressed="@(filter == _filter ? "true" : "false")" OnClick="() => _filter = filter"
+                       Class="@(filter == _filter ? "pictures-filter pictures-filter-on" : "pictures-filter")">
+                @filter.Label <span class="pictures-filter-count">@_pictures.Count(filter.Matches)</span>
+            </MudButton>
+        }
+    </div>
+
+    @if (Shown.Count == 0 && _pending.Count == 0)
+    {
+        <MudText Class="pictures-empty">
+            @(_character is null ? "No pictures yet. Use Picture this on a turn in the chat." : "No pictures yet. Generate a portrait, or use Picture this in a chat.")
+        </MudText>
+    }
+    else
+    {
+        <div class="pictures-grid">
+            @foreach (var pending in _pending)
+            {
+                <PicturePlaceholder Pending="pending" Compact="true" Class="app-picture-tile" @key="pending.Id" />
+            }
+            @foreach (var picture in Shown)
+            {
+                <button type="button" class="app-picture-tile" aria-label="@(picture.Caption ?? (picture.IsPortrait ? "Portrait" : "Picture"))" @key="picture.Id" @onclick="() => OpenAsync(picture)">
+                    <img src="@ImageEndpoints.Url(picture.Id)" alt="" loading="lazy" />
+                    @if (_references.Contains(picture.Id))
+                    {
+                        <span class="pictures-badge">Reference</span>
+                    }
+                    @if (picture.Caption is { } caption)
+                    {
+                        <span class="pictures-caption">@caption</span>
+                    }
+                </button>
+            }
+        </div>
+    }
+}

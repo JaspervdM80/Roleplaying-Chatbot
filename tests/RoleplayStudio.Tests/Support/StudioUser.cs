@@ -52,6 +52,9 @@ public sealed class StudioUser(PostgresFixture postgres)
     public async Task<ModelProfile> UtilityModelAsync() =>
         (await Profiles.CreateAsync(new ModelProfile { Name = "Utility", Role = ModelRole.Utility, Provider = ProviderKind.Ollama, ModelId = "qwen3", IsDefault = true })).Value;
 
+    public async Task<ModelProfile> ImageModelAsync(bool acceptsReferenceImage = false) =>
+        (await Profiles.CreateAsync(new ModelProfile { Name = "Runware", Role = ModelRole.Image, Provider = ProviderKind.Runware, ModelId = "runware:101@1", IsDefault = true, AcceptsReferenceImage = acceptsReferenceImage })).Value;
+
     public async Task<ModelProfile> EmbeddingModelAsync() =>
         (await Profiles.CreateAsync(new ModelProfile { Name = "Embeddings", Role = ModelRole.Embedding, Provider = ProviderKind.Ollama, ModelId = "nomic-embed-text", IsDefault = true })).Value;
 

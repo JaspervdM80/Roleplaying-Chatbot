@@ -4,10 +4,12 @@ using Microsoft.JSInterop;
 
 namespace RoleplayStudio.Web.Components.Shared;
 
-public sealed class ChatTurnView(bool fromUser, string speaker, string text)
+/// <summary>One turn as the transcript shows it; <see cref="MessageId"/> is null until the turn is saved.</summary>
+public sealed class ChatTurnView(bool fromUser, string speaker, string text, Guid? messageId = null)
 {
     private readonly StringBuilder _text = new(text);
 
+    public Guid? MessageId { get; } = messageId;
     public bool FromUser { get; } = fromUser;
     public string Speaker { get; } = speaker;
     public string Text => _text.ToString();
@@ -30,6 +32,10 @@ public partial class ChatTranscript
 
     [Parameter]
     public bool Streaming { get; set; }
+
+    /// <summary>Shown under each saved turn, such as its pictures.</summary>
+    [Parameter]
+    public RenderFragment<ChatTurnView>? TurnFooter { get; set; }
 
     /// <summary>Jumps to the newest turn on the next render even if the reader had scrolled up, as after sending.</summary>
     public void RequestScrollToEnd() => _scrollToEnd = true;

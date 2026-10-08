@@ -1,4 +1,13 @@
-<div class="app-avatar @Class" style="--avatar-size: @(Size)px; @ToneStyle" aria-hidden="true">@Letter</div>
+@if (ImageId is { } imageId)
+{
+    <div class="app-avatar app-avatar-picture @Class" style="--avatar-size: @(Size)px" aria-hidden="true">
+        <img src="@ImageEndpoints.Url(imageId)" alt="" loading="lazy" />
+    </div>
+}
+else
+{
+    <div class="app-avatar @Class" style="--avatar-size: @(Size)px; @ToneStyle" aria-hidden="true">@Letter</div>
+}
 
 @code {
     [Parameter, EditorRequired]
@@ -6,6 +15,10 @@
 
     [Parameter, EditorRequired]
     public string Name { get; set; } = "";
+
+    /// <summary>The reference portrait to crop the avatar from; without one the avatar is the first letter of the name.</summary>
+    [Parameter]
+    public Guid? ImageId { get; set; }
 
     [Parameter]
     public int Size { get; set; } = 40;

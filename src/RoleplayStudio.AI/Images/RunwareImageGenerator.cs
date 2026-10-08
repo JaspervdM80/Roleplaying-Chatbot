@@ -61,21 +61,38 @@ public sealed class RunwareImageGenerator(HttpClient http, Uri endpoint, string 
         }
     }
 
-    private sealed record InferenceTask(
-        Guid TaskUUID,
-        string Model,
-        string PositivePrompt,
-        string? NegativePrompt,
-        int Width,
-        int Height,
-        long Seed,
-        string[]? ReferenceImages)
+
+    private sealed class InferenceTask(Guid TaskUUID, string Model, string PositivePrompt, string? NegativePrompt, int Width, int Height, long Seed, string[] ReferenceImages)
     {
+        public Guid TaskUUID { get; } = TaskUUID;
+        public string Model { get; } = Model;
+        public string PositivePrompt { get; } = PositivePrompt;
+        [JsonIgnore]
+        public string? NegativePrompt { get; } = NegativePrompt;      
+        public int Width { get; } = Width;
+        public int Height { get; } = Height;
+        [JsonIgnore]
+        public long? Seed { get; } = Seed;
+        public string[] ReferenceImages { get; } = ReferenceImages;
+
         public string TaskType => "imageInference";
         public int NumberResults => 1;
         public string OutputType => "base64Data";
         public string OutputFormat => "WEBP";
     }
+
+    // private sealed record InferenceTask(
+    //     Guid TaskUUID,
+    //     string Model,
+    //     string PositivePrompt,
+    //     string? NegativePrompt,
+    //     int Width,
+    //     int Height,
+    //     long Seed,
+    //     string[]? ReferenceImages)
+    // {
+
+    // }
 
     private sealed record RunwareResponse(List<RunwareImage>? Data, List<RunwareError>? Errors);
 

@@ -20,7 +20,8 @@ public class Character : OwnedEntity
     /// <summary>Extra comma-separated tags appended to every image prompt for this character.</summary>
     public string? ImageTags { get; set; }
     public long? ImageSeed { get; set; }
-    public Guid? AvatarImageId { get; set; }
+
+    /// <summary>The portrait every picture of the character is drawn after; its crop is also their avatar.</summary>
     public Guid? ReferenceImageId { get; set; }
 
     /// <summary>Copies the fields a user edits, cleaned, leaving identity, ownership and images alone.</summary>

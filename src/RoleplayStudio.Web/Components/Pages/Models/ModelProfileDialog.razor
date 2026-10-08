@@ -71,6 +71,15 @@
                     </MudItem>
                 </MudGrid>
             }
+            else
+            {
+                <div>
+                    <MudSwitch @bind-Value="_profile.AcceptsReferenceImage" Color="Color.Primary" Label="Send the reference portrait" />
+                    <MudText Typo="Typo.caption" Class="app-list-card-detail">
+                        For models that draw after a reference picture, such as FLUX Kontext. Keeps a character looking the same in every picture.
+                    </MudText>
+                </div>
+            }
             <MudSwitch @bind-Value="_profile.IsDefault" Color="Color.Primary" Label="Default for this use" />
         </MudStack>
     </DialogContent>

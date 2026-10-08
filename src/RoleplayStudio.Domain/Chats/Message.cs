@@ -16,6 +16,5 @@ public class Message : Entity
     public string SpeakerName { get; set; } = "";
     public string Content { get; set; } = "";
     public int TokenCount { get; set; }
-    public Guid? ImageId { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

@@ -16,6 +16,14 @@ public sealed class CharacterService(IDbContextFactory<ApplicationDbContext> dbF
             return Result.Success<IReadOnlyList<Character>>(characters);
         });
 
+    public Task<Result<Character>> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
+        ServiceOperation.RunOwnerAsync(currentUser, logger, "load the character", cancellationToken, async ownerId =>
+        {
+            await using var db = await dbFactory.CreateForOwnerAsync(ownerId, cancellationToken);
+            var character = await db.Characters.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id, cancellationToken);
+            return character ?? NotFound(id).To<Character>();
+        });
+
     public Task<Result<Character>> CreateAsync(Character input) =>
         ServiceOperation.RunOwnerAsync(currentUser, logger, "create the character", CancellationToken.None, async ownerId =>
         {

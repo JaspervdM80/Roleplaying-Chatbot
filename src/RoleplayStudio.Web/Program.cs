@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using RoleplayStudio.AI.Chat;
+using RoleplayStudio.AI.Images;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Playground;
 using RoleplayStudio.AI.Providers;
@@ -90,6 +91,11 @@ builder.Services.AddSingleton<IImageStore>(new FileSystemImageStore(builder.Conf
     ? imagePath
     : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoleplayStudio", "images")));
 builder.Services.AddScoped<ImageService>();
+builder.Services.AddSingleton<PictureQueue>();
+builder.Services.AddSingleton<PictureNotifier>();
+builder.Services.AddSingleton<PictureDrawing>();
+builder.Services.AddScoped<PictureService>();
+builder.Services.AddHostedService<PictureWorker>();
 
 var app = builder.Build();
 
