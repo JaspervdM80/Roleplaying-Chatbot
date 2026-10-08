@@ -41,7 +41,7 @@ added rows and refuses to write an owned row from an unscoped context or for ano
 
 ## Owned types are JSON columns
 
-`Appearance`, `Outfit`, `SceneState` and `SessionSummary` are `OwnsOne(...).ToJson()` → `jsonb`.
+`SceneState` and `SessionSummary` are `OwnsOne(...).ToJson()` → `jsonb`.
 
 - Replace the owned object or mutate it on a **tracked** entity; on an untracked one EF does not see
   the change.

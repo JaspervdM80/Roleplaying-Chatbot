@@ -13,7 +13,7 @@ public class SceneTests(PostgresFixture postgres)
     private const string BessWalksIn = """
         {"location":"The common room","timeOfDay":"Late evening","present":["Mira","Old Bess"],
          "changes":[{"name":"Mira","status":"Warm"}],
-         "newcomers":[{"name":"Old Bess","role":"cook","age":61,"outfit":{"top":"kitchen whites"}}]}
+         "newcomers":[{"name":"Old Bess","role":"cook","age":61,"outfit":"Kitchen whites"}]}
         """;
 
     private static FakeChatClientFactory Utility(string reply) => new(new FakeChatClient([reply]));
@@ -47,7 +47,7 @@ public class SceneTests(PostgresFixture postgres)
         var mira = reloaded.CharacterStates.Single(s => s.Character.Name == "Mira");
         Assert.Equal(("The common room", "Late evening", 2L), (reloaded.Scene.Location, reloaded.Scene.TimeOfDay, reloaded.Scene.TrackedUpToSequence));
         Assert.Equal([mira.CharacterId, bess.CharacterId], reloaded.Scene.PresentCharacterIds);
-        Assert.Equal(("kitchen whites", "Warm"), (bess.CurrentOutfit.Top, mira.Status));
+        Assert.Equal(("Kitchen whites", "Warm"), (bess.CurrentOutfit, mira.Status));
         Assert.Contains((await user.Characters.ListAsync()).Value, c => c.Id == bess.CharacterId);
         Assert.Contains((await user.Chatbots.GetAsync(reloaded.Scenario.ChatbotId)).Value.Cast, m => m.CharacterId == bess.CharacterId && m.Role == "cook");
         Assert.Equal([session.Id], notified);

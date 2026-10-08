@@ -36,12 +36,15 @@
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Looks">
-            <AppearanceFields Appearance="Edited.Appearance" Changed="Changed" />
+            <MudTextField @bind-Value="Edited.Appearance" @bind-Value:after="Changed" Label="Appearance" Lines="4" Sizing="InputSizing.Auto" MaxLines="14" Variant="Variant.Outlined"
+                          Placeholder="Tall and wiry, with a weathered face, close-cropped grey hair and a scar through one eyebrow…"
+                          HelperText="How they look in every scene: build, face, hair, eyes, anything that stands out." />
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Outfit">
-            <MudText Typo="Typo.body2" Class="app-list-card-detail">What they wear when a chat starts. Each chat keeps track of outfit changes on its own.</MudText>
-            <OutfitFields Outfit="Edited.DefaultOutfit" Changed="Changed" />
+            <MudTextField @bind-Value="Edited.DefaultOutfit" @bind-Value:after="Changed" Label="Outfit" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
+                          Placeholder="A long oilskin coat over a wool jumper, dark trousers and scuffed boots…"
+                          HelperText="What they wear when a chat starts. Each chat keeps track of outfit changes on its own." />
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Images">

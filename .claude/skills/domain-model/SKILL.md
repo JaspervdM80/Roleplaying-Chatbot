@@ -22,8 +22,9 @@ ChatSession 1──* Message, CharacterState, MemoryEntry
 - **A chat session is an instance of it**, with its own mutable state: `SceneState`,
   `CharacterState` per character, `SessionSummary`, memories. Changing a character's
   `DefaultOutfit` never rewrites a running chat; the session's `CharacterState.CurrentOutfit` does.
-- `Appearance` (stable looks) and `Outfit` (changes during a chat) are separate on purpose: the image
-  prompt reads stable looks from the character and clothes from the session state.
+- `Appearance` (stable looks) and the outfit (changes during a chat) are separate on purpose: the image
+  prompt reads stable looks from the character and clothes from the session state. Both are free text the
+  user writes as prose, not a field per body part or garment.
 
 ## Domain logic lives on the model
 

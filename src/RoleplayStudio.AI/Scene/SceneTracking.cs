@@ -8,32 +8,10 @@ using RoleplayStudio.Domain.Chats;
 
 namespace RoleplayStudio.AI.Scene;
 
-/// <summary>A field the model left out is null and keeps its value; one it gave as empty clears it.</summary>
-public sealed record OutfitChange(IReadOnlyDictionary<string, string?> Fields)
-{
-    public Outfit ApplyTo(Outfit outfit)
-    {
-        var changed = outfit.Copy();
-        foreach (var (field, value) in Fields)
-        {
-            var cleaned = TextFields.Clean(value);
-            switch (field)
-            {
-                case "top": changed.Top = cleaned; break;
-                case "bottom": changed.Bottom = cleaned; break;
-                case "footwear": changed.Footwear = cleaned; break;
-                case "accessories": changed.Accessories = cleaned; break;
-                case "notes": changed.Notes = cleaned; break;
-            }
-        }
+/// <summary>A field the model left out is null and keeps its value.</summary>
+public sealed record CharacterChange(string Name, string? Status, string? AppearanceChanges, string? Outfit);
 
-        return changed;
-    }
-}
-
-public sealed record CharacterChange(string Name, string? Status, string? AppearanceChanges, OutfitChange? Outfit);
-
-public sealed record Newcomer(string Name, string? Role, int? Age, string? Gender, string? Description, string? Personality, string? SpeechStyle, Appearance Appearance, Outfit Outfit);
+public sealed record Newcomer(string Name, string? Role, int? Age, string? Gender, string? Description, string? Personality, string? SpeechStyle, string? Appearance, string? Outfit);
 
 /// <summary>What the utility model read from the latest messages; <see cref="Present"/> is null when it did not say who is there.</summary>
 public sealed record SceneUpdate(
@@ -52,9 +30,6 @@ public static class SceneTracking
     public const int MaxMessages = 12;
     public const int MaxTextLength = 400;
 
-    private static readonly string[] OutfitFields = ["top", "bottom", "footwear", "accessories", "notes"];
-    private static readonly string[] AppearanceFields = ["bodyType", "height", "skinTone", "face", "hair", "eyes", "distinguishingFeatures"];
-
     public static IReadOnlyList<ChatMessage> Prompt(ChatSession session, string personaName, SceneCast cast, IReadOnlyList<Message> messages)
     {
         var instructions = new StringBuilder();
@@ -67,8 +42,8 @@ public static class SceneTracking
         instructions.AppendLine("Use the known characters' names exactly as written below.");
         instructions.AppendLine();
         instructions.AppendLine("Answer with JSON only, in this shape:");
-        instructions.AppendLine($$"""{"location":"...","timeOfDay":"...","mood":"...","present":["Name"],"changes":[{"name":"Name","status":"...","appearanceChanges":"...","outfit":{{OutfitShape()}}}],"newcomers":[{"name":"...","role":"...","age":30,"gender":"...","description":"...","personality":"...","speechStyle":"...","appearance":{{Shape(AppearanceFields)}},"outfit":{{OutfitShape()}}}]}""");
-        instructions.AppendLine("Leave out a field that did not change. In an outfit, give a piece someone took off as an empty string.");
+        instructions.AppendLine($$"""{"location":"...","timeOfDay":"...","mood":"...","present":["Name"],"changes":[{"name":"Name","status":"...","appearanceChanges":"...","outfit":"..."}],"newcomers":[{"name":"...","role":"...","age":30,"gender":"...","description":"...","personality":"...","speechStyle":"...","appearance":"...","outfit":"..."}]}""");
+        instructions.AppendLine("Leave out a field that did not change. An outfit is everything they wear now, in a sentence or two, not only what changed.");
 
         var story = new StringBuilder();
         story.AppendLine("The scene before this part:");
@@ -80,7 +55,7 @@ public static class SceneTracking
         foreach (var state in cast.Met)
         {
             var where = session.Scene.PresentCharacterIds.Contains(state.CharacterId) ? "in the scene" : "met earlier, not in the scene";
-            story.AppendLine($"- {state.Character.Name} ({where}). Wearing: {OneLine(state.CurrentOutfit.Describe()) ?? "unknown"}.{Suffix(" Status: ", state.Status)}");
+            story.AppendLine($"- {state.Character.Name} ({where}). Wearing: {OneLine(state.CurrentOutfit) ?? "unknown"}.{Suffix(" Status: ", state.Status)}");
         }
 
         foreach (var character in cast.Cast.Where(c => cast.Met.All(s => s.CharacterId != c.Id)))
@@ -171,11 +146,7 @@ public static class SceneTracking
 
             state.Status = change.Status ?? state.Status;
             state.AppearanceChanges = change.AppearanceChanges ?? state.AppearanceChanges;
-            if (change.Outfit is { } outfit)
-            {
-                state.CurrentOutfit = outfit.ApplyTo(state.CurrentOutfit);
-            }
-
+            state.CurrentOutfit = change.Outfit ?? state.CurrentOutfit;
             state.UpdatedAt = now;
         }
 
@@ -201,27 +172,8 @@ public static class SceneTracking
 
     private static CharacterChange? ChangeOf(JsonElement item) =>
         Text(item, "name") is { } name
-            ? new CharacterChange(name, Text(item, "status"), Text(item, "appearanceChanges"), item.TryGetProperty("outfit", out var outfit) ? OutfitChangeOf(outfit) : null)
+            ? new CharacterChange(name, Text(item, "status"), Text(item, "appearanceChanges"), Text(item, "outfit"))
             : null;
-
-    private static OutfitChange? OutfitChangeOf(JsonElement outfit)
-    {
-        if (outfit.ValueKind != JsonValueKind.Object)
-        {
-            return null;
-        }
-
-        var fields = new Dictionary<string, string?>();
-        foreach (var field in OutfitFields)
-        {
-            if (outfit.TryGetProperty(field, out var value) && value.ValueKind is JsonValueKind.String or JsonValueKind.Null)
-            {
-                fields[field] = value.ValueKind == JsonValueKind.String ? Cut(value.GetString()) : null;
-            }
-        }
-
-        return fields.Count == 0 ? null : new OutfitChange(fields);
-    }
 
     private static Newcomer? NewcomerOf(JsonElement item)
     {
@@ -230,8 +182,6 @@ public static class SceneTracking
             return null;
         }
 
-        var appearance = item.TryGetProperty("appearance", out var looks) && looks.ValueKind == JsonValueKind.Object ? looks : default;
-        var outfit = item.TryGetProperty("outfit", out var clothes) ? OutfitChangeOf(clothes) : null;
         return new Newcomer(
             name,
             Text(item, "role"),
@@ -240,17 +190,8 @@ public static class SceneTracking
             Text(item, "description"),
             Text(item, "personality"),
             Text(item, "speechStyle"),
-            new Appearance
-            {
-                BodyType = Text(appearance, "bodyType"),
-                Height = Text(appearance, "height"),
-                SkinTone = Text(appearance, "skinTone"),
-                Face = Text(appearance, "face"),
-                Hair = Text(appearance, "hair"),
-                Eyes = Text(appearance, "eyes"),
-                DistinguishingFeatures = Text(appearance, "distinguishingFeatures"),
-            },
-            outfit?.ApplyTo(new Outfit()) ?? new Outfit());
+            Text(item, "appearance"),
+            Text(item, "outfit"));
     }
 
     private static int? AgeOf(JsonElement item)
@@ -280,10 +221,6 @@ public static class SceneTracking
             : null;
 
     private static string? Cut(string? text) => text is { Length: > MaxTextLength } ? text[..MaxTextLength] : text;
-
-    private static string Shape(IEnumerable<string> fields) => $"{{{string.Join(",", fields.Select(f => $"\"{f}\":\"...\""))}}}";
-
-    private static string OutfitShape() => Shape(OutfitFields);
 
     private static string? OneLine(string? text) => text?.ReplaceLineEndings("; ");
 

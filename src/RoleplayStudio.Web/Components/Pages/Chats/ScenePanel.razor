@@ -39,7 +39,7 @@
                 }
                 @foreach (var state in _present)
                 {
-                    @Person(state.Character.Id, state.Character.Name, state.Status, state.CurrentOutfit.Summarize())
+                    @Person(state.Character.Id, state.Character.Name, state.Status, state.CurrentOutfit)
                 }
             </section>
 
@@ -49,14 +49,14 @@
                     <h3 id="scene-met" class="scene-heading">Met earlier</h3>
                     @foreach (var state in _metEarlier)
                     {
-                        @Person(state.Character.Id, state.Character.Name, state.Status, state.CurrentOutfit.Summarize())
+                        @Person(state.Character.Id, state.Character.Name, state.Status, state.CurrentOutfit)
                     }
                 </section>
             }
 
             <section class="scene-group scene-you" aria-labelledby="scene-you">
                 <h3 id="scene-you" class="scene-heading">You</h3>
-                @Person(Session.Persona.Id, Session.Persona.Name, null, Session.Persona.DefaultOutfit.Summarize())
+                @Person(Session.Persona.Id, Session.Persona.Name, null, Session.Persona.DefaultOutfit)
             </section>
 
             <div class="scene-links">

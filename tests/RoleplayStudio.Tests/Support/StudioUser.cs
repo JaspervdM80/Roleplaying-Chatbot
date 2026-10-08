@@ -43,8 +43,8 @@ public sealed class StudioUser(PostgresFixture postgres)
 
     public async Task<Persona> PersonaAsync(string name = "Sam") => (await Personas.CreateAsync(new Persona { Name = name })).Value;
 
-    public async Task<Character> CharacterAsync(string name, string? top = null) =>
-        (await Characters.CreateAsync(new Character { Name = name, Age = 25, DefaultOutfit = new Outfit { Top = top } })).Value;
+    public async Task<Character> CharacterAsync(string name, string? outfit = null) =>
+        (await Characters.CreateAsync(new Character { Name = name, Age = 25, DefaultOutfit = outfit })).Value;
 
     public async Task<ModelProfile> ChatModelAsync(bool isDefault = true) =>
         (await Profiles.CreateAsync(new ModelProfile { Name = "Local", Role = ModelRole.Chat, Provider = ProviderKind.Ollama, ModelId = "mistral-nemo", IsDefault = isDefault })).Value;
@@ -79,7 +79,7 @@ public sealed class StudioUser(PostgresFixture postgres)
     public async Task<ChatSession> ChatAsync(string characterName = "Mira")
     {
         await ChatModelAsync();
-        var character = await CharacterAsync(characterName, top: "apron");
+        var character = await CharacterAsync(characterName, outfit: "An apron");
         var chatbot = await ChatbotAsync(character);
         var scenario = await ScenarioAsync(chatbot);
         var persona = await PersonaAsync();

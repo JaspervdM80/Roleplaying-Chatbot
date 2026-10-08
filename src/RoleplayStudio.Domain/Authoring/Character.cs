@@ -14,8 +14,8 @@ public class Character : OwnedEntity
     public string? Backstory { get; set; }
     public string? Boundaries { get; set; }
 
-    public Appearance Appearance { get; set; } = new();
-    public Outfit DefaultOutfit { get; set; } = new();
+    public string? Appearance { get; set; }
+    public string? DefaultOutfit { get; set; }
 
     /// <summary>Extra comma-separated tags appended to every image prompt for this character.</summary>
     public string? ImageTags { get; set; }
@@ -34,8 +34,8 @@ public class Character : OwnedEntity
         SpeechStyle = TextFields.Clean(other.SpeechStyle);
         Backstory = TextFields.Clean(other.Backstory);
         Boundaries = TextFields.Clean(other.Boundaries);
-        Appearance = other.Appearance.Copy();
-        DefaultOutfit = other.DefaultOutfit.Copy();
+        Appearance = TextFields.Clean(other.Appearance);
+        DefaultOutfit = TextFields.Clean(other.DefaultOutfit);
         ImageTags = TextFields.Clean(other.ImageTags);
         ImageSeed = other.ImageSeed;
     }

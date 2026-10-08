@@ -8,8 +8,8 @@ public class Persona : OwnedEntity
     public string? Gender { get; set; }
     public string? Description { get; set; }
     public string? Personality { get; set; }
-    public Appearance Appearance { get; set; } = new();
-    public Outfit DefaultOutfit { get; set; } = new();
+    public string? Appearance { get; set; }
+    public string? DefaultOutfit { get; set; }
     public Guid? AvatarImageId { get; set; }
 
     /// <summary>Copies the fields a user edits, cleaned, leaving identity and ownership alone.</summary>
@@ -20,8 +20,8 @@ public class Persona : OwnedEntity
         Gender = TextFields.Clean(other.Gender);
         Description = TextFields.Clean(other.Description);
         Personality = TextFields.Clean(other.Personality);
-        Appearance = other.Appearance.Copy();
-        DefaultOutfit = other.DefaultOutfit.Copy();
+        Appearance = TextFields.Clean(other.Appearance);
+        DefaultOutfit = TextFields.Clean(other.DefaultOutfit);
     }
 
     /// <summary>The first reason this persona cannot be saved, or null when it can.</summary>

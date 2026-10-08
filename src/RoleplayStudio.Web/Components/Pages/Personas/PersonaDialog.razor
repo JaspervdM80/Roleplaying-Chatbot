@@ -31,12 +31,15 @@
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Looks">
-            <AppearanceFields Appearance="Edited.Appearance" Changed="Changed" />
+            <MudTextField @bind-Value="Edited.Appearance" @bind-Value:after="Changed" Label="Appearance" Lines="4" Sizing="InputSizing.Auto" MaxLines="14" Variant="Variant.Outlined"
+                          Placeholder="Short and freckled, with a mess of red curls and green eyes…"
+                          HelperText="How you look in every scene: build, face, hair, eyes, anything that stands out." />
         </EditorSectionBlock>
 
         <EditorSectionBlock Section="Outfit">
-            <MudText Typo="Typo.body2" Class="app-list-card-detail">What you wear when a chat starts. Each chat keeps track of outfit changes on its own.</MudText>
-            <OutfitFields Outfit="Edited.DefaultOutfit" Changed="Changed" />
+            <MudTextField @bind-Value="Edited.DefaultOutfit" @bind-Value:after="Changed" Label="Outfit" Lines="3" Sizing="InputSizing.Auto" MaxLines="10" Variant="Variant.Outlined"
+                          Placeholder="A yellow raincoat over a striped jumper, jeans and green wellies…"
+                          HelperText="What you wear when a chat starts. Each chat keeps track of outfit changes on its own." />
         </EditorSectionBlock>
     </ChildContent>
 </EditorSheet>

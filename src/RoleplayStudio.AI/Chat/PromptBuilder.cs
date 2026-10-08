@@ -79,8 +79,8 @@ public static partial class PromptBuilder
             Labelled("Gender", persona.Gender),
             persona.Description,
             Labelled("Personality", persona.Personality),
-            persona.Appearance.Describe(),
-            Labelled("Wearing", persona.DefaultOutfit.Describe(), "\n")));
+            Labelled("Looks", persona.Appearance),
+            Labelled("Wearing", persona.DefaultOutfit)));
 
         foreach (var (character, state) in input.Present)
         {
@@ -92,8 +92,8 @@ public static partial class PromptBuilder
                 Labelled("Speech style", character.SpeechStyle),
                 Labelled("Backstory", character.Backstory),
                 Labelled("Boundaries", character.Boundaries),
-                character.Appearance.Describe(),
-                Labelled("Wearing now", state.CurrentOutfit.Describe(), "\n"),
+                Labelled("Looks", character.Appearance),
+                Labelled("Wearing now", state.CurrentOutfit),
                 Labelled("Changes since the start", state.AppearanceChanges)));
         }
 

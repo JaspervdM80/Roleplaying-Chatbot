@@ -20,7 +20,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var model = Assert.Single((await user.Profiles.ListAsync()).Value);
         Assert.Equal(model.Id, loaded.ChatModelProfileId);
         Assert.Equal("Behind the counter", loaded.Scene.Location);
-        Assert.Equal("apron", Assert.Single(loaded.CharacterStates).CurrentOutfit.Top);
+        Assert.Equal("An apron", Assert.Single(loaded.CharacterStates).CurrentOutfit);
         var opening = Assert.Single(loaded.Messages);
         Assert.Equal("Mira", opening.SpeakerName);
         Assert.Equal(user.Time.GetUtcNow(), loaded.LastActivityAt);
