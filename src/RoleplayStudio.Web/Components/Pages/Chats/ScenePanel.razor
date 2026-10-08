@@ -58,6 +58,10 @@
                 <h3 id="scene-you" class="scene-heading">You</h3>
                 @Person(Session.Persona.Id, Session.Persona.Name, null, Session.Persona.DefaultOutfit.Summarize())
             </section>
+
+            <div class="scene-links">
+                <MudButton Variant="Variant.Outlined" Href="@AppRoutes.ChatMemories(Session.Id)" FullWidth="true">Memories</MudButton>
+            </div>
         </div>
     </aside>
 </div>

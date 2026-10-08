@@ -21,18 +21,10 @@
             else
             {
                 <p class="scenario-present-hint @(IsProblem(nameof(Scenario.StartingCharacterIds)) ? "scenario-present-problem" : null)">@(IsProblem(nameof(Scenario.StartingCharacterIds)) ? Problem!.Message : PresentHint)</p>
-                <div class="scenario-present-chips">
+                <div class="app-pick-chips">
                     @foreach (var character in Cast)
                     {
-                        var present = Edited.StartingCharacterIds.Contains(character.Id);
-                        <button type="button" class="scenario-present-chip" aria-pressed="@(present ? "true" : "false")" @onclick="() => Toggle(character.Id)" @key="character.Id">
-                            <Avatar Id="character.Id" Name="@character.Name" Size="32" />
-                            @character.Name
-                            @if (present)
-                            {
-                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
-                            }
-                        </button>
+                        <PickChip Id="character.Id" Name="@character.Name" Picked="Edited.StartingCharacterIds.Contains(character.Id)" OnToggle="() => Toggle(character.Id)" @key="character.Id" />
                     }
                 </div>
             }

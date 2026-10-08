@@ -90,7 +90,7 @@ which runs each step in turn so one failing does not stop the next:
 
 - **Short-term memory is the messages after `Summary.CoveredUpToSequence`.** Upkeep folds the oldest
   of them into the summary once they outgrow a threshold (`SessionSummarizing`), a bounded piece per
-  job; the prompt never sends a message the summary covers.
+  model call, until what is left fits; the prompt never sends a message the summary covers.
 - **Extraction moves `ChatSession.MemoriesExtractedUpToSequence`.** A provider failure leaves it, so
   the next turn retries; unreadable JSON moves it past those messages, so a model that cannot write
   the JSON does not pay for them every turn.
@@ -99,7 +99,19 @@ which runs each step in turn so one failing does not stop the next:
 - **Recall never fails a turn.** Pinned memories come first; without an embedding model the most
   important memories stand in for the closest. A vector of the wrong dimension is dropped and the
   memory kept without one — never padded or cut — and a memory without a vector competes in
-  recall on importance alone.
+  recall on importance alone. Every memory recall brings back gets `LastRecalledAt` stamped.
+- **The user corrects memory through `MemoryService`.** A memory added or re-worded there is embedded
+  at once, so recall finds it by what it says now; it can only be about characters met in the chat.
+  An edited summary keeps covering the same messages, so the next fold builds on the user's text.
+- **Rebuilding the summary is an upkeep job** (`UpkeepJob.RebuildSummary`), not a reset done from the
+  page: jobs for one chat run in order, so a fold already in flight cannot write the old summary back
+  over the cleared one. It is refused without a utility model, since the job would do nothing, and
+  when the queue is full, since no later turn's job rebuilds.
+- **A user's summary edit wins over a fold.** The save is refused when the summary has moved past what
+  the user was editing, and a fold re-reads the stored summary before writing and stops if it changed.
+- `MemoryUpkeep` announces new memories and a changed summary through `MemoryNotifier`, as scene
+  tracking does through `SceneNotifier`; the end of a rebuild is always announced, even one that
+  changed nothing, so a page waiting on it stops waiting.
 
 ## Cost and latency
 

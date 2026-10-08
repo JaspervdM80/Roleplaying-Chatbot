@@ -92,7 +92,8 @@ why the dialog's own Escape handling is off.
   `Saving` and `OnSave="SaveAsync"` from it; a missing `ProblemSection` drops the problem dot silently.
 - **Dirty is a snapshot compare, asked on demand** (`IsDirty` is a `Func<bool>`). A field inside a
   child component (`AppearanceFields`) re-renders only that child, so it raises `Changed` and the
-  editor re-renders its footer.
+  editor re-renders its footer. A property the entity initialises from the clock is copied in
+  `CopyEditableFields`, or every snapshot differs (see `docs/known_issues`).
 - **A blocked save points at the field.** The entity's `FindProblem()` returns an `EditProblem`
   naming the property; the field sits in a `data-field="<Property>"` wrapper, and the sheet scrolls
   to it and marks its section.

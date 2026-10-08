@@ -115,6 +115,14 @@
     opacity: 0.72;
 }
 
+.scene-links {
+    margin-top: auto;
+}
+
+.scene-links ::deep .mud-button-root {
+    min-height: 44px;
+}
+
 .scene-scrim {
     display: none;
 }

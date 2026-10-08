@@ -29,8 +29,11 @@ public sealed class StudioUser(PostgresFixture postgres)
     public MemoryRecall Recall(IChatClientFactory clients) =>
         new(postgres.DbFactory, User, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), Time, NullLogger<MemoryRecall>.Instance);
 
-    public MemoryUpkeep Upkeep(IChatClientFactory clients) =>
-        new(postgres.DbFactory, clients, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), Time, NullLogger<MemoryUpkeep>.Instance);
+    public MemoryUpkeep Upkeep(IChatClientFactory clients, MemoryNotifier? notifier = null) =>
+        new(postgres.DbFactory, clients, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), notifier ?? new MemoryNotifier(), Time, NullLogger<MemoryUpkeep>.Instance);
+
+    public MemoryService Memories(IChatClientFactory clients) =>
+        new(postgres.DbFactory, User, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), UpkeepQueue, Time, NullLogger<MemoryService>.Instance);
 
     public SceneUpkeep SceneUpkeep(IChatClientFactory clients, SceneNotifier? notifier = null) =>
         new(postgres.DbFactory, clients, notifier ?? new SceneNotifier(), Time, NullLogger<SceneUpkeep>.Instance);

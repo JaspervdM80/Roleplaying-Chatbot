@@ -1,0 +1,47 @@
+@inherits EntityEditor<MemoryEntry>
+@using RoleplayStudio.Domain.Memory
+
+<EditorSheet @ref="Sheet" Kind="@($"{Kind} · {ChatTitle}")" Title="@(Original is null ? "New memory" : "Edit memory")" Sections="[]" IsDirty="IsDirty"
+             DiscardMessage="@DiscardMessage" Saving="Saving" OnSave="SaveAsync">
+    <div class="app-editor-section">
+        <div data-field="@nameof(MemoryEntry.Text)">
+            <MudTextField @bind-Value="Edited.Text" @bind-Value:after="Changed" Label="What to remember" Required="true" Lines="3" Sizing="InputSizing.Auto"
+                          MaxLines="10" Variant="Variant.Outlined" Error="IsProblem(nameof(MemoryEntry.Text))" ErrorText="@Problem?.Message"
+                          HelperText="One fact or event, written so it makes sense on its own." />
+        </div>
+
+        <MudSelect T="MemoryType" @bind-Value="Edited.Type" Label="Kind" Variant="Variant.Outlined">
+            @foreach (var type in Enum.GetValues<MemoryType>())
+            {
+                <MudSelectItem T="MemoryType" Value="type">@type</MudSelectItem>
+            }
+        </MudSelect>
+
+        <div class="memory-importance">
+            <MudSlider T="int" @bind-Value="Edited.Importance" Min="MemoryEntry.MinImportance" Max="MemoryEntry.MaxImportance" Step="1" Color="Color.Primary"
+                       aria-label="Importance">
+                Importance: @Edited.Importance
+            </MudSlider>
+            <p class="memory-hint">How much it counts when the chat looks for something to recall.</p>
+        </div>
+
+        <MudSwitch T="bool" @bind-Value="Edited.IsPinned" Color="Color.Primary" Label="Pinned: always in the prompt" />
+
+        @if (Characters.Count > 0)
+        {
+            <section class="memory-characters" aria-labelledby="memory-characters-title" data-field="@nameof(MemoryEntry.RelatedCharacterIds)">
+                <h3 id="memory-characters-title" class="app-editor-section-title">Who it is about</h3>
+                @if (IsProblem(nameof(MemoryEntry.RelatedCharacterIds)))
+                {
+                    <p class="memory-hint memory-problem">@Problem!.Message</p>
+                }
+                <div class="app-pick-chips">
+                    @foreach (var character in Characters)
+                    {
+                        <PickChip Id="character.Id" Name="@character.Name" Picked="Edited.RelatedCharacterIds.Contains(character.Id)" OnToggle="() => Toggle(character.Id)" @key="character.Id" />
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</EditorSheet>

@@ -58,7 +58,10 @@ public sealed class MemoryRecall(
                 .AsNoTracking()
                 .ToListAsync(cancellationToken));
 
-            var recalled = pinned.Concat(MemoryRanking.Rank(hits, time.GetUtcNow(), Recalled)).ToList();
+            var now = time.GetUtcNow();
+            var recalled = pinned.Concat(MemoryRanking.Rank(hits, now, Recalled)).ToList();
+            var recalledIds = recalled.Select(m => m.Id).ToList();
+            await memories.Where(m => recalledIds.Contains(m.Id)).ExecuteUpdateAsync(s => s.SetProperty(m => m.LastRecalledAt, now), cancellationToken);
             logger.LogDebug("Recalled {MemoryCount} memories for chat {SessionId}", recalled.Count, sessionId);
             return Result.Success<IReadOnlyList<MemoryEntry>>(recalled);
         });
