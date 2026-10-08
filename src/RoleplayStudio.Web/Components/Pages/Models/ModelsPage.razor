@@ -18,7 +18,7 @@ else if (_profiles.Count == 0)
     <MudPaper Class="pa-4" Outlined="true">
         <MudText Typo="Typo.h6" HtmlTag="h2">No models yet</MudText>
         <MudText Class="mt-2">
-            Add a cloud model from OpenRouter or Featherless, or a local one from Ollama. API keys stay out of the database:
+            Add a cloud model from OpenRouter or Featherless, a local one from Ollama, or an image model from Runware. API keys stay out of the database:
             a model names the setting that holds its key, which you set with <code>dotnet user-secrets</code>.
         </MudText>
     </MudPaper>
@@ -42,6 +42,10 @@ else
                     @if (_checks.TryGetValue(profile.Id, out var check))
                     {
                         <MudText Typo="Typo.body2" Color="@(check.Ok ? Color.Success : Color.Error)" Class="mt-1">@check.Text</MudText>
+                        @if (check.ImageId is { } imageId)
+                        {
+                            <img src="@ImageEndpoints.Url(imageId)" alt="Test picture from @profile.Name" class="app-model-test-picture mt-2" />
+                        }
                     }
                 </div>
                 <div class="app-list-card-actions">

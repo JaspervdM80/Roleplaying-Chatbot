@@ -10,8 +10,10 @@ using RoleplayStudio.AI.Scene;
 using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Infrastructure.Data;
 using RoleplayStudio.Infrastructure.Services;
+using RoleplayStudio.Infrastructure.Storage;
 using RoleplayStudio.Web.Components;
 using RoleplayStudio.Web.Components.Account;
+using RoleplayStudio.Web.Media;
 using RoleplayStudio.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -84,6 +86,10 @@ builder.Services.AddSingleton<MemoryUpkeep>();
 builder.Services.AddSingleton<SceneNotifier>();
 builder.Services.AddSingleton<SceneUpkeep>();
 builder.Services.AddHostedService<UpkeepWorker>();
+builder.Services.AddSingleton<IImageStore>(new FileSystemImageStore(builder.Configuration["Images:Path"] is { Length: > 0 } imagePath
+    ? imagePath
+    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RoleplayStudio", "images")));
+builder.Services.AddScoped<ImageService>();
 
 var app = builder.Build();
 
@@ -113,6 +119,7 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+app.MapImageEndpoints();
 app.MapDefaultEndpoints();
 
 app.Run();

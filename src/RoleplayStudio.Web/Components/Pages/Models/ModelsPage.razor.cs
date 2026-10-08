@@ -9,7 +9,7 @@ namespace RoleplayStudio.Web.Components.Pages.Models;
 
 public partial class ModelsPage
 {
-    private readonly Dictionary<Guid, (bool Ok, string Text)> _checks = [];
+    private readonly Dictionary<Guid, (bool Ok, string Text, Guid? ImageId)> _checks = [];
     private readonly HashSet<Guid> _testing = [];
     private IReadOnlyList<ModelProfile>? _profiles;
 
@@ -74,9 +74,12 @@ public partial class ModelsPage
             return;
         }
 
-        _checks[profile.Id] = result.IsSuccess
-            ? (true, $"Connected in {result.Value.Latency.TotalSeconds:0.0}s. Reply: “{Shorten(result.Value.Reply)}”")
-            : (false, result.Error ?? "");
+        _checks[profile.Id] = result switch
+        {
+            { IsSuccess: true, Value.ImageId: { } imageId } => (true, $"Drew a test picture in {result.Value.Latency.TotalSeconds:0.0}s.", imageId),
+            { IsSuccess: true } => (true, $"Connected in {result.Value.Latency.TotalSeconds:0.0}s. Reply: “{Shorten(result.Value.Reply)}”", null),
+            _ => (false, result.Error ?? "", null),
+        };
     }
 
     private static string Shorten(string text) => text.Length <= 80 ? text : text[..80] + "…";

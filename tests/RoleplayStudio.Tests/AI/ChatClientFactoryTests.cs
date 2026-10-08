@@ -15,6 +15,8 @@ public class ChatClientFactoryTests
             ["Providers:OpenRouter:ApiKey"] = Secret,
             ["Providers:OpenRouter:BaseUrl"] = "https://openrouter.ai/api/v1",
             ["Providers:Featherless:BaseUrl"] = "https://api.featherless.ai/v1",
+            ["Providers:Runware:ApiKey"] = Secret,
+            ["Providers:Runware:BaseUrl"] = ModelProfile.DefaultRunwareUrl,
             ["Registration:InviteCode"] = "invite",
         })
         .Build());
@@ -86,6 +88,51 @@ public class ChatClientFactoryTests
     public void An_image_provider_cannot_chat()
     {
         var result = Factory().Create(new ModelProfile { Name = "Images", Role = ModelRole.Image, Provider = ProviderKind.Runware, ModelId = "flux" });
+
+        Assert.True(result.IsFailure);
+    }
+
+    private static ModelProfile Runware(string? baseUrl = null, string? apiKeySetting = "Providers:Runware:ApiKey") => new()
+    {
+        Name = "Runware",
+        Role = ModelRole.Image,
+        Provider = ProviderKind.Runware,
+        BaseUrl = baseUrl,
+        ModelId = "runware:101@1",
+        ApiKeySetting = apiKeySetting,
+    };
+
+    [Fact]
+    public void A_runware_profile_draws_with_its_model()
+    {
+        var result = Factory().CreateImageGenerator(Runware());
+
+        Assert.True(result.IsSuccess, result.Error);
+        Assert.Equal("runware:101@1", result.Value.ModelId);
+    }
+
+    [Fact]
+    public void A_runware_key_is_never_sent_to_a_host_other_than_its_own()
+    {
+        var result = Factory().CreateImageGenerator(Runware("https://collector.example/v1"));
+
+        Assert.True(result.IsFailure);
+        Assert.Contains("Providers:Runware:BaseUrl", result.Error);
+    }
+
+    [Fact]
+    public void Runware_without_a_key_setting_is_a_readable_failure()
+    {
+        var result = Factory().CreateImageGenerator(Runware(apiKeySetting: null));
+
+        Assert.True(result.IsFailure);
+        Assert.Contains("Providers:Runware:ApiKey", result.Error);
+    }
+
+    [Fact]
+    public void A_chat_provider_cannot_draw()
+    {
+        var result = Factory().CreateImageGenerator(OpenRouter("Providers:OpenRouter:ApiKey"));
 
         Assert.True(result.IsFailure);
     }

@@ -128,3 +128,16 @@ The image prompt is written by the utility model from the character's `Appearanc
 `IImageGenerator`. It always describes the character as an adult. Store the final prompt, seed,
 provider and source memory ids on `GeneratedImage`, so an image can be explained and regenerated.
 Files go through `IImageStore`, never a path built in a page.
+
+- `IImageGenerator` is `RoleplayStudio.AI.Images`'s, not the one Microsoft.Extensions.AI ships under
+  the same name; a file using both namespaces aliases ours.
+- The factory's `CreateImageGenerator` builds it; only a provider `ModelProfile.CanDraw` accepts may
+  be an `Image` profile. The Runware key follows the same host rule as every other key
+  (`Providers:Runware:BaseUrl`).
+- **The seed is chosen by us and sent**, never left to the provider, so `GeneratedImage.Seed` can
+  always regenerate the picture.
+- `ImageService.SaveAsync` writes the file and the row together (the file is removed if the row fails)
+  and refuses a session, message or character that is not the caller's. `/images/{id}` serves
+  through `ImageService.OpenAsync`, so another user's id is a 404; the endpoint hands the request's
+  user to the `AuthenticationStateProvider` first, since outside a component nothing else does.
+- Testing an `Image` profile on the models page draws and stores a real picture.
