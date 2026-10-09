@@ -21,12 +21,10 @@ public interface IChatClientFactory
     Result<IImageGenerator> CreateImageGenerator(ModelProfile profile);
 }
 
-public sealed class ChatClientFactory(IConfiguration configuration) : IChatClientFactory
+public sealed class ChatClientFactory(IConfiguration configuration, RunwareModelCatalog? runwareModels = null) : IChatClientFactory
 {
     // Not IHttpClientFactory: the service defaults put a 10-second resilience timeout on every client, far shorter than a generation.
     internal static readonly SocketsHttpHandler Handler = new() { PooledConnectionLifetime = TimeSpan.FromMinutes(5) };
-
-    private static readonly RunwareModelCatalog RunwareModels = new(new HttpClient(Handler, disposeHandler: false) { Timeout = TimeSpan.FromSeconds(20) });
 
     public Result<IChatClient> Create(ModelProfile profile)
     {
@@ -84,7 +82,7 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
 
         var key = ApiKey(profile.ApiKeySetting, baseUrl);
         return key.IsSuccess
-            ? Result.Success<IImageGenerator>(new RunwareImageGenerator(new HttpClient(Handler, disposeHandler: false) { Timeout = TimeSpan.FromMinutes(2) }, new Uri(baseUrl), key.Value, profile.ModelId, RunwareModels))
+            ? Result.Success<IImageGenerator>(new RunwareImageGenerator(new HttpClient(Handler, disposeHandler: false) { Timeout = TimeSpan.FromMinutes(2) }, new Uri(baseUrl), key.Value, profile.ModelId, runwareModels ?? RunwareModelCatalog.Default))
             : key.To<IImageGenerator>();
     }
 

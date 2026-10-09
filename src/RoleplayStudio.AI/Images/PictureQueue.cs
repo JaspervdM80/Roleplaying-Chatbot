@@ -5,9 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace RoleplayStudio.AI.Images;
 
 /// <summary>
-/// One picture to draw in the background. It runs with no signed-in user, so it carries the owner it works for.
-/// A job with a <see cref="SessionId"/> pictures that chat, of <see cref="CharacterId"/> when set; without one it is the character's portrait,
-/// which with <see cref="RenewsReference"/> is drawn from their looks alone and replaces the reference portrait.
+/// A background picture carrying its owner: of the chat at <see cref="SessionId"/> (of <see cref="CharacterId"/> when set),
+/// else <see cref="CharacterId"/>'s portrait, which <see cref="RenewsReference"/> makes their new reference.
 /// </summary>
 public sealed record PictureJob(string OwnerId, Guid? SessionId, Guid? MessageId, Guid? CharacterId, Guid? RedrawOf = null, bool RenewsReference = false)
 {

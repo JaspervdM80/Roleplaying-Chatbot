@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
 using RoleplayStudio.AI.Images;
 
 namespace RoleplayStudio.Tests.AI;
@@ -66,8 +68,11 @@ public class RunwareImageGeneratorTests
         }
     }
 
+    private static RunwareModelCatalog Catalog(StubHandler handler, TimeProvider? time = null) =>
+        new(new HttpClient(handler), time ?? TimeProvider.System, NullLogger<RunwareModelCatalog>.Instance);
+
     private static RunwareImageGenerator Generator(StubHandler handler, string model = Diffusion) =>
-        new(new HttpClient(handler), new Uri(Endpoint), Key, model, new RunwareModelCatalog(new HttpClient(handler)));
+        new(new HttpClient(handler), new Uri(Endpoint), Key, model, Catalog(handler));
 
     private static ImageRequest Request(params ReferenceImage[] references) => new("A lighthouse at dusk", "blurry", 832, 1216, 42, references);
 
@@ -179,7 +184,7 @@ public class RunwareImageGeneratorTests
     public async Task A_schema_is_read_once_per_model_and_only_from_runwares_own_site()
     {
         var handler = new StubHandler(HttpStatusCode.OK, Drawn([1]));
-        var catalog = new RunwareModelCatalog(new HttpClient(handler));
+        var catalog = Catalog(handler);
 
         await catalog.TraitsAsync(Flux, default);
         await catalog.TraitsAsync(Flux, default);
@@ -193,7 +198,7 @@ public class RunwareImageGeneratorTests
     public async Task Documentation_that_cannot_be_read_now_is_tried_again_next_time()
     {
         var handler = new StubHandler(HttpStatusCode.OK, Drawn([1])) { DocumentsDown = true };
-        var catalog = new RunwareModelCatalog(new HttpClient(handler));
+        var catalog = Catalog(handler);
 
         var down = await catalog.TraitsAsync(Flux, default);
         handler.DocumentsDown = false;
@@ -201,6 +206,23 @@ public class RunwareImageGeneratorTests
 
         Assert.Same(ImageModelTraits.Unknown, down);
         Assert.Equal((false, false, 2), (up.TakesNegativePrompt, up.TakesSeed, up.MaxReferenceImages));
+    }
+
+    [Fact]
+    public async Task A_model_released_after_the_index_was_read_is_found_once_the_index_is_old()
+    {
+        var handler = new StubHandler(HttpStatusCode.OK, Drawn([1]));
+        var time = new FakeTimeProvider();
+        var catalog = Catalog(handler, time);
+        Assert.Same(ImageModelTraits.Unknown, await catalog.TraitsAsync("new:1@1", default));
+        handler.Documents["/docs/models/index.json"] = Index.Replace("other:1@1", "new:1@1").Replace("https://example.com/schema.json", "https://runware.ai/docs/models/flux/schema.json");
+
+        var soon = await catalog.TraitsAsync("new:1@1", default);
+        time.Advance(RunwareModelCatalog.IndexLifetime);
+        var later = await catalog.TraitsAsync("new:1@1", default);
+
+        Assert.Same(ImageModelTraits.Unknown, soon);
+        Assert.Equal(2, later.MaxReferenceImages);
     }
 
     [Fact]

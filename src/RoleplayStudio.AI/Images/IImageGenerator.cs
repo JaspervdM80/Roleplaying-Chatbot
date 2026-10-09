@@ -16,7 +16,7 @@ public sealed record ImageModelTraits(bool TakesNegativePrompt, bool TakesSeed, 
     /// <summary>A model nothing is known about: diffusion models of the Stable Diffusion family take a negative prompt and a seed.</summary>
     public static readonly ImageModelTraits Unknown = new(true, true, 0, []);
 
-    /// <summary>The size asked for, or of the allowed sizes nearly as close to its shape as the closest, the one nearest its area.</summary>
+    /// <summary>The size asked for when any is allowed; otherwise, of the allowed sizes closest in shape, the one closest in area.</summary>
     public ImageSize Fit(int width, int height)
     {
         if (Sizes.Count == 0)

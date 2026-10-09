@@ -4,7 +4,6 @@ using RoleplayStudio.AI.Images;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Authoring;
-using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Data;
 
 namespace RoleplayStudio.AI.Scene;
@@ -98,9 +97,7 @@ public sealed class SceneUpkeep(
     private async Task DrawPortraitsAsync(ApplicationDbContext db, string ownerId, SceneOutcome outcome, CancellationToken cancellationToken)
     {
         var portraits = outcome.Newcomers.Select(n => (n.Character.Id, Renew: false)).Concat(outcome.Restyled.Select(c => (c.Id, Renew: true))).ToList();
-        if (portraits.Count == 0
-            || !await db.ModelProfiles.PreferredFor(ModelRole.Image).AnyAsync(cancellationToken)
-            || !await db.ModelProfiles.PreferredFor(ModelRole.Utility).AnyAsync(cancellationToken))
+        if (portraits.Count == 0 || await PictureService.MissingModelAsync(db, needsPrompt: true, cancellationToken) is not null)
         {
             return;
         }

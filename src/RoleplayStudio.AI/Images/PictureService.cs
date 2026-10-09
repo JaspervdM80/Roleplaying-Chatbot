@@ -81,18 +81,23 @@ public sealed class PictureService(IDbContextFactory<ApplicationDbContext> dbFac
             return Task.FromResult(Result.Success());
         });
 
-    private async Task<Result<Guid>> EnqueueAsync(ApplicationDbContext db, PictureJob job, bool needsPrompt)
+    /// <summary>Why the context's owner cannot have a picture drawn, or null when they can.</summary>
+    internal static async Task<string?> MissingModelAsync(ApplicationDbContext db, bool needsPrompt, CancellationToken cancellationToken)
     {
-        if (!await db.ModelProfiles.PreferredFor(ModelRole.Image).AnyAsync())
+        if (!await db.ModelProfiles.PreferredFor(ModelRole.Image).AnyAsync(cancellationToken))
         {
-            logger.LogWarning("Refused a picture: no image model");
-            return Result.Failure<Guid>(NoImageModel);
+            return NoImageModel;
         }
 
-        if (needsPrompt && !await db.ModelProfiles.PreferredFor(ModelRole.Utility).AnyAsync())
+        return needsPrompt && !await db.ModelProfiles.PreferredFor(ModelRole.Utility).AnyAsync(cancellationToken) ? NoUtilityModel : null;
+    }
+
+    private async Task<Result<Guid>> EnqueueAsync(ApplicationDbContext db, PictureJob job, bool needsPrompt)
+    {
+        if (await MissingModelAsync(db, needsPrompt, CancellationToken.None) is { } missing)
         {
-            logger.LogWarning("Refused a picture: no utility model");
-            return Result.Failure<Guid>(NoUtilityModel);
+            logger.LogWarning("Refused a picture: {Problem}", missing);
+            return Result.Failure<Guid>(missing);
         }
 
         if (!queue.Enqueue(job))

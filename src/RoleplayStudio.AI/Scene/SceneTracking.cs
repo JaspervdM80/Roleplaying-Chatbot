@@ -43,6 +43,7 @@ public static class SceneTracking
 {
     public const int MaxMessages = 12;
     public const int MaxTextLength = 400;
+    public const double RestyleGrowth = 1.2;
 
     public static IReadOnlyList<ChatMessage> Prompt(ChatSession session, string personaName, SceneCast cast, IReadOnlyList<Message> messages)
     {
@@ -197,8 +198,13 @@ public static class SceneTracking
             character.Gender = change.Gender ?? character.Gender;
             if (change.Appearance is { } appearance && !string.Equals(appearance, character.Appearance?.Trim(), StringComparison.OrdinalIgnoreCase))
             {
+                // A model rewording the same looks each turn would redraw and re-reference them each turn; only more to go on earns a portrait.
+                if (appearance.Length >= (character.Appearance?.Trim().Length ?? 0) * RestyleGrowth)
+                {
+                    restyled.Add(character);
+                }
+
                 character.Appearance = appearance;
-                restyled.Add(character);
             }
         }
 

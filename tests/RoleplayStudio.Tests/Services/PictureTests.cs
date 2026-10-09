@@ -303,4 +303,88 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         Assert.Empty(drawer.LastRequest!.References!);
         Assert.Equal(renewed.Value, (await user.Characters.ListAsync()).Value.Single(c => c.Id == miraId).ReferenceImageId);
     }
+
+    private async Task<(StudioUser User, Guid PortraitId, Guid SceneId)> SceneAfterPortraitAsync()
+    {
+        var (user, session, opening, miraId) = await ReadyChatAsync();
+        Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
+        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
+        var scene = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator(Referencing)));
+        return (user, portrait.Value, scene.Value);
+    }
+
+    [Fact]
+    public async Task Drawing_a_picture_again_sends_the_same_references_in_the_same_order()
+    {
+        var (user, portraitId, sceneId) = await SceneAfterPortraitAsync();
+        var drawer = new FakeImageGenerator(Referencing);
+
+        Assert.True((await Pictures(user).RedrawAsync(sceneId)).IsSuccess);
+        var again = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient(["not asked"]), images: drawer));
+
+        Assert.Equal(FakeImageGenerator.Png, Assert.Single(drawer.LastRequest!.References!).Data);
+        Assert.Equal([portraitId], (await ImageAsync(user, again.Value)).ReferenceImageIds);
+    }
+
+    [Fact]
+    public async Task Drawing_again_after_a_reference_was_deleted_is_refused_rather_than_renumbered()
+    {
+        var (user, portraitId, sceneId) = await SceneAfterPortraitAsync();
+        Assert.True((await Images(user).DeleteAsync(portraitId)).IsSuccess);
+        var drawer = new FakeImageGenerator(Referencing);
+
+        Assert.True((await Pictures(user).RedrawAsync(sceneId)).IsSuccess);
+        var again = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient(["not asked"]), images: drawer));
+
+        Assert.True(again.IsFailure);
+        Assert.Contains("gone", again.Error);
+        Assert.Null(drawer.LastRequest);
+    }
+
+    [Fact]
+    public async Task Drawing_again_on_a_model_that_takes_fewer_references_is_refused()
+    {
+        var (user, _, sceneId) = await SceneAfterPortraitAsync();
+
+        Assert.True((await Pictures(user).RedrawAsync(sceneId)).IsSuccess);
+        var again = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient(["not asked"]), images: new FakeImageGenerator()));
+
+        Assert.True(again.IsFailure);
+        Assert.Contains("fewer reference portraits", again.Error);
+    }
+
+    [Fact]
+    public async Task A_reference_whose_file_is_gone_is_not_numbered_in_the_prompt_or_sent()
+    {
+        var (user, session, opening, miraId) = await ReadyChatAsync();
+        Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
+        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        Store.Delete((await ImageAsync(user, portrait.Value)).StoragePath);
+        var writer = new FakeChatClient([Written]);
+        var drawer = new FakeImageGenerator(Referencing);
+
+        Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
+        Assert.True((await DrawQueuedAsync(new FakeChatClientFactory(writer, images: drawer))).IsSuccess);
+
+        Assert.Empty(drawer.LastRequest!.References!);
+        Assert.DoesNotContain("reference image", writer.LastMessages![1].Text);
+    }
+
+    [Fact]
+    public async Task Picking_a_reference_hands_a_character_the_chat_introduced_to_the_user()
+    {
+        var (user, _, _, miraId) = await ReadyChatAsync();
+        await using (var db = await postgres.DbFactory.CreateForOwnerAsync(user.User.UserId!))
+        {
+            (await db.Characters.SingleAsync(c => c.Id == miraId)).IntroducedInSessionId = Guid.NewGuid();
+            await db.SaveChangesAsync();
+        }
+
+        Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
+        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        Assert.True((await Images(user).SetReferenceAsync(portrait.Value)).IsSuccess);
+
+        Assert.Null((await user.Characters.ListAsync()).Value.Single(c => c.Id == miraId).IntroducedInSessionId);
+    }
 }

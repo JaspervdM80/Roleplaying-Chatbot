@@ -140,8 +140,8 @@ Files go through `IImageStore`, never a path built in a page.
 - The factory's `CreateImageGenerator` builds it; only a provider `ModelProfile.CanDraw` accepts may
   be an `Image` profile. The Runware key follows the same host rule as every other key
   (`Providers:Runware:BaseUrl`).
-- **The seed is chosen by us and sent**, never left to the provider, so `GeneratedImage.Seed` can
-  always regenerate the picture.
+- **The seed is chosen by us and sent when the model takes one**, never left to the provider, so
+  `GeneratedImage.Seed` can regenerate the picture; a model that takes no seed stores none.
 - `ImageService.SaveAsync` writes the file and the row together (the file is removed if the row fails)
   and refuses a session, message or character that is not the caller's. `/images/{id}` serves
   through `ImageService.OpenAsync`, so another user's id is a 404; the endpoint hands the request's
@@ -158,13 +158,16 @@ Files go through `IImageStore`, never a path built in a page.
   `CharacterState`; a portrait wears the default outfit. A picture is of the moment it was asked on:
   the messages up to that one go in, not later ones.
 - **What a model takes comes from its schema, not from settings.** `RunwareModelCatalog` reads the
-  schema Runware publishes per model (cached; a model missing from the index is treated as the SD
-  family: negative prompt and seed, no references), and `RunwareImageGenerator` leaves out what the
-  model does not declare, puts references in `inputs.referenceImages` and snaps to an allowed size.
-  `GeneratedPicture` reports the size drawn and a null seed when the model takes none.
+  schema Runware publishes per model and caches what it found; a model missing from the index (read
+  again after an hour) is treated as the SD family: negative prompt and seed, no references.
+  `RunwareImageGenerator` leaves out what the model does not declare, puts references in
+  `inputs.referenceImages` and snaps to an allowed size; `GeneratedPicture` reports the size drawn.
 - **Reference portraits** (`Character.ReferenceImageId`) of everyone pictured are sent, in the order
-  the prompt numbers them ("reference image N"), up to the model's limit, together with the subject's
-  `ImageSeed`; `GeneratedImage.ReferenceImageIds` keeps them so drawing again sends the same ones. A character's first portrait
-  becomes the reference and gives them its seed; the user can pick another picture of them. The avatar
+  the prompt numbers them ("reference image N"), up to the model's limit, with the subject's
+  `ImageSeed`. Only a portrait that loaded gets a number, so the numbers always match what is sent.
+  `GeneratedImage.ReferenceImageIds` keeps them; drawing again sends the same ones, and is refused
+  when one is gone or the model now takes fewer. A character's first portrait becomes the reference
+  and gives them its seed; the user can pick another picture of them, which like any edit hands a
+  character the chat introduced over to the user. The avatar
   is that portrait cropped in CSS (`.app-avatar-picture`), never a second stored image. Drawing again
   keeps the prompt and takes a new seed, since the stored one would give back the same picture.

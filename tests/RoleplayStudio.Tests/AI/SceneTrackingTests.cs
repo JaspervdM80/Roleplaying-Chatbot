@@ -209,6 +209,18 @@ public class SceneTrackingTests
     }
 
     [Fact]
+    public void Looks_only_reworded_are_kept_but_ask_for_no_new_portrait()
+    {
+        var (session, cast, stablehand) = WithStablehand();
+        stablehand.Appearance = "Lanky, with red hair and freckles";
+
+        var outcome = SceneTracking.Apply(session, cast, Parsed("""{"changes":[{"name":"The stablehand","appearance":"Lanky; red hair, freckled"}]}"""), "Sam", Now);
+
+        Assert.Equal("Lanky; red hair, freckled", stablehand.Appearance);
+        Assert.Empty(outcome.Restyled);
+    }
+
+    [Fact]
     public void A_character_the_user_wrote_is_never_renamed_or_restyled_by_the_story()
     {
         var mira = new Character { Name = "Mira", Appearance = "Short and round" };

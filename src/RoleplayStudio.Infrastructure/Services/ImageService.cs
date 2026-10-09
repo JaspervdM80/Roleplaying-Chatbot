@@ -103,7 +103,7 @@ public sealed class ImageService(IDbContextFactory<ApplicationDbContext> dbFacto
     public Task<Result<IReadOnlyList<GeneratedImage>>> ListForCharacterAsync(Guid characterId, CancellationToken cancellationToken = default) =>
         ListAsync(i => i.CharacterId == characterId, cancellationToken);
 
-    /// <summary>Makes the picture the reference portrait of the character it shows, and adopts its seed when the character has none.</summary>
+    /// <summary>Makes the picture the reference portrait of the character it shows, and adopts its seed when the character has none; like any edit, it hands a character the chat introduced to the user.</summary>
     public Task<Result> SetReferenceAsync(Guid id) =>
         ServiceOperation.RunOwnerAsync(currentUser, logger, "set the reference portrait", CancellationToken.None, async ownerId =>
         {
@@ -123,6 +123,7 @@ public sealed class ImageService(IDbContextFactory<ApplicationDbContext> dbFacto
 
             character.ReferenceImageId = image.Id;
             character.ImageSeed ??= image.Seed;
+            character.IntroducedInSessionId = null;
             await db.SaveChangesAsync();
             logger.LogInformation("Set image {ImageId} as the reference of character {CharacterId}", id, character.Id);
             return Result.Success();

@@ -1,6 +1,9 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using RoleplayStudio.AI.Providers;
 
 namespace RoleplayStudio.AI.Images;
 
@@ -8,14 +11,21 @@ namespace RoleplayStudio.AI.Images;
 /// Reads what a Runware model accepts from the schema Runware publishes for it, since a model refuses any parameter it does not declare.
 /// A model missing from the index (a community checkpoint) is <see cref="ImageModelTraits.Unknown"/>.
 /// </summary>
-public sealed class RunwareModelCatalog(HttpClient http)
+public sealed class RunwareModelCatalog(HttpClient http, TimeProvider time, ILogger<RunwareModelCatalog> logger)
 {
     public static readonly Uri IndexAddress = new("https://runware.ai/docs/models/index.json");
 
-    private readonly ConcurrentDictionary<string, ImageModelTraits> _traits = new(StringComparer.OrdinalIgnoreCase);
-    private IReadOnlyDictionary<string, Uri>? _schemas;
+    public static readonly TimeSpan IndexLifetime = TimeSpan.FromHours(1);
 
-    /// <summary>The model's traits; <see cref="ImageModelTraits.Unknown"/> when the schema cannot be read now, which is not remembered.</summary>
+    private readonly ConcurrentDictionary<string, ImageModelTraits> _traits = new(StringComparer.OrdinalIgnoreCase);
+    private (IReadOnlyDictionary<string, Uri> Schemas, DateTimeOffset ReadAt)? _index;
+
+    public static RunwareModelCatalog Create(TimeProvider time, ILogger<RunwareModelCatalog> logger) =>
+        new(new HttpClient(ChatClientFactory.Handler, disposeHandler: false) { Timeout = TimeSpan.FromSeconds(20) }, time, logger);
+
+    internal static RunwareModelCatalog Default { get; } = Create(TimeProvider.System, NullLogger<RunwareModelCatalog>.Instance);
+
+    /// <summary>The model's traits; <see cref="ImageModelTraits.Unknown"/> when it is not in the index or its schema cannot be read now, neither of which is remembered.</summary>
     public async Task<ImageModelTraits> TraitsAsync(string modelId, CancellationToken cancellationToken)
     {
         if (_traits.TryGetValue(modelId, out var known))
@@ -25,12 +35,17 @@ public sealed class RunwareModelCatalog(HttpClient http)
 
         try
         {
-            _schemas ??= await ReadIndexAsync(cancellationToken);
-            var traits = _schemas.TryGetValue(modelId, out var schema) ? Parse(await GetJsonAsync(schema, cancellationToken)) : ImageModelTraits.Unknown;
-            return _traits[modelId] = traits;
+            if (await SchemaOfAsync(modelId, cancellationToken) is not { } schema)
+            {
+                logger.LogDebug("Runware model {ModelId} is not in the schema index; sending it what Stable Diffusion models take", modelId);
+                return ImageModelTraits.Unknown;
+            }
+
+            return _traits[modelId] = Parse(await GetJsonAsync(schema, cancellationToken));
         }
-        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
+            logger.LogWarning(exception, "Could not read the schema of Runware model {ModelId}; sending it what Stable Diffusion models take", modelId);
             return ImageModelTraits.Unknown;
         }
     }
@@ -53,6 +68,19 @@ public sealed class RunwareModelCatalog(HttpClient http)
         }
 
         return new ImageModelTraits(properties.TryGetProperty("negativePrompt", out _), properties.TryGetProperty("seed", out _), references, sizes.Distinct().ToList());
+    }
+
+    // A model released after the index was read is found once the index is read again.
+    private async Task<Uri?> SchemaOfAsync(string modelId, CancellationToken cancellationToken)
+    {
+        if (_index is { } index && (index.Schemas.ContainsKey(modelId) || time.GetUtcNow() - index.ReadAt < IndexLifetime))
+        {
+            return index.Schemas.GetValueOrDefault(modelId);
+        }
+
+        var schemas = await ReadIndexAsync(cancellationToken);
+        _index = (schemas, time.GetUtcNow());
+        return schemas.GetValueOrDefault(modelId);
     }
 
     private async Task<IReadOnlyDictionary<string, Uri>> ReadIndexAsync(CancellationToken cancellationToken)

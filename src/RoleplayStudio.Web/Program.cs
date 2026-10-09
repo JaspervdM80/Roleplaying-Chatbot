@@ -68,6 +68,7 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 builder.Services.AddScoped<ICurrentUser, AuthenticationStateCurrentUser>();
 builder.Services.AddScoped<ModelProfileService>();
+builder.Services.AddSingleton(services => RunwareModelCatalog.Create(services.GetRequiredService<TimeProvider>(), services.GetRequiredService<ILogger<RunwareModelCatalog>>()));
 builder.Services.AddSingleton<IChatClientFactory, ChatClientFactory>();
 builder.Services.AddScoped<ModelConnectionService>();
 builder.Services.AddScoped<OllamaModelCatalog>();
