@@ -11,6 +11,9 @@ public class GeneratedImage : OwnedEntity
     public string? Caption { get; set; }
     public string? NegativePrompt { get; set; }
     public List<Guid> SourceMemoryIds { get; set; } = [];
+
+    /// <summary>The portraits it was drawn after, in the order the prompt numbers them.</summary>
+    public List<Guid> ReferenceImageIds { get; set; } = [];
     public string Provider { get; set; } = "";
     public string? Model { get; set; }
     public long? Seed { get; set; }

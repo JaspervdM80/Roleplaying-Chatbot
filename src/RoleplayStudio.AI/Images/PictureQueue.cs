@@ -6,9 +6,10 @@ namespace RoleplayStudio.AI.Images;
 
 /// <summary>
 /// One picture to draw in the background. It runs with no signed-in user, so it carries the owner it works for.
-/// A job with a <see cref="SessionId"/> pictures that chat, of <see cref="CharacterId"/> when set; without one it is the character's portrait.
+/// A job with a <see cref="SessionId"/> pictures that chat, of <see cref="CharacterId"/> when set; without one it is the character's portrait,
+/// which with <see cref="RenewsReference"/> is drawn from their looks alone and replaces the reference portrait.
 /// </summary>
-public sealed record PictureJob(string OwnerId, Guid? SessionId, Guid? MessageId, Guid? CharacterId, Guid? RedrawOf = null)
+public sealed record PictureJob(string OwnerId, Guid? SessionId, Guid? MessageId, Guid? CharacterId, Guid? RedrawOf = null, bool RenewsReference = false)
 {
     public Guid Id { get; } = Guid.NewGuid();
 }

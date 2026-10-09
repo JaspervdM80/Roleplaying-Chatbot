@@ -7,28 +7,36 @@ using System.Text.Json.Serialization;
 namespace RoleplayStudio.AI.Images;
 
 /// <summary>A refusal the provider explained with an error code, such as an unknown model or a size it cannot make.</summary>
-public sealed class ImageProviderException(string code) : Exception($"The image provider refused the request: {code}")
+public sealed class ImageProviderException(string code, string? parameter = null) : Exception($"The image provider refused the request: {code}")
 {
     public string Code { get; } = code;
+
+    /// <summary>The request parameter the refusal names, if any.</summary>
+    public string? Parameter { get; } = parameter;
 }
 
-public sealed class RunwareImageGenerator(HttpClient http, Uri endpoint, string apiKey, string modelId) : IImageGenerator
+public sealed class RunwareImageGenerator(HttpClient http, Uri endpoint, string apiKey, string modelId, RunwareModelCatalog catalog) : IImageGenerator
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     public string ModelId => modelId;
 
+    public Task<ImageModelTraits> TraitsAsync(CancellationToken cancellationToken = default) => catalog.TraitsAsync(modelId, cancellationToken);
+
     public async Task<GeneratedPicture> GenerateAsync(ImageRequest request, CancellationToken cancellationToken = default)
     {
+        var traits = await TraitsAsync(cancellationToken);
+        var size = traits.Fit(request.Width, request.Height);
+        var references = (request.References ?? []).Take(traits.MaxReferenceImages).Select(r => $"data:{r.ContentType};base64,{Convert.ToBase64String(r.Data)}").ToList();
         var task = new InferenceTask(
             TaskUUID: Guid.NewGuid(),
             Model: modelId,
             PositivePrompt: request.Prompt,
-            NegativePrompt: string.IsNullOrWhiteSpace(request.NegativePrompt) ? null : request.NegativePrompt,
-            Width: request.Width,
-            Height: request.Height,
-            Seed: request.Seed,
-            ReferenceImages: request.Reference is { } reference ? [$"data:{reference.ContentType};base64,{Convert.ToBase64String(reference.Data)}"] : null);
+            NegativePrompt: traits.TakesNegativePrompt && !string.IsNullOrWhiteSpace(request.NegativePrompt) ? request.NegativePrompt : null,
+            Width: size.Width,
+            Height: size.Height,
+            Seed: traits.TakesSeed ? request.Seed : null,
+            Inputs: references.Count > 0 ? new InferenceInputs(references) : null);
 
         using var message = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = JsonContent.Create(new[] { task }, options: Json) };
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
@@ -37,7 +45,7 @@ public sealed class RunwareImageGenerator(HttpClient http, Uri endpoint, string 
         var body = await ReadBodyAsync(response, cancellationToken);
         if (body?.Errors is [var error, ..] && response.StatusCode is HttpStatusCode.OK or HttpStatusCode.BadRequest)
         {
-            throw new ImageProviderException(error.Code ?? "unknown");
+            throw new ImageProviderException(error.Code ?? "unknown", error.Parameter);
         }
 
         response.EnsureSuccessStatusCode();
@@ -46,7 +54,7 @@ public sealed class RunwareImageGenerator(HttpClient http, Uri endpoint, string 
             throw new ImageProviderException("noImage");
         }
 
-        return new GeneratedPicture(Convert.FromBase64String(image), "image/webp", result.Seed ?? request.Seed);
+        return new GeneratedPicture(Convert.FromBase64String(image), "image/webp", task.Seed is null ? null : result.Seed ?? task.Seed, size.Width, size.Height);
     }
 
     private static async Task<RunwareResponse?> ReadBodyAsync(HttpResponseMessage response, CancellationToken cancellationToken)
@@ -61,42 +69,27 @@ public sealed class RunwareImageGenerator(HttpClient http, Uri endpoint, string 
         }
     }
 
-
-    private sealed class InferenceTask(Guid TaskUUID, string Model, string PositivePrompt, string? NegativePrompt, int Width, int Height, long Seed, string[] ReferenceImages)
+    private sealed record InferenceTask(
+        Guid TaskUUID,
+        string Model,
+        string PositivePrompt,
+        string? NegativePrompt,
+        int Width,
+        int Height,
+        long? Seed,
+        InferenceInputs? Inputs)
     {
-        public Guid TaskUUID { get; } = TaskUUID;
-        public string Model { get; } = Model;
-        public string PositivePrompt { get; } = PositivePrompt;
-        [JsonIgnore]
-        public string? NegativePrompt { get; } = NegativePrompt;      
-        public int Width { get; } = Width;
-        public int Height { get; } = Height;
-        [JsonIgnore]
-        public long? Seed { get; } = Seed;
-        public string[] ReferenceImages { get; } = ReferenceImages;
-
         public string TaskType => "imageInference";
         public int NumberResults => 1;
         public string OutputType => "base64Data";
         public string OutputFormat => "WEBP";
     }
 
-    // private sealed record InferenceTask(
-    //     Guid TaskUUID,
-    //     string Model,
-    //     string PositivePrompt,
-    //     string? NegativePrompt,
-    //     int Width,
-    //     int Height,
-    //     long Seed,
-    //     string[]? ReferenceImages)
-    // {
-
-    // }
+    private sealed record InferenceInputs(IReadOnlyList<string> ReferenceImages);
 
     private sealed record RunwareResponse(List<RunwareImage>? Data, List<RunwareError>? Errors);
 
     private sealed record RunwareImage(string? ImageBase64Data, long? Seed);
 
-    private sealed record RunwareError(string? Code);
+    private sealed record RunwareError(string? Code, string? Parameter);
 }

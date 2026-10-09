@@ -53,6 +53,7 @@ public sealed class CharacterService(IDbContextFactory<ApplicationDbContext> dbF
             }
 
             character.CopyEditableFieldsFrom(input);
+            character.IntroducedInSessionId = null;
             if (character.FindProblem() is { } problem)
             {
                 logger.LogWarning("Refused to save character {CharacterId}: {Problem}", input.Id, problem.Message);

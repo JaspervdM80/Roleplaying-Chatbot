@@ -48,6 +48,7 @@ public sealed class ImageService(IDbContextFactory<ApplicationDbContext> dbFacto
             Caption = input.Caption,
             NegativePrompt = input.NegativePrompt,
             SourceMemoryIds = [.. input.SourceMemoryIds],
+            ReferenceImageIds = [.. input.ReferenceImageIds],
             Provider = input.Provider,
             Model = input.Model,
             Seed = input.Seed,

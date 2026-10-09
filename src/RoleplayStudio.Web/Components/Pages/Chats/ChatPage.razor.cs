@@ -276,6 +276,17 @@ public partial class ChatPage
                 StateHasChanged();
             });
         }
+        else if (change.SessionId is null && change.Outcome is { IsSuccess: true } && change.CharacterId is { } characterId)
+        {
+            // A portrait drawn for someone met in this chat may be their new avatar.
+            _ = InvokeAsync(async () =>
+            {
+                if (_session?.CharacterStates.Any(s => s.CharacterId == characterId) == true)
+                {
+                    await ReloadSceneAsync();
+                }
+            });
+        }
     }
 
     public override void Dispose()

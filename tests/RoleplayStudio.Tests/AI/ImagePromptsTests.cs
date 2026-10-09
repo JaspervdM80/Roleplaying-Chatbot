@@ -59,4 +59,28 @@ public class ImagePromptsTests
         Assert.Equal((768, 1024), ImagePrompts.SizeFor(new PictureBrief([], "Mira", IsPortrait: false)));
         Assert.Equal((1344, 768), ImagePrompts.SizeFor(new PictureBrief([], null, IsPortrait: false)));
     }
+
+    [Fact]
+    public void A_person_without_an_age_is_described_without_one()
+    {
+        var story = Story(new PictureBrief([new PicturedPerson("Sam", null, "Man", "Tall", null, "A coat", null)], null, IsPortrait: false));
+
+        Assert.Contains("- Sam: Man. Looks: Tall. Wearing: A coat.", story);
+        Assert.DoesNotContain("year-old", story);
+    }
+
+    [Fact]
+    public void A_person_shown_in_a_reference_image_is_numbered_and_the_model_told_how_to_name_them()
+    {
+        var messages = ImagePrompts.Prompt(new PictureBrief([PicturedPerson.Of(Mira, null, 1)], null, IsPortrait: false));
+
+        Assert.Contains("- Mira: 31-year-old Woman. Shown in reference image 1. Looks: Red curls, freckles.", messages[1].Text);
+        Assert.Contains("the person from reference image N", messages[0].Text);
+    }
+
+    [Fact]
+    public void Without_reference_images_the_model_is_not_told_about_them()
+    {
+        Assert.DoesNotContain("reference image", ImagePrompts.Prompt(new PictureBrief([PicturedPerson.Of(Mira, null)], null, IsPortrait: false))[0].Text);
+    }
 }

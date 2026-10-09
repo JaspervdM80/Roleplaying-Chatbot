@@ -18,6 +18,8 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     private const string Written = """{"prompt":"a woman on the loft stairs, lantern in hand","caption":"Mira on the stairs"}""";
 
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "roleplay-pictures-" + Guid.NewGuid().ToString("N"));
+    private static readonly ImageModelTraits Referencing = ImageModelTraits.Unknown with { MaxReferenceImages = 4 };
+
     private readonly PictureQueue _queue = new(NullLogger<PictureQueue>.Instance);
 
     private FileSystemImageStore Store => new(_folder);
@@ -48,12 +50,12 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         return await db.Images.AsNoTracking().SingleAsync(i => i.Id == id);
     }
 
-    private async Task<(StudioUser User, ChatSession Session, Message Opening, Guid MiraId)> ReadyChatAsync(bool acceptsReferenceImage = false)
+    private async Task<(StudioUser User, ChatSession Session, Message Opening, Guid MiraId)> ReadyChatAsync()
     {
         var user = new StudioUser(postgres);
         var session = await user.ChatAsync("Mira");
         await user.UtilityModelAsync();
-        await user.ImageModelAsync(acceptsReferenceImage);
+        await user.ImageModelAsync();
         var loaded = (await user.Sessions.GetAsync(session.Id)).Value;
         return (user, loaded, loaded.Messages[0], loaded.CharacterStates[0].CharacterId);
     }
@@ -92,15 +94,15 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     [Fact]
     public async Task A_picture_of_a_character_is_drawn_after_their_reference_with_their_seed_when_the_model_accepts_one()
     {
-        var (user, session, opening, miraId) = await ReadyChatAsync(acceptsReferenceImage: true);
+        var (user, session, opening, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
         var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
-        var drawer = new FakeImageGenerator();
+        var drawer = new FakeImageGenerator(Referencing);
 
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, miraId)).IsSuccess);
         Assert.True((await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer))).IsSuccess);
 
-        Assert.Equal(FakeImageGenerator.Png, drawer.LastRequest!.Reference!.Data);
+        Assert.Equal(FakeImageGenerator.Png, Assert.Single(drawer.LastRequest!.References!).Data);
         Assert.Equal((await ImageAsync(user, portrait.Value)).Seed, drawer.LastRequest.Seed);
     }
 
@@ -115,7 +117,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, miraId)).IsSuccess);
         await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer));
 
-        Assert.Null(drawer.LastRequest!.Reference);
+        Assert.Empty(drawer.LastRequest!.References!);
     }
 
     [Fact]
@@ -255,5 +257,50 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         {
             Directory.Delete(_folder, recursive: true);
         }
+    }
+
+    [Fact]
+    public async Task A_scene_picture_is_drawn_after_the_reference_of_everyone_in_it_and_the_prompt_numbers_them()
+    {
+        var (user, session, opening, miraId) = await ReadyChatAsync();
+        Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
+        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var writer = new FakeChatClient([Written]);
+        var drawer = new FakeImageGenerator(Referencing);
+
+        Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
+        var scene = await DrawQueuedAsync(new FakeChatClientFactory(writer, images: drawer));
+
+        Assert.Single(drawer.LastRequest!.References!);
+        Assert.Contains("Shown in reference image 1", writer.LastMessages![1].Text);
+        Assert.Equal([portrait.Value], (await ImageAsync(user, scene.Value)).ReferenceImageIds);
+    }
+
+    [Fact]
+    public async Task A_model_that_takes_no_negative_prompt_is_sent_none_and_none_is_stored()
+    {
+        var (user, session, opening, _) = await ReadyChatAsync();
+        var drawer = new FakeImageGenerator(ImageModelTraits.Unknown with { TakesNegativePrompt = false });
+
+        Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
+        var drawn = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer));
+
+        Assert.Null(drawer.LastRequest!.NegativePrompt);
+        Assert.Null((await ImageAsync(user, drawn.Value)).NegativePrompt);
+    }
+
+    [Fact]
+    public async Task A_renewed_portrait_is_drawn_without_the_old_reference_and_replaces_it()
+    {
+        var (user, _, _, miraId) = await ReadyChatAsync();
+        Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
+        await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var drawer = new FakeImageGenerator(Referencing);
+
+        Assert.True(_queue.Enqueue(new PictureJob(user.User.UserId!, null, null, miraId, RenewsReference: true)));
+        var renewed = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer));
+
+        Assert.Empty(drawer.LastRequest!.References!);
+        Assert.Equal(renewed.Value, (await user.Characters.ListAsync()).Value.Single(c => c.Id == miraId).ReferenceImageId);
     }
 }

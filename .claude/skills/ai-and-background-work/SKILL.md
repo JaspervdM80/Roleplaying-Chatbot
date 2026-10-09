@@ -79,7 +79,11 @@ the same rules:
   `SceneState.TrackedUpToSequence` like extraction moves its marker, and announces the change through
   `SceneNotifier`.
 - **A newcomer becomes a real `Character`**, owned by the chat's owner and added to the chatbot's
-  cast with the role the model gave. A name already in the cast or met in the chat (exactly, or by a
+  cast with the role the model gave, marked with `IntroducedInSessionId`. That chat's tracking may
+  rename them and fill in their age, gender and lasting looks as the story reveals them; a character
+  the user wrote, or one they have since edited (the edit clears the mark), is never changed. A new
+  portrait is queued for a newcomer, and one that renews the reference when their looks were filled
+  in (`PictureJob.RenewsReference`). A name already in the cast or met in the chat (exactly, or by a
   first name only one character has) is that character, never a copy. The persona, and a name no
   newcomer entry describes, are never made into characters.
 - **Leaving is not forgetting.** Who is present is replaced wholesale; a `CharacterState` stays for
@@ -153,8 +157,14 @@ Files go through `IImageStore`, never a path built in a page.
   `Compose`. Stable looks come from the `Character`, clothes and changes from the chat's
   `CharacterState`; a portrait wears the default outfit. A picture is of the moment it was asked on:
   the messages up to that one go in, not later ones.
-- **The reference portrait** (`Character.ReferenceImageId`) is sent only to a profile with
-  `AcceptsReferenceImage`, together with the character's `ImageSeed`. A character's first portrait
+- **What a model takes comes from its schema, not from settings.** `RunwareModelCatalog` reads the
+  schema Runware publishes per model (cached; a model missing from the index is treated as the SD
+  family: negative prompt and seed, no references), and `RunwareImageGenerator` leaves out what the
+  model does not declare, puts references in `inputs.referenceImages` and snaps to an allowed size.
+  `GeneratedPicture` reports the size drawn and a null seed when the model takes none.
+- **Reference portraits** (`Character.ReferenceImageId`) of everyone pictured are sent, in the order
+  the prompt numbers them ("reference image N"), up to the model's limit, together with the subject's
+  `ImageSeed`; `GeneratedImage.ReferenceImageIds` keeps them so drawing again sends the same ones. A character's first portrait
   becomes the reference and gives them its seed; the user can pick another picture of them. The avatar
   is that portrait cropped in CSS (`.app-avatar-picture`), never a second stored image. Drawing again
   keeps the prompt and takes a new seed, since the stored one would give back the same picture.

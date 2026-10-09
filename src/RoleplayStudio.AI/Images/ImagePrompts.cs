@@ -8,11 +8,11 @@ using RoleplayStudio.Domain.Chats;
 
 namespace RoleplayStudio.AI.Images;
 
-/// <summary>Someone in the picture: stable looks from the character, clothes and changes from the chat.</summary>
-public sealed record PicturedPerson(string Name, int? Age, string? Gender, string? Appearance, string? AppearanceChanges, string? Outfit, string? ImageTags)
+/// <summary>Someone in the picture: stable looks from the character, clothes and changes from the chat. <see cref="Reference"/> numbers the reference image that shows them, from 1.</summary>
+public sealed record PicturedPerson(string Name, int? Age, string? Gender, string? Appearance, string? AppearanceChanges, string? Outfit, string? ImageTags, int? Reference = null)
 {
-    public static PicturedPerson Of(Character character, CharacterState? state) =>
-        new(character.Name, character.Age, character.Gender, character.Appearance, state?.AppearanceChanges, state is null ? character.DefaultOutfit : state.CurrentOutfit, character.ImageTags);
+    public static PicturedPerson Of(Character character, CharacterState? state, int? reference = null) =>
+        new(character.Name, character.Age, character.Gender, character.Appearance, state?.AppearanceChanges, state is null ? character.DefaultOutfit : state.CurrentOutfit, character.ImageTags, reference);
 
     public static PicturedPerson Of(Persona persona) =>
         new(persona.Name, persona.Age, persona.Gender, persona.Appearance, null, persona.DefaultOutfit, null);
@@ -41,7 +41,7 @@ public static class ImagePrompts
     private const int MaxCaptionLength = 80;
 
     /// <summary>Portraits and pictures of one person stand at 3:4, scenes lie at 16:9; both are multiples of 64, as diffusion models want.</summary>
-    public static (int Width, int Height) SizeFor(PictureBrief brief) => brief.IsPortrait || brief.Focus is not null ? (768, 768) : (1344, 768);
+    public static (int Width, int Height) SizeFor(PictureBrief brief) => brief.IsPortrait || brief.Focus is not null ? (768, 1024) : (1344, 768);
 
     public static IReadOnlyList<ChatMessage> Prompt(PictureBrief brief)
     {
@@ -53,7 +53,12 @@ public static class ImagePrompts
                 ? $"Write a prompt for a picture of {focus} at this moment of the story, with the place behind them."
                 : "Write a prompt for a picture of this moment of the story: the place, and the people in it.");
         instructions.AppendLine("Describe what can be seen, not what anyone thinks or says: looks, clothes, pose, expression, the place, the light.");
-        instructions.AppendLine("Use each person's looks and clothes exactly as given below; the clothes are what they wear now.");
+        instructions.AppendLine("Use each person's looks and clothes exactly as given below, in the same words, leaving nothing out: age, hair, eyes, skin, build and marks keep them recognisable from picture to picture. The clothes are what they wear now.");
+        if (brief.People.Any(p => p.Reference is not null))
+        {
+            instructions.AppendLine("The image model also gets reference images. Call a person shown in one \"the person from reference image N\", and still describe their clothes, pose and expression.");
+        }
+
         instructions.AppendLine("Write the prompt as one paragraph of comma-separated phrases, under 120 words, without names.");
         instructions.AppendLine("Also write a caption: a few words on what the picture shows, like \"Mira on the loft stairs\".");
         instructions.AppendLine();
@@ -112,16 +117,23 @@ public static class ImagePrompts
         return (Cut(prompt, MaxPromptLength), "blurry, low quality, deformed, distorted, bad anatomy, disfigured, mutated, extra limbs, ugly, poorly drawn, bad proportions, cloned face, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers");
     }
 
-    public static string AgeFor(int? age) => $"{age}-year-old";
+    public static string? AgeFor(int? age) => age is { } years ? $"{years}-year-old" : null;
 
     public static string Moment(IEnumerable<Message> messages) => Transcript.Of(messages);
 
     private static string Describe(PicturedPerson person)
     {
-        var parts = new List<string> { string.Join(' ', new[] { AgeFor(person.Age), TextFields.Clean(person.Gender) }.OfType<string>()) };
-        if (person.Age is not null){
-            AddPart(parts, "Age", person.Age.ToString());
+        var parts = new List<string>();
+        if (string.Join(' ', new[] { AgeFor(person.Age), TextFields.Clean(person.Gender) }.OfType<string>()) is { Length: > 0 } who)
+        {
+            parts.Add(who);
         }
+
+        if (person.Reference is { } reference)
+        {
+            parts.Add($"Shown in reference image {reference}");
+        }
+
         AddPart(parts, "Looks", person.Appearance);
         AddPart(parts, "Changed since", person.AppearanceChanges);
         AddPart(parts, "Wearing", person.Outfit);

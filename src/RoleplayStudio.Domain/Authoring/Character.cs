@@ -24,6 +24,9 @@ public class Character : OwnedEntity
     /// <summary>The portrait every picture of the character is drawn after; its crop is also their avatar.</summary>
     public Guid? ReferenceImageId { get; set; }
 
+    /// <summary>The chat whose scene tracking made this character up; that chat renames them and fills in their looks as the story tells more, until the user edits them.</summary>
+    public Guid? IntroducedInSessionId { get; set; }
+
     /// <summary>Copies the fields a user edits, cleaned, leaving identity, ownership and images alone.</summary>
     public void CopyEditableFieldsFrom(Character other)
     {

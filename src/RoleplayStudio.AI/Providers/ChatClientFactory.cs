@@ -26,6 +26,8 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
     // Not IHttpClientFactory: the service defaults put a 10-second resilience timeout on every client, far shorter than a generation.
     internal static readonly SocketsHttpHandler Handler = new() { PooledConnectionLifetime = TimeSpan.FromMinutes(5) };
 
+    private static readonly RunwareModelCatalog RunwareModels = new(new HttpClient(Handler, disposeHandler: false) { Timeout = TimeSpan.FromSeconds(20) });
+
     public Result<IChatClient> Create(ModelProfile profile)
     {
         if (profile.FindProblem() is { } problem)
@@ -82,7 +84,7 @@ public sealed class ChatClientFactory(IConfiguration configuration) : IChatClien
 
         var key = ApiKey(profile.ApiKeySetting, baseUrl);
         return key.IsSuccess
-            ? Result.Success<IImageGenerator>(new RunwareImageGenerator(new HttpClient(Handler, disposeHandler: false) { Timeout = TimeSpan.FromMinutes(2) }, new Uri(baseUrl), key.Value, profile.ModelId))
+            ? Result.Success<IImageGenerator>(new RunwareImageGenerator(new HttpClient(Handler, disposeHandler: false) { Timeout = TimeSpan.FromMinutes(2) }, new Uri(baseUrl), key.Value, profile.ModelId, RunwareModels))
             : key.To<IImageGenerator>();
     }
 
