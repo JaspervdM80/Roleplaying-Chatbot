@@ -70,3 +70,15 @@ discard instead of closing.
 editor resets the timestamps of an `OwnedEntity` only.
 **Rule:** an editor whose entity has a property initialised from the clock copies it in
 `CopyEditableFields` (as `MemoryDialog` does), so the snapshot is stable.
+
+## A Runware model refuses a negative prompt, a seed, a size or a reference image another model takes
+
+**Symptom:** a picture fails with an `invalidParameter`-style refusal, or a reference image is
+silently ignored, after switching the image profile to another Runware model (FLUX 3, Seedream,
+Nano Banana).
+**Cause:** each Runware model accepts only the parameters its published schema declares and rejects
+the rest; many newer models take no `negativePrompt` or `seed`, some draw only fixed sizes, and
+reference images go in `inputs.referenceImages`, not at the top level.
+**Rule:** `RunwareModelCatalog` reads the model's schema from `https://runware.ai/docs/models/index.json`,
+and `RunwareImageGenerator` sends only what it declares, at the nearest allowed size. Never add a
+parameter to the request without the schema saying the model takes it.

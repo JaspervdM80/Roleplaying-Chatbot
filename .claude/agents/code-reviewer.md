@@ -109,7 +109,6 @@ This app holds private roleplay. A leak across users is the worst bug it can hav
 - A background loop that can throw out of `ExecuteAsync`.
 - Provider-specific branching outside the client factory.
 - Prompt assembly doing I/O, or a token budget that can truncate the system sections.
-- An image prompt that does not describe the character as an adult.
 
 ## 8. `Result` at the call site
 
@@ -140,7 +139,6 @@ Verify the ones the diff touches; the skill for each area holds them in full.
   touches layout; colours from tokens.
 - **Touch**: 44px floor and a 0-or-≥8px gap; touch rules key off
   `(max-width: 599.98px), (max-height: 559.98px)`.
-- **Domain**: the adult age rule kept; ordering by `Sequence`, not `CreatedAt`.
 - **Docs**: a behaviour change updates the skill that states the rule, in the same change.
 - **Diff hygiene**: no drive-by reformatting, no line-ending churn, nothing unrelated riding along.
 

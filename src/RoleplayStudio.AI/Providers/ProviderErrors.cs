@@ -33,7 +33,7 @@ public static class ProviderErrors
         }
         catch (ImageProviderException exception)
         {
-            return Log<T>(profile, logger, exception, Result.Failure("The image provider refused the request: {0}", exception.Code));
+            return Log<T>(profile, logger, exception, Result.Failure("The image provider refused the request: {0}", exception.Parameter is null ? exception.Code : $"{exception.Code} ({exception.Parameter})"));
         }
         catch (OllamaException exception)
         {

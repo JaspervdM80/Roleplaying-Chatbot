@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using RoleplayStudio.AI.Chat;
+using RoleplayStudio.AI.Images;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.AI.Scene;
@@ -25,6 +26,7 @@ public sealed class StudioUser(PostgresFixture postgres)
     public ModelProfileService Profiles => new(postgres.DbFactory, User, NullLogger<ModelProfileService>.Instance);
 
     public UpkeepQueue UpkeepQueue { get; } = new(NullLogger<UpkeepQueue>.Instance);
+    public PictureQueue PictureQueue { get; } = new(NullLogger<PictureQueue>.Instance);
 
     public MemoryRecall Recall(IChatClientFactory clients) =>
         new(postgres.DbFactory, User, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), Time, NullLogger<MemoryRecall>.Instance);
@@ -36,7 +38,7 @@ public sealed class StudioUser(PostgresFixture postgres)
         new(postgres.DbFactory, User, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), UpkeepQueue, Time, NullLogger<MemoryService>.Instance);
 
     public SceneUpkeep SceneUpkeep(IChatClientFactory clients, SceneNotifier? notifier = null) =>
-        new(postgres.DbFactory, clients, notifier ?? new SceneNotifier(), Time, NullLogger<SceneUpkeep>.Instance);
+        new(postgres.DbFactory, clients, notifier ?? new SceneNotifier(), PictureQueue, Time, NullLogger<SceneUpkeep>.Instance);
 
     public ChatTurnService Turns(IChatClientFactory clients) =>
         new(Sessions, Profiles, clients, Recall(clients), UpkeepQueue, User, NullLogger<ChatTurnService>.Instance);
@@ -51,6 +53,9 @@ public sealed class StudioUser(PostgresFixture postgres)
 
     public async Task<ModelProfile> UtilityModelAsync() =>
         (await Profiles.CreateAsync(new ModelProfile { Name = "Utility", Role = ModelRole.Utility, Provider = ProviderKind.Ollama, ModelId = "qwen3", IsDefault = true })).Value;
+
+    public async Task<ModelProfile> ImageModelAsync() =>
+        (await Profiles.CreateAsync(new ModelProfile { Name = "Runware", Role = ModelRole.Image, Provider = ProviderKind.Runware, ModelId = "runware:101@1", IsDefault = true })).Value;
 
     public async Task<ModelProfile> EmbeddingModelAsync() =>
         (await Profiles.CreateAsync(new ModelProfile { Name = "Embeddings", Role = ModelRole.Embedding, Provider = ProviderKind.Ollama, ModelId = "nomic-embed-text", IsDefault = true })).Value;

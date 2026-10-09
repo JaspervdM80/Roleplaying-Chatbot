@@ -94,7 +94,7 @@ public sealed class FakeEmbeddingGenerator(Func<string, float[]> embed) : IEmbed
 }
 
 /// <summary>Draws a one-pixel PNG for every request and records what it was asked for.</summary>
-public sealed class FakeImageGenerator : IImageGenerator
+public sealed class FakeImageGenerator(ImageModelTraits? traits = null) : IImageGenerator
 {
     public static readonly byte[] Png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
 
@@ -102,10 +102,12 @@ public sealed class FakeImageGenerator : IImageGenerator
 
     public string ModelId => "fake-diffusion";
 
+    public Task<ImageModelTraits> TraitsAsync(CancellationToken cancellationToken = default) => Task.FromResult(traits ?? ImageModelTraits.Unknown);
+
     public Task<GeneratedPicture> GenerateAsync(ImageRequest request, CancellationToken cancellationToken = default)
     {
         LastRequest = request;
-        return Task.FromResult(new GeneratedPicture(Png, "image/png", request.Seed));
+        return Task.FromResult(new GeneratedPicture(Png, "image/png", request.Seed, request.Width, request.Height));
     }
 }
 

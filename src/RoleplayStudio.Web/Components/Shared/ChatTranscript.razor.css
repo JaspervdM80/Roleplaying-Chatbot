@@ -8,6 +8,10 @@
     padding: 4px 2px;
 }
 
+.chat-entry {
+    display: contents;
+}
+
 .chat-turn {
     max-width: min(48rem, 90%);
     padding: 8px 12px;

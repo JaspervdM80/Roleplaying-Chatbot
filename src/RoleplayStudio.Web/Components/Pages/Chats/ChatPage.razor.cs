@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using RoleplayStudio.AI.Chat;
+using RoleplayStudio.AI.Images;
 using RoleplayStudio.AI.Scene;
 using RoleplayStudio.Domain.Chats;
+using RoleplayStudio.Domain.Media;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Services;
 using RoleplayStudio.Web.Components.Shared;
@@ -23,6 +25,9 @@ public partial class ChatPage
     private bool _sceneToggled;
     private CancellationTokenSource? _stop;
     private ChatTranscript? _transcript;
+    private IReadOnlyList<GeneratedImage> _pictures = [];
+    private IReadOnlyList<PendingPicture> _pending = [];
+    private IReadOnlyList<(Guid Id, string Name)> _subjects = [];
 
     [Inject]
     private ChatSessionService Sessions { get; set; } = null!;
@@ -37,6 +42,18 @@ public partial class ChatPage
     private SceneNotifier SceneNotifier { get; set; } = null!;
 
     [Inject]
+    private ImageService Images { get; set; } = null!;
+
+    [Inject]
+    private PictureService Pictures { get; set; } = null!;
+
+    [Inject]
+    private PictureNotifier PictureNotifier { get; set; } = null!;
+
+    [Inject]
+    private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject]
@@ -47,7 +64,11 @@ public partial class ChatPage
 
     private bool CanSend => _session is not null && !_streaming && !string.IsNullOrWhiteSpace(_draft);
 
-    protected override void OnInitialized() => SceneNotifier.Changed += OnSceneChanged;
+    protected override void OnInitialized()
+    {
+        SceneNotifier.Changed += OnSceneChanged;
+        PictureNotifier.Changed += OnPictureChanged;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -65,8 +86,10 @@ public partial class ChatPage
 
         _session = result.Value;
         _turns.Clear();
-        _turns.AddRange(_session.Messages.Select(m => new ChatTurnView(m.Role == MessageRole.User, m.SpeakerName, m.Content)));
+        _turns.AddRange(_session.Messages.Select(m => new ChatTurnView(m.Role == MessageRole.User, m.SpeakerName, m.Content, m.Id)));
         _transcript?.RequestScrollToEnd();
+        _subjects = Subjects(_session);
+        await LoadPicturesAsync();
 
         var profiles = await Profiles.ListAsync(Cancellation);
         if (profiles.IsSuccess)
@@ -109,7 +132,7 @@ public partial class ChatPage
             return;
         }
 
-        _turns.Add(new ChatTurnView(true, sent.Value.SpeakerName, sent.Value.Content));
+        _turns.Add(new ChatTurnView(true, sent.Value.SpeakerName, sent.Value.Content, sent.Value.Id));
         _transcript?.RequestScrollToEnd();
         await StreamReplyAsync();
     }
@@ -154,7 +177,7 @@ public partial class ChatPage
             var saved = await Turns.SaveReplyAsync(Id, reply.Text);
             if (Snackbar.Report(saved))
             {
-                _turns.Add(new ChatTurnView(false, saved.Value.SpeakerName, saved.Value.Content));
+                _turns.Add(new ChatTurnView(false, saved.Value.SpeakerName, saved.Value.Content, saved.Value.Id));
             }
         }
 
@@ -181,13 +204,95 @@ public partial class ChatPage
         {
             _session.Scene = result.Value.Scene;
             _session.CharacterStates = result.Value.CharacterStates;
+            _subjects = Subjects(_session);
             StateHasChanged();
+        }
+    }
+
+    private static IReadOnlyList<(Guid, string)> Subjects(ChatSession session) =>
+        session.PresentCharacters(session.CharacterStates).Select(c => (c.Id, c.Name)).ToList();
+
+    private IReadOnlyList<GeneratedImage> PicturesOf(ChatTurnView turn) =>
+        _pictures.Where(p => p.MessageId == turn.MessageId).OrderBy(p => p.CreatedAt).ToList();
+
+    private IReadOnlyList<PendingPicture> PendingOf(ChatTurnView turn) => _pending.Where(p => p.MessageId == turn.MessageId).ToList();
+
+    private async Task LoadPicturesAsync()
+    {
+        var pictures = await Images.ListForChatAsync(Id, Cancellation);
+        if (pictures.IsSuccess)
+        {
+            _pictures = pictures.Value;
+        }
+
+        var pending = await Pictures.PendingAsync();
+        if (pending.IsSuccess)
+        {
+            _pending = pending.Value.Where(p => p.SessionId == Id).ToList();
+        }
+    }
+
+    private async Task PictureAsync(ChatTurnView turn, Guid? characterId)
+    {
+        if (turn.MessageId is { } messageId && Snackbar.Report(await Pictures.PictureMessageAsync(Id, messageId, characterId)))
+        {
+            await LoadPicturesAsync();
+        }
+    }
+
+    private async Task CancelPictureAsync(PendingPicture pending)
+    {
+        Snackbar.Report(await Pictures.CancelAsync(pending.Id));
+        await LoadPicturesAsync();
+    }
+
+    private async Task OpenAsync(GeneratedImage picture)
+    {
+        if (_session is null)
+        {
+            return;
+        }
+
+        var names = _session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.Name);
+        var references = _session.CharacterStates.Select(s => s.Character.ReferenceImageId).OfType<Guid>().ToHashSet();
+        var pictures = _pictures.OrderBy(p => p.CreatedAt).ToList();
+        await Dialogs.ShowPicturesAsync(pictures, pictures.IndexOf(picture), names, references);
+        await LoadPicturesAsync();
+        await ReloadSceneAsync();
+    }
+
+    private void OnPictureChanged(PictureChange change)
+    {
+        if (change.SessionId == Id)
+        {
+            _ = InvokeAsync(async () =>
+            {
+                await LoadPicturesAsync();
+                if (change.Outcome is { } outcome)
+                {
+                    Snackbar.Report(outcome);
+                }
+
+                StateHasChanged();
+            });
+        }
+        else if (change.SessionId is null && change.Outcome is { IsSuccess: true } && change.CharacterId is { } characterId)
+        {
+            // A portrait drawn for someone met in this chat may be their new avatar.
+            _ = InvokeAsync(async () =>
+            {
+                if (_session?.CharacterStates.Any(s => s.CharacterId == characterId) == true)
+                {
+                    await ReloadSceneAsync();
+                }
+            });
         }
     }
 
     public override void Dispose()
     {
         SceneNotifier.Changed -= OnSceneChanged;
+        PictureNotifier.Changed -= OnPictureChanged;
         _stop?.Cancel();
         base.Dispose();
     }

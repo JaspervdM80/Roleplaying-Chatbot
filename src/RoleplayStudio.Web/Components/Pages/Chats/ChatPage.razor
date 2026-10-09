@@ -30,7 +30,12 @@
             </div>
         }
 
-        <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming" />
+        <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming">
+            <TurnFooter Context="turn">
+                <TurnPictures Turn="turn" Pictures="PicturesOf(turn)" Pending="PendingOf(turn)" Subjects="_subjects" Disabled="_streaming"
+                              OnPicture="subject => PictureAsync(turn, subject)" OnOpen="OpenAsync" OnCancel="CancelPictureAsync" />
+            </TurnFooter>
+        </ChatTranscript>
 
         <div class="chat-input">
             <MudTextField @bind-Value="_draft" Placeholder="Say something…" Lines="1" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
@@ -51,6 +56,6 @@
 
     @if (_session is not null)
     {
-        <ScenePanel Session="_session" Toggled="_sceneToggled" OnClose="ToggleScene" />
+        <ScenePanel Session="_session" Toggled="_sceneToggled" OnClose="ToggleScene" Pictures="_pictures" Pending="_pending" OnOpen="OpenAsync" />
     }
 </div>

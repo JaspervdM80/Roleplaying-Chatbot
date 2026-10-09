@@ -1,0 +1,103 @@
+@using RoleplayStudio.AI.Images
+@using RoleplayStudio.Infrastructure.Services
+@inherits CancellableComponent
+
+<div class="app-editor-portrait @(_referenceId is null ? null : "app-editor-portrait-picture")">
+    @if (_referenceId is { } referenceId)
+    {
+        <img src="@ImageEndpoints.Url(referenceId)" alt="@($"Portrait of {Name}")" />
+    }
+    else
+    {
+        <Avatar Id="CharacterId ?? Guid.Empty" Name="@Name" Size="96" Class="app-editor-portrait-letter" />
+        <span class="app-editor-portrait-note">@(_drawing ? "Drawing a portrait…" : "No portrait yet")</span>
+    }
+</div>
+@if (CharacterId is { } characterId)
+{
+    <div class="app-editor-portrait-actions">
+        <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="_drawing" OnClick="DrawAsync">@(_drawing ? "Drawing…" : "Generate portrait")</MudButton>
+        <MudButton Variant="Variant.Text" Size="Size.Small" Href="@AppRoutes.CharacterPictures(characterId)">Pictures</MudButton>
+    </div>
+}
+
+@code {
+    private Guid? _referenceId;
+    private Guid? _jobId;
+    private bool _drawing;
+
+    [Inject]
+    private PictureService Pictures { get; set; } = null!;
+
+    [Inject]
+    private PictureNotifier Notifier { get; set; } = null!;
+
+    [Inject]
+    private CharacterService Characters { get; set; } = null!;
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
+
+    /// <summary>Null for a character not saved yet, which cannot have a portrait drawn.</summary>
+    [Parameter]
+    public Guid? CharacterId { get; set; }
+
+    [Parameter]
+    public string Name { get; set; } = "";
+
+    [Parameter]
+    public Guid? ReferenceImageId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _referenceId = ReferenceImageId;
+        Notifier.Changed += OnPictureChanged;
+        if (CharacterId is not null && await Pictures.PendingAsync() is { IsSuccess: true } pending)
+        {
+            _drawing = pending.Value.Any(IsPortraitOfThis);
+        }
+    }
+
+    private bool IsPortraitOfThis(PendingPicture pending) => pending.SessionId is null && pending.CharacterId == CharacterId;
+
+    private async Task DrawAsync()
+    {
+        var queued = await Pictures.DrawPortraitAsync(CharacterId!.Value);
+        if (Snackbar.Report(queued))
+        {
+            _jobId = queued.Value;
+            _drawing = true;
+        }
+    }
+
+    private void OnPictureChanged(PictureChange change)
+    {
+        if (change.SessionId is not null || change.CharacterId != CharacterId || change.Outcome is not { } outcome)
+        {
+            return;
+        }
+
+        _ = InvokeAsync(async () =>
+        {
+            // The sheet shows this component twice, for wide and narrow screens; only the one that asked reports a failure.
+            if (change.JobId == _jobId)
+            {
+                Snackbar.Report(outcome);
+            }
+
+            if (await Characters.GetAsync(CharacterId!.Value, Cancellation) is { IsSuccess: true } character)
+            {
+                _referenceId = character.Value.ReferenceImageId;
+            }
+
+            _drawing = await Pictures.PendingAsync() is { IsSuccess: true } pending && pending.Value.Any(IsPortraitOfThis);
+            StateHasChanged();
+        });
+    }
+
+    public override void Dispose()
+    {
+        Notifier.Changed -= OnPictureChanged;
+        base.Dispose();
+    }
+}

@@ -99,4 +99,68 @@ public class SceneTests(PostgresFixture postgres)
         Assert.Single(reloaded.CharacterStates);
         Assert.Empty((await other.Characters.ListAsync()).Value);
     }
+
+    [Fact]
+    public async Task A_newcomer_gets_a_portrait_queued_when_there_is_an_image_model()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        await user.UtilityModelAsync();
+        await user.ImageModelAsync();
+
+        await user.SceneUpkeep(Utility(BessWalksIn)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+
+        var bess = (await user.Characters.ListAsync()).Value.Single(c => c.Name == "Old Bess");
+        Assert.Equal(session.Id, bess.IntroducedInSessionId);
+        Assert.True(user.PictureQueue.Reader.TryRead(out var job));
+        Assert.Equal((bess.Id, (Guid?)null, false), (job.CharacterId!.Value, job.SessionId, job.RenewsReference));
+    }
+
+    [Fact]
+    public async Task Without_an_image_model_no_portrait_is_queued()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        await user.UtilityModelAsync();
+
+        await user.SceneUpkeep(Utility(BessWalksIn)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+
+        Assert.False(user.PictureQueue.Reader.TryRead(out _));
+    }
+
+    [Fact]
+    public async Task A_renamed_and_described_newcomer_is_saved_and_gets_a_portrait_that_renews_their_reference()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        await user.UtilityModelAsync();
+        await user.ImageModelAsync();
+        await user.SceneUpkeep(Utility(BessWalksIn)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+        Assert.True(user.PictureQueue.Reader.TryRead(out var first));
+        user.PictureQueue.Finish(first.Id);
+        Assert.True((await user.Sessions.AddUserMessageAsync(session.Id, "What's your name, cook?")).IsSuccess);
+        const string named = """{"changes":[{"name":"Old Bess","newName":"Bess Harrow","appearance":"Stout, grey bun, a burn scar on one forearm"}]}""";
+
+        await user.SceneUpkeep(Utility(named)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+
+        var bess = (await user.Characters.ListAsync()).Value.Single(c => c.Id == first.CharacterId);
+        Assert.Equal(("Bess Harrow", "Stout, grey bun, a burn scar on one forearm"), (bess.Name, bess.Appearance));
+        Assert.True(user.PictureQueue.Reader.TryRead(out var renewed));
+        Assert.Equal((bess.Id, true), (renewed.CharacterId!.Value, renewed.RenewsReference));
+    }
+
+    [Fact]
+    public async Task Editing_an_introduced_character_hands_them_to_the_user_for_good()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        await user.UtilityModelAsync();
+        await user.SceneUpkeep(Utility(BessWalksIn)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+        var bess = (await user.Characters.ListAsync()).Value.Single(c => c.Name == "Old Bess");
+
+        bess.Appearance = "Tall and thin";
+        Assert.True((await user.Characters.UpdateAsync(bess)).IsSuccess);
+
+        Assert.Null((await user.Characters.ListAsync()).Value.Single(c => c.Id == bess.Id).IntroducedInSessionId);
+    }
 }

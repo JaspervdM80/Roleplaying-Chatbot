@@ -1,4 +1,6 @@
+@using RoleplayStudio.AI.Images
 @using RoleplayStudio.Domain.Chats
+@using RoleplayStudio.Domain.Media
 
 <div class="scene-host @(Toggled ? "scene-toggled" : null)">
     <div class="scene-scrim" @onclick="OnClose"></div>
@@ -39,7 +41,7 @@
                 }
                 @foreach (var state in _present)
                 {
-                    @Person(state.Character.Id, state.Character.Name, state.Status, state.CurrentOutfit)
+                    @Person(state.Character.Id, state.Character.Name, state.Character.ReferenceImageId, state.Status, state.CurrentOutfit)
                 }
             </section>
 
@@ -49,15 +51,37 @@
                     <h3 id="scene-met" class="scene-heading">Met earlier</h3>
                     @foreach (var state in _metEarlier)
                     {
-                        @Person(state.Character.Id, state.Character.Name, state.Status, state.CurrentOutfit)
+                        @Person(state.Character.Id, state.Character.Name, state.Character.ReferenceImageId, state.Status, state.CurrentOutfit)
                     }
                 </section>
             }
 
             <section class="scene-group scene-you" aria-labelledby="scene-you">
                 <h3 id="scene-you" class="scene-heading">You</h3>
-                @Person(Session.Persona.Id, Session.Persona.Name, null, Session.Persona.DefaultOutfit)
+                @Person(Session.Persona.Id, Session.Persona.Name, null, null, Session.Persona.DefaultOutfit)
             </section>
+
+            @if (Pictures.Count > 0 || Pending.Count > 0)
+            {
+                <section class="scene-group" aria-labelledby="scene-pictures">
+                    <div class="scene-pictures-heading">
+                        <h3 id="scene-pictures" class="scene-heading">Pictures · @Pictures.Count</h3>
+                        <MudLink Href="@AppRoutes.ChatPictures(Session.Id)" Class="scene-see-all">See all</MudLink>
+                    </div>
+                    <div class="scene-pictures">
+                        @foreach (var pending in Pending.Take(ShownPictures))
+                        {
+                            <PicturePlaceholder Pending="pending" Compact="true" Class="app-picture-tile" @key="pending.Id" />
+                        }
+                        @foreach (var picture in Pictures.Take(ShownPictures - Math.Min(Pending.Count, ShownPictures)))
+                        {
+                            <button type="button" class="app-picture-tile" aria-label="@(picture.Caption ?? "Picture")" @key="picture.Id" @onclick="() => OnOpen.InvokeAsync(picture)">
+                                <img src="@ImageEndpoints.Url(picture.Id)" alt="" loading="lazy" />
+                            </button>
+                        }
+                    </div>
+                </section>
+            }
 
             <div class="scene-links">
                 <MudButton Variant="Variant.Outlined" Href="@AppRoutes.ChatMemories(Session.Id)" FullWidth="true">Memories</MudButton>
@@ -80,16 +104,28 @@
     [Parameter]
     public EventCallback OnClose { get; set; }
 
+    /// <summary>The chat's pictures, newest first.</summary>
+    [Parameter]
+    public IReadOnlyList<GeneratedImage> Pictures { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyList<PendingPicture> Pending { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<GeneratedImage> OnOpen { get; set; }
+
+    private const int ShownPictures = 4;
+
     protected override void OnParametersSet()
     {
         _present = Session.PresentStates(Session.CharacterStates);
         _metEarlier = Session.AbsentStates(Session.CharacterStates);
     }
 
-    private static RenderFragment Person(Guid id, string name, string? status, string? wearing) => __builder =>
+    private static RenderFragment Person(Guid id, string name, Guid? portraitId, string? status, string? wearing) => __builder =>
     {
         <div class="scene-person">
-            <Avatar Id="id" Name="@name" />
+            <Avatar Id="id" Name="@name" ImageId="portraitId" />
             <div class="scene-person-text">
                 <div class="scene-person-name">
                     <span>@name</span>

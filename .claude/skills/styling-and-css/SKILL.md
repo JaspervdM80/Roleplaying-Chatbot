@@ -42,7 +42,8 @@ Keep `font-size` off `html` — the root `rem` stays 16px so `1.0625rem` means 1
   as a full-width band across the top of the page. Scope it:
   `.mud-paper:not(.mud-popover):not(.mud-dialog)`. **Excluding the popover beats overriding it back.**
 - **`MudMenu`'s `Class` lands on the root wrapper, not the activator button.** Style
-  `.<your-class>.mud-menu .mud-button-root` instead.
+  `.<your-class>.mud-menu .mud-button-root` instead. That wrapper also carries `align-self: center`,
+  so in a column flex container the menu sits centred until you set `align-self` on it.
 - **The popover, dialog and snackbar providers must render inside an interactive render mode.** They
   live in `MainLayout`, which is interactive on app pages only (see `razor-pages-and-circuit`).
 - `MudForm.Validate()` is obsolete — use `ValidateAsync()`.

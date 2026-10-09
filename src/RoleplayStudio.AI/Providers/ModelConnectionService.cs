@@ -108,8 +108,8 @@ public sealed class ModelConnectionService(ModelProfileService profiles, IChatCl
                 Model = generator.ModelId,
                 Seed = picture.Seed,
                 ContentType = picture.ContentType,
-                Width = TestPictureSize,
-                Height = TestPictureSize,
+                Width = picture.Width,
+                Height = picture.Height,
             },
             picture.Data);
         return saved.IsSuccess ? Result.Success(new ConnectionCheck(latency, TestPicture, saved.Value.Id)) : saved.To<ConnectionCheck>();

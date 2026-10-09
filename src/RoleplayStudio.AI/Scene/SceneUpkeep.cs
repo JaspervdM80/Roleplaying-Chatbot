@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RoleplayStudio.AI.Images;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Authoring;
@@ -7,11 +8,15 @@ using RoleplayStudio.Infrastructure.Data;
 
 namespace RoleplayStudio.AI.Scene;
 
-/// <summary>After a turn: reads the new messages for where the scene is, who is in it and what they wear, and meets newcomers.</summary>
+/// <summary>
+/// After a turn: reads the new messages for where the scene is, who is in it and what they wear, and meets newcomers.
+/// A newcomer, or someone the chat introduced whose looks it filled in, gets a portrait drawn when there is an image model.
+/// </summary>
 public sealed class SceneUpkeep(
     IDbContextFactory<ApplicationDbContext> dbFactory,
     IChatClientFactory clients,
     SceneNotifier notifier,
+    PictureQueue pictures,
     TimeProvider time,
     ILogger<SceneUpkeep> logger)
 {
@@ -58,7 +63,7 @@ public sealed class SceneUpkeep(
 
         var lastSequence = messages.Max(m => m.Sequence);
         var update = SceneTracking.Parse(reply.Value);
-        var met = 0;
+        SceneOutcome? outcome = null;
         if (update is null)
         {
             // Skipped rather than retried, so a model that cannot write the JSON does not pay for the same messages every turn.
@@ -67,22 +72,40 @@ public sealed class SceneUpkeep(
         else
         {
             var before = session.CharacterStates.ToList();
-            var newcomers = SceneTracking.Apply(session, known, update, session.Persona.Name, time.GetUtcNow());
+            outcome = SceneTracking.Apply(session, known, update, session.Persona.Name, time.GetUtcNow());
 
             // Found only through the collection, a state with a client-made id would be taken for an existing row and updated.
             db.CharacterStates.AddRange(session.CharacterStates.Except(before));
-            foreach (var (character, role) in newcomers)
+            foreach (var (character, role) in outcome.Newcomers)
             {
                 db.Characters.Add(character);
                 db.Add(new ChatbotCharacter { ChatbotId = chatbotId, CharacterId = character.Id, Role = role });
             }
-
-            met = newcomers.Count;
         }
 
         session.Scene.TrackedUpToSequence = lastSequence;
         await db.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Tracked the scene of chat {SessionId} up to message {Sequence}; met {NewcomerCount} newcomers", session.Id, lastSequence, met);
+        logger.LogInformation("Tracked the scene of chat {SessionId} up to message {Sequence}; met {NewcomerCount} newcomers", session.Id, lastSequence, outcome?.Newcomers.Count ?? 0);
         notifier.Notify(session.Id);
+
+        if (outcome is not null)
+        {
+            await DrawPortraitsAsync(db, job.OwnerId, outcome, cancellationToken);
+        }
+    }
+
+    private async Task DrawPortraitsAsync(ApplicationDbContext db, string ownerId, SceneOutcome outcome, CancellationToken cancellationToken)
+    {
+        var portraits = outcome.Newcomers.Select(n => (n.Character.Id, Renew: false)).Concat(outcome.Restyled.Select(c => (c.Id, Renew: true))).ToList();
+        if (portraits.Count == 0 || await PictureService.MissingModelAsync(db, needsPrompt: true, cancellationToken) is not null)
+        {
+            return;
+        }
+
+        var waiting = pictures.PendingFor(ownerId).Where(p => p.SessionId is null).Select(p => p.CharacterId).ToHashSet();
+        foreach (var (characterId, renew) in portraits.Where(p => !waiting.Contains(p.Id)))
+        {
+            pictures.Enqueue(new PictureJob(ownerId, null, null, characterId, RenewsReference: renew));
+        }
     }
 }

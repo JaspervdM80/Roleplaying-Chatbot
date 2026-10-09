@@ -1,0 +1,70 @@
+.turn-footer {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.turn-footer-user {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.turn-pictures {
+    max-width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.turn-picture {
+    margin: 0;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.turn-picture figcaption {
+    font-size: 0.75rem;
+    color: var(--ink-subtle);
+}
+
+.turn-picture-open {
+    display: block;
+    max-width: 100%;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface-raised);
+    cursor: zoom-in;
+}
+
+.turn-picture-open img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.turn-picture ::deep .turn-picture-wide {
+    width: 448px;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+}
+
+.turn-picture ::deep .turn-picture-tall {
+    width: 240px;
+    max-width: 100%;
+    aspect-ratio: 3 / 4;
+}
+
+.turn-footer ::deep .turn-picture-this {
+    align-self: flex-start;
+}
+
+.turn-footer ::deep .turn-picture-this .mud-button-root {
+    min-height: 44px;
+}

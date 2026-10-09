@@ -185,3 +185,23 @@
         color: var(--ink);
     }
 }
+
+.scene-pictures-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.scene-pictures-heading ::deep .scene-see-all {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.scene-pictures {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}

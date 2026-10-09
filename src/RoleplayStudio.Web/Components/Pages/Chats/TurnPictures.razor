@@ -1,0 +1,71 @@
+@using RoleplayStudio.AI.Images
+@using RoleplayStudio.Domain.Media
+
+<div class="turn-footer @(Turn.FromUser ? "turn-footer-user" : null)">
+    @if (Pictures.Count > 0 || Pending.Count > 0)
+    {
+        <div class="turn-pictures">
+            @foreach (var picture in Pictures)
+            {
+                <figure class="turn-picture" @key="picture.Id">
+                    <button type="button" class="turn-picture-open" style="@Shape(picture.Width, picture.Height)"
+                            aria-label="@($"Open picture: {picture.Caption ?? "Picture"}")" @onclick="() => OnOpen.InvokeAsync(picture)">
+                        <img src="@ImageEndpoints.Url(picture.Id)" alt="" loading="lazy" />
+                    </button>
+                    @if (picture.Caption is { } caption)
+                    {
+                        <figcaption>@caption</figcaption>
+                    }
+                </figure>
+            }
+            @foreach (var pending in Pending)
+            {
+                <figure class="turn-picture" aria-busy="true" @key="pending.Id">
+                    <PicturePlaceholder Pending="pending" OnCancel="OnCancel" Class="@(pending.CharacterId is null ? "turn-picture-wide" : "turn-picture-tall")" />
+                </figure>
+            }
+        </div>
+    }
+    @if (!Turn.FromUser && OnPicture.HasDelegate)
+    {
+        <MudMenu Label="Picture this" StartIcon="@Icons.Material.Outlined.Image" Variant="Variant.Text" Size="Size.Small" Disabled="Disabled"
+                 AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" Class="turn-picture-this">
+            <MudMenuItem OnClick="() => OnPicture.InvokeAsync(null)">The scene</MudMenuItem>
+            @foreach (var (id, name) in Subjects)
+            {
+                <MudMenuItem OnClick="() => OnPicture.InvokeAsync(id)">@name</MudMenuItem>
+            }
+        </MudMenu>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ChatTurnView Turn { get; set; } = null!;
+
+    [Parameter]
+    public IReadOnlyList<GeneratedImage> Pictures { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyList<PendingPicture> Pending { get; set; } = [];
+
+    /// <summary>The characters a picture can be of, besides the whole scene.</summary>
+    [Parameter]
+    public IReadOnlyList<(Guid Id, string Name)> Subjects { get; set; } = [];
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>Asks for a picture of the character with this id, or of the scene for null.</summary>
+    [Parameter]
+    public EventCallback<Guid?> OnPicture { get; set; }
+
+    [Parameter]
+    public EventCallback<GeneratedImage> OnOpen { get; set; }
+
+    [Parameter]
+    public EventCallback<PendingPicture> OnCancel { get; set; }
+
+    private static string Shape(int width, int height) =>
+        $"width: {(width > height ? 448 : 240)}px; aspect-ratio: {width} / {height}";
+}

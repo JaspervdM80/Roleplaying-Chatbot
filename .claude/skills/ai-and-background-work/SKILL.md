@@ -51,9 +51,11 @@ becomes narration rather than a new character.
 
 ## Background work never blocks the user
 
-Scene tracking, memory extraction, summarization and image generation run **after** the reply is
-saved, through a bounded `Channel<T>` (`UpkeepQueue`) read by a `BackgroundService` (`UpkeepWorker`),
-which runs each step in turn so one failing does not stop the next:
+Scene tracking, memory extraction and summarization run **after** the reply is saved, through a
+bounded `Channel<T>` (`UpkeepQueue`) read by a `BackgroundService` (`UpkeepWorker`), which runs each
+step in turn so one failing does not stop the next. Pictures have their own queue and worker
+(`PictureQueue`, `PictureWorker`), so a slow drawing never holds a chat's upkeep back. Both follow
+the same rules:
 
 - **The producer only `TryWrite`s and returns.** A chat turn never waits on extraction, and a failing
   job never fails the turn.
@@ -77,7 +79,11 @@ which runs each step in turn so one failing does not stop the next:
   `SceneState.TrackedUpToSequence` like extraction moves its marker, and announces the change through
   `SceneNotifier`.
 - **A newcomer becomes a real `Character`**, owned by the chat's owner and added to the chatbot's
-  cast with the role the model gave. A name already in the cast or met in the chat (exactly, or by a
+  cast with the role the model gave, marked with `IntroducedInSessionId`. That chat's tracking may
+  rename them and fill in their age, gender and lasting looks as the story reveals them; a character
+  the user wrote, or one they have since edited (the edit clears the mark), is never changed. A new
+  portrait is queued for a newcomer, and one that renews the reference when their looks were filled
+  in (`PictureJob.RenewsReference`). A name already in the cast or met in the chat (exactly, or by a
   first name only one character has) is that character, never a copy. The persona, and a name no
   newcomer entry describes, are never made into characters.
 - **Leaving is not forgetting.** Who is present is replaced wholesale; a `CharacterState` stays for
@@ -125,7 +131,7 @@ which runs each step in turn so one failing does not stop the next:
 
 The image prompt is written by the utility model from the character's `Appearance`, the session's
 `CharacterState.CurrentOutfit`, `SceneState` and a few related memories, then sent to the
-`IImageGenerator`. It always describes the character as an adult. Store the final prompt, seed,
+`IImageGenerator`. Store the final prompt, seed,
 provider and source memory ids on `GeneratedImage`, so an image can be explained and regenerated.
 Files go through `IImageStore`, never a path built in a page.
 
@@ -134,10 +140,34 @@ Files go through `IImageStore`, never a path built in a page.
 - The factory's `CreateImageGenerator` builds it; only a provider `ModelProfile.CanDraw` accepts may
   be an `Image` profile. The Runware key follows the same host rule as every other key
   (`Providers:Runware:BaseUrl`).
-- **The seed is chosen by us and sent**, never left to the provider, so `GeneratedImage.Seed` can
-  always regenerate the picture.
+- **The seed is chosen by us and sent when the model takes one**, never left to the provider, so
+  `GeneratedImage.Seed` can regenerate the picture; a model that takes no seed stores none.
 - `ImageService.SaveAsync` writes the file and the row together (the file is removed if the row fails)
   and refuses a session, message or character that is not the caller's. `/images/{id}` serves
   through `ImageService.OpenAsync`, so another user's id is a 404; the endpoint hands the request's
   user to the `AuthenticationStateProvider` first, since outside a component nothing else does.
 - Testing an `Image` profile on the models page draws and stores a real picture.
+- **Pages ask through `PictureService`; `PictureDrawing` does the work** in the background. A job
+  carries its owner like an upkeep job and saves with `ImageService.StoreAsync` in a context scoped to
+  that owner. `PictureQueue` also holds what is waiting or being drawn, so a page shows placeholders
+  (with the caption once the prompt is written) and can cancel; `PictureNotifier` announces the caption
+  and the end. Picture this and portraits are refused up front without an image model, or without a
+  utility model to write the prompt.
+- **`ImagePrompts` is pure**: the brief (`PictureBrief`), the utility-model prompt, the parse and
+  `Compose`. Stable looks come from the `Character`, clothes and changes from the chat's
+  `CharacterState`; a portrait wears the default outfit. A picture is of the moment it was asked on:
+  the messages up to that one go in, not later ones.
+- **What a model takes comes from its schema, not from settings.** `RunwareModelCatalog` reads the
+  schema Runware publishes per model and caches what it found; a model missing from the index (read
+  again after an hour) is treated as the SD family: negative prompt and seed, no references.
+  `RunwareImageGenerator` leaves out what the model does not declare, puts references in
+  `inputs.referenceImages` and snaps to an allowed size; `GeneratedPicture` reports the size drawn.
+- **Reference portraits** (`Character.ReferenceImageId`) of everyone pictured are sent, in the order
+  the prompt numbers them ("reference image N"), up to the model's limit, with the subject's
+  `ImageSeed`. Only a portrait that loaded gets a number, so the numbers always match what is sent.
+  `GeneratedImage.ReferenceImageIds` keeps them; drawing again sends the same ones, and is refused
+  when one is gone or the model now takes fewer. A character's first portrait becomes the reference
+  and gives them its seed; the user can pick another picture of them, which like any edit hands a
+  character the chat introduced over to the user. The avatar
+  is that portrait cropped in CSS (`.app-avatar-picture`), never a second stored image. Drawing again
+  keeps the prompt and takes a new seed, since the stored one would give back the same picture.

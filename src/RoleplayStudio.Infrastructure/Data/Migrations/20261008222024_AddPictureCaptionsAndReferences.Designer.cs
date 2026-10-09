@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using RoleplayStudio.Infrastructure.Data;
 namespace RoleplayStudio.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261008222024_AddPictureCaptionsAndReferences")]
+    partial class AddPictureCaptionsAndReferences
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -210,9 +213,6 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
 
                     b.Property<string>("ImageTags")
                         .HasColumnType("text");
-
-                    b.Property<Guid?>("IntroducedInSessionId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -566,10 +566,6 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.PrimitiveCollection<List<Guid>>("ReferenceImageIds")
-                        .IsRequired()
-                        .HasColumnType("uuid[]");
-
                     b.Property<long?>("Seed")
                         .HasColumnType("bigint");
 
@@ -660,6 +656,9 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("AcceptsReferenceImage")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("ApiKeySetting")
                         .HasMaxLength(200)

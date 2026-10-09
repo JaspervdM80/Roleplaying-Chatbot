@@ -28,7 +28,7 @@
                 {
                     <li class="cast-row" data-picked="@row.InCast" @key="row.Character.Id">
                         <label class="cast-pick">
-                            <Avatar Id="row.Character.Id" Name="@row.Character.Name" />
+                            <Avatar Id="row.Character.Id" Name="@row.Character.Name" ImageId="row.Character.ReferenceImageId" />
                             <span class="cast-text">
                                 <span class="cast-name">@row.Character.Name</span>
                                 @if (row.Character.ShortDescription is not null)

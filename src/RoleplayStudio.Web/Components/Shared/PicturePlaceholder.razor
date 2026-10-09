@@ -1,0 +1,29 @@
+@using RoleplayStudio.AI.Images
+
+<div role="status" class="app-picture-placeholder @Class" aria-label="Drawing a picture">
+    <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+    @if (!Compact)
+    {
+        <span class="app-picture-placeholder-title">Drawing the picture…</span>
+        @if (Pending.Caption is { } caption)
+        {
+            <span class="app-picture-placeholder-caption">@caption</span>
+        }
+        <MudButton Variant="Variant.Text" Size="Size.Small" Class="app-picture-placeholder-cancel" OnClick="() => OnCancel.InvokeAsync(Pending)">Cancel</MudButton>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public PendingPicture Pending { get; set; } = null!;
+
+    /// <summary>Only the spinner, for a small gallery tile.</summary>
+    [Parameter]
+    public bool Compact { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public EventCallback<PendingPicture> OnCancel { get; set; }
+}

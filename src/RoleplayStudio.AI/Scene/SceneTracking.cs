@@ -8,8 +8,19 @@ using RoleplayStudio.Domain.Chats;
 
 namespace RoleplayStudio.AI.Scene;
 
-/// <summary>A field the model left out is null and keeps its value.</summary>
-public sealed record CharacterChange(string Name, string? Status, string? AppearanceChanges, string? Outfit);
+/// <summary>
+/// A field the model left out is null and keeps its value. <see cref="NewName"/>, <see cref="Age"/>, <see cref="Gender"/> and
+/// <see cref="Appearance"/> are what the story revealed about a character it introduced, and change nobody else.
+/// </summary>
+public sealed record CharacterChange(
+    string Name,
+    string? Status,
+    string? AppearanceChanges,
+    string? Outfit,
+    string? NewName = null,
+    int? Age = null,
+    string? Gender = null,
+    string? Appearance = null);
 
 public sealed record Newcomer(string Name, string? Role, int? Age, string? Gender, string? Description, string? Personality, string? SpeechStyle, string? Appearance, string? Outfit);
 
@@ -25,10 +36,14 @@ public sealed record SceneUpdate(
 /// <summary>The characters a tracked scene can name: those met in this chat, and the rest of the chatbot's cast.</summary>
 public sealed record SceneCast(IReadOnlyList<CharacterState> Met, IReadOnlyList<Character> Cast);
 
+/// <summary>What applying an update did to characters: newcomers made (not yet saved or cast), and characters whose lasting looks were filled in.</summary>
+public sealed record SceneOutcome(IReadOnlyList<(Character Character, string? Role)> Newcomers, IReadOnlyList<Character> Restyled);
+
 public static class SceneTracking
 {
     public const int MaxMessages = 12;
     public const int MaxTextLength = 400;
+    public const double RestyleGrowth = 1.2;
 
     public static IReadOnlyList<ChatMessage> Prompt(ChatSession session, string personaName, SceneCast cast, IReadOnlyList<Message> messages)
     {
@@ -39,10 +54,12 @@ public static class SceneTracking
         instructions.AppendLine($"- who is in the scene with {personaName} now: everyone who arrived stays until the story says they left;");
         instructions.AppendLine("- for anyone whose clothes, looks or feelings changed: their outfit as it is now, lasting changes to how they look, and a one- or two-word status (how they feel, like \"Warm\" or \"Wary\");");
         instructions.AppendLine("- newcomers: named people who speak or act and are not one of the known characters. Describe them from the story, inventing only what is needed to picture them, and always give an age, estimated from the story if it is not said. Someone unnamed who speaks can be named by what they are, like \"The stablehand\".");
-        instructions.AppendLine("Use the known characters' names exactly as written below.");
+        instructions.AppendLine("- for a known character marked \"introduced in this story\": when the story now gives their real name, their new name; when it tells more about how they look, their lasting looks as a whole, old details kept; and their age or gender once the story makes it clear.");
+        instructions.AppendLine("Lasting looks are what stays the same from picture to picture: face, hair colour, length and style, eye colour, skin, build and height, and marks like scars or tattoos. Give a newcomer's looks in that detail too.");
+        instructions.AppendLine("Use the known characters' names exactly as written below, also for someone who was just renamed.");
         instructions.AppendLine();
         instructions.AppendLine("Answer with JSON only, in this shape:");
-        instructions.AppendLine($$"""{"location":"...","timeOfDay":"...","mood":"...","present":["Name"],"changes":[{"name":"Name","status":"...","appearanceChanges":"...","outfit":"..."}],"newcomers":[{"name":"...","role":"...","age":30,"gender":"...","description":"...","personality":"...","speechStyle":"...","appearance":"...","outfit":"..."}]}""");
+        instructions.AppendLine($$"""{"location":"...","timeOfDay":"...","mood":"...","present":["Name"],"changes":[{"name":"Name","status":"...","appearanceChanges":"...","outfit":"...","newName":"...","age":30,"gender":"...","appearance":"..."}],"newcomers":[{"name":"...","role":"...","age":30,"gender":"...","description":"...","personality":"...","speechStyle":"...","appearance":"...","outfit":"..."}]}""");
         instructions.AppendLine("Leave out a field that did not change. An outfit is everything they wear now, in a sentence or two, not only what changed.");
 
         var story = new StringBuilder();
@@ -55,7 +72,10 @@ public static class SceneTracking
         foreach (var state in cast.Met)
         {
             var where = session.Scene.PresentCharacterIds.Contains(state.CharacterId) ? "in the scene" : "met earlier, not in the scene";
-            story.AppendLine($"- {state.Character.Name} ({where}). Wearing: {OneLine(state.CurrentOutfit) ?? "unknown"}.{Suffix(" Status: ", state.Status)}");
+            var introduced = state.Character.IntroducedInSessionId == session.Id
+                ? $" Introduced in this story. Age: {state.Character.Age}. Gender: {state.Character.Gender ?? "unknown"}. Looks: {OneLine(state.Character.Appearance) ?? "unknown"}."
+                : "";
+            story.AppendLine($"- {state.Character.Name} ({where}). Wearing: {OneLine(state.CurrentOutfit) ?? "unknown"}.{Suffix(" Status: ", state.Status)}{introduced}");
         }
 
         foreach (var character in cast.Cast.Where(c => cast.Met.All(s => s.CharacterId != c.Id)))
@@ -91,20 +111,39 @@ public static class SceneTracking
             Objects(root, "newcomers").Select(NewcomerOf).OfType<Newcomer>().ToList());
     }
 
-    /// <summary>Applies the update to a tracked session; returns the characters made for newcomers, already present but not yet saved or cast.</summary>
-    public static IReadOnlyList<(Character Character, string? Role)> Apply(ChatSession session, SceneCast cast, SceneUpdate update, string personaName, DateTimeOffset now)
+    /// <summary>Applies the update to a tracked session; newcomers are already present.</summary>
+    public static SceneOutcome Apply(ChatSession session, SceneCast cast, SceneUpdate update, string personaName, DateTimeOffset now)
     {
         session.Scene.Location = update.Location ?? session.Scene.Location;
         session.Scene.TimeOfDay = update.TimeOfDay ?? session.Scene.TimeOfDay;
         session.Scene.Mood = update.Mood ?? session.Scene.Mood;
 
         var known = cast.Met.Select(s => s.Character).Concat(cast.Cast).DistinctBy(c => c.Id).ToList();
+
+        // Renamed first, so the rest of the update finds them by either name.
+        var formerNames = new Dictionary<string, Character>(StringComparer.OrdinalIgnoreCase);
+        foreach (var change in update.Changes.Where(c => c.NewName is not null))
+        {
+            if (Find(known, change.Name) is { } character
+                && character.IntroducedInSessionId == session.Id
+                && Fit(change.NewName!) is { } newName
+                && !IsPersona(newName, personaName)
+                && (Find(known, newName) ?? character) == character)
+            {
+                formerNames[character.Name.Trim()] = character;
+                character.Name = newName;
+            }
+        }
+
+        Character? Resolve(string name) => Find(known, name) ?? formerNames.GetValueOrDefault(name);
+
         var created = new List<(Character, string?)>();
-        foreach (var newcomer in update.Newcomers.Where(n => !IsPersona(n.Name, personaName) && Find(known, n.Name) is null))
+        foreach (var newcomer in update.Newcomers.Where(n => !IsPersona(n.Name, personaName) && Resolve(n.Name) is null))
         {
             var character = new Character
             {
-                Name = newcomer.Name.Length > Character.MaxNameLength ? newcomer.Name[..Character.MaxNameLength].TrimEnd() : newcomer.Name,
+                IntroducedInSessionId = session.Id,
+                Name = Fit(newcomer.Name)!,
                 Gender = newcomer.Gender,
                 ShortDescription = newcomer.Description,
                 Personality = newcomer.Personality,
@@ -125,7 +164,7 @@ public static class SceneTracking
         {
             var present = names
                 .Where(n => !IsPersona(n, personaName))
-                .Select(n => Find(known, n))
+                .Select(Resolve)
                 .OfType<Character>()
                 .Concat(created.Select(c => c.Item1))
                 .DistinctBy(c => c.Id)
@@ -137,9 +176,10 @@ public static class SceneTracking
             session.SetPresent([.. session.Scene.PresentCharacterIds.Select(id => known.First(c => c.Id == id)), .. created.Select(c => c.Item1)], now);
         }
 
+        var restyled = new List<Character>();
         foreach (var change in update.Changes)
         {
-            if (Find(known, change.Name) is not { } character || session.CharacterStates.FirstOrDefault(s => s.CharacterId == character.Id) is not { } state)
+            if (Resolve(change.Name) is not { } character || session.CharacterStates.FirstOrDefault(s => s.CharacterId == character.Id) is not { } state)
             {
                 continue;
             }
@@ -148,9 +188,34 @@ public static class SceneTracking
             state.AppearanceChanges = change.AppearanceChanges ?? state.AppearanceChanges;
             state.CurrentOutfit = change.Outfit ?? state.CurrentOutfit;
             state.UpdatedAt = now;
+
+            if (character.IntroducedInSessionId != session.Id)
+            {
+                continue;
+            }
+
+            character.Age = change.Age ?? character.Age;
+            character.Gender = change.Gender ?? character.Gender;
+            if (change.Appearance is { } appearance && !string.Equals(appearance, character.Appearance?.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                // A model rewording the same looks each turn would redraw and re-reference them each turn; only more to go on earns a portrait.
+                if (appearance.Length >= (character.Appearance?.Trim().Length ?? 0) * RestyleGrowth)
+                {
+                    restyled.Add(character);
+                }
+
+                character.Appearance = appearance;
+            }
         }
 
-        return created;
+        var newcomers = created.Select(c => c.Item1).ToList();
+        return new SceneOutcome(created, restyled.Except(newcomers).Distinct().ToList());
+    }
+
+    private static string? Fit(string name)
+    {
+        var trimmed = name.Trim();
+        return trimmed.Length == 0 ? null : trimmed.Length > Character.MaxNameLength ? trimmed[..Character.MaxNameLength].TrimEnd() : trimmed;
     }
 
     // A model writes "Thorne" for "Thorne Ashby"; a first name counts only when it picks out one character.
@@ -172,7 +237,7 @@ public static class SceneTracking
 
     private static CharacterChange? ChangeOf(JsonElement item) =>
         Text(item, "name") is { } name
-            ? new CharacterChange(name, Text(item, "status"), Text(item, "appearanceChanges"), Text(item, "outfit"))
+            ? new CharacterChange(name, Text(item, "status"), Text(item, "appearanceChanges"), Text(item, "outfit"), Text(item, "newName"), AgeOf(item), Text(item, "gender"), Text(item, "appearance"))
             : null;
 
     private static Newcomer? NewcomerOf(JsonElement item)

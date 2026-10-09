@@ -17,4 +17,8 @@ public static class AppRoutes
     public static string Chat(Guid id) => $"{Chats}/{id}";
 
     public static string ChatMemories(Guid id) => $"{Chat(id)}/memories";
+
+    public static string ChatPictures(Guid id) => $"{Chat(id)}/pictures";
+
+    public static string CharacterPictures(Guid id) => $"{Characters}/{id}/pictures";
 }

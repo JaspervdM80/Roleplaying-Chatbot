@@ -1,4 +1,5 @@
 using MudBlazor;
+using RoleplayStudio.Domain.Media;
 
 namespace RoleplayStudio.Web.Components.Shared;
 
@@ -8,6 +9,20 @@ public static class DialogServiceExtensions
 
     // EditorSheet draws its own header and handles Escape itself, so it can ask before unsaved edits are lost.
     public static readonly DialogOptions EditorOptions = Options with { NoHeader = true, CloseOnEscapeKey = false, MaxWidth = MaxWidth.Medium };
+
+    /// <summary>Shows the pictures from <paramref name="index"/>; whatever was deleted or redrawn there, the caller reloads afterwards.</summary>
+    public static async Task ShowPicturesAsync(this IDialogService dialogs, IReadOnlyList<GeneratedImage> images, int index, IReadOnlyDictionary<Guid, string> names, IReadOnlySet<Guid> referenceIds)
+    {
+        var parameters = new DialogParameters<PictureViewerDialog>
+        {
+            { d => d.Images, images },
+            { d => d.Index, index },
+            { d => d.Names, names },
+            { d => d.ReferenceIds, referenceIds },
+        };
+        var dialog = await dialogs.ShowAsync<PictureViewerDialog>("Picture", parameters, Options with { NoHeader = true, MaxWidth = MaxWidth.Large });
+        await dialog.Result;
+    }
 
     public static async Task<bool> ConfirmAsync(this IDialogService dialogs, string title, string message, string confirmText)
     {
