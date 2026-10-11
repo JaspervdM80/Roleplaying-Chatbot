@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using RoleplayStudio.AI.Memory;
-using RoleplayStudio.Domain;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 
@@ -73,7 +72,7 @@ public static class SceneTracking
         {
             var where = session.Scene.PresentCharacterIds.Contains(state.CharacterId) ? "in the scene" : "met earlier, not in the scene";
             var introduced = state.Character.IntroducedInSessionId == session.Id
-                ? $" Introduced in this story. Age: {state.Character.Age}. Gender: {state.Character.Gender ?? "unknown"}. Looks: {OneLine(state.Character.Appearance) ?? "unknown"}."
+                ? $" Introduced in this story. Age: {state.Character.Age?.ToString() ?? "unknown"}. Gender: {state.Character.Gender ?? "unknown"}. Looks: {OneLine(state.Character.Appearance) ?? "unknown"}."
                 : "";
             story.AppendLine($"- {state.Character.Name} ({where}). Wearing: {OneLine(state.CurrentOutfit) ?? "unknown"}.{Suffix(" Status: ", state.Status)}{introduced}");
         }
@@ -105,7 +104,7 @@ public static class SceneTracking
             Text(root, "timeOfDay"),
             Text(root, "mood"),
             root.TryGetProperty("present", out var present) && present.ValueKind == JsonValueKind.Array
-                ? present.EnumerateArray().Select(n => n.ValueKind == JsonValueKind.String ? TextFields.Clean(n.GetString()) : null).OfType<string>().ToList()
+                ? present.EnumerateArray().Select(n => n.ValueKind == JsonValueKind.String ? StructuredOutput.Text(n.GetString()) : null).OfType<string>().ToList()
                 : null,
             Objects(root, "changes").Select(ChangeOf).OfType<CharacterChange>().ToList(),
             Objects(root, "newcomers").Select(NewcomerOf).OfType<Newcomer>().ToList());
@@ -150,11 +149,8 @@ public static class SceneTracking
                 SpeechStyle = newcomer.SpeechStyle,
                 Appearance = newcomer.Appearance,
                 DefaultOutfit = newcomer.Outfit,
+                Age = newcomer.Age,
             };
-            if (newcomer.Age is { } age)
-            {
-                character.Age = age;
-            }
 
             known.Add(character);
             created.Add((character, newcomer.Role));
@@ -280,12 +276,7 @@ public static class SceneTracking
             ? items.EnumerateArray().Where(i => i.ValueKind == JsonValueKind.Object)
             : [];
 
-    private static string? Text(JsonElement element, string property) =>
-        element.ValueKind == JsonValueKind.Object && element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String
-            ? Cut(TextFields.Clean(value.GetString()))
-            : null;
-
-    private static string? Cut(string? text) => text is { Length: > MaxTextLength } ? text[..MaxTextLength] : text;
+    private static string? Text(JsonElement element, string property) => StructuredOutput.Text(element, property, MaxTextLength);
 
     private static string? OneLine(string? text) => text?.ReplaceLineEndings("; ");
 

@@ -219,7 +219,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var scene = (await user.Sessions.GetSceneAsync(session.Id)).Value;
         Assert.Equal([mira.Id, jun.Id], scene.Scene.PresentCharacterIds);
         Assert.Equal("A wet raincoat", scene.CharacterStates.Single(s => s.CharacterId == jun.Id).CurrentOutfit);
-        Assert.Contains("Jun arrives", client.LastMessages![0].Text);
+        Assert.Contains("Jun arrives", client.LastMessages![^1].Text);
         Assert.Equal(jun.Id, saved[^1].SpeakerCharacterId);
     }
 

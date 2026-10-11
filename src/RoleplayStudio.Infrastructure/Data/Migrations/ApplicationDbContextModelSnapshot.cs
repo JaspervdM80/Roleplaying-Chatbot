@@ -184,7 +184,7 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Age")
+                    b.Property<int?>("Age")
                         .HasColumnType("integer");
 
                     b.Property<string>("Appearance")
