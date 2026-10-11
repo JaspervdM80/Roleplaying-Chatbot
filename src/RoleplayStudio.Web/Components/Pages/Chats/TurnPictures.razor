@@ -26,7 +26,7 @@
             }
         </div>
     }
-    @if (!Turn.FromUser && OnPicture.HasDelegate)
+    @if (!Turn.FromUser && Actions && OnPicture.HasDelegate)
     {
         <MudMenu Label="Picture this" StartIcon="@Icons.Material.Outlined.Image" Variant="Variant.Text" Size="Size.Small" Disabled="Disabled"
                  AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" Class="turn-picture-this">
@@ -55,6 +55,10 @@
 
     [Parameter]
     public bool Disabled { get; set; }
+
+    /// <summary>Whether this turn carries the actions; they show once per run of model turns, under its last part.</summary>
+    [Parameter]
+    public bool Actions { get; set; } = true;
 
     /// <summary>Asks for a picture of the character with this id, or of the scene for null.</summary>
     [Parameter]

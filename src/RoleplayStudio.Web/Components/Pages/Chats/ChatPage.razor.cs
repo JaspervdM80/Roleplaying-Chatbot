@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
@@ -28,6 +29,7 @@ public partial class ChatPage
     private IReadOnlyList<GeneratedImage> _pictures = [];
     private IReadOnlyList<PendingPicture> _pending = [];
     private IReadOnlyList<(Guid Id, string Name)> _subjects = [];
+    private IReadOnlyDictionary<Guid, Guid?> _portraits = new Dictionary<Guid, Guid?>();
 
     [Inject]
     private ChatSessionService Sessions { get; set; } = null!;
@@ -86,9 +88,9 @@ public partial class ChatPage
 
         _session = result.Value;
         _turns.Clear();
-        _turns.AddRange(_session.Messages.Select(m => new ChatTurnView(m.Role == MessageRole.User, m.SpeakerName, m.Content, m.Id)));
+        _turns.AddRange(_session.Messages.Select(ChatTurnView.Of));
         _transcript?.RequestScrollToEnd();
-        _subjects = Subjects(_session);
+        ShowCast(_session);
         await LoadPicturesAsync();
 
         var profiles = await Profiles.ListAsync(Cancellation);
@@ -132,7 +134,7 @@ public partial class ChatPage
             return;
         }
 
-        _turns.Add(new ChatTurnView(true, sent.Value.SpeakerName, sent.Value.Content, sent.Value.Id));
+        _turns.Add(ChatTurnView.Of(sent.Value));
         _transcript?.RequestScrollToEnd();
         await StreamReplyAsync();
     }
@@ -148,9 +150,9 @@ public partial class ChatPage
 
     private async Task StreamReplyAsync()
     {
-        var speaker = ChatSession.ReplySpeaker(_session!.PresentCharacters(_session.CharacterStates)).Name;
-        var reply = new ChatTurnView(false, speaker, "");
-        _turns.Add(reply);
+        var parser = new SpeakerTagParser(_session!.PresentCharacters(_session.CharacterStates));
+        var streamed = new StringBuilder();
+        var live = new List<ChatTurnView>();
         _streaming = true;
         _stop = CancellationTokenSource.CreateLinkedTokenSource(Cancellation);
         var sinceRender = Stopwatch.StartNew();
@@ -159,10 +161,12 @@ public partial class ChatPage
             Id,
             text =>
             {
-                reply.Append(text);
+                streamed.Append(text);
+                parser.Append(text);
                 if (sinceRender.Elapsed >= RenderThrottle)
                 {
                     sinceRender.Restart();
+                    ShowSegments(parser.Segments, live);
                     StateHasChanged();
                 }
             },
@@ -170,19 +174,38 @@ public partial class ChatPage
 
         _stop.Dispose();
         _stop = null;
-        _turns.Remove(reply);
-        if (reply.Text.Trim().Length > 0)
+        ShowSegments(parser.Complete(), live);
+        _turns.RemoveAll(live.Contains);
+        if (streamed.ToString().Trim().Length > 0)
         {
             // Saved even when stopped or the user left: what was streamed is what they saw.
-            var saved = await Turns.SaveReplyAsync(Id, reply.Text);
+            var saved = await Turns.SaveReplyAsync(Id, streamed.ToString());
             if (Snackbar.Report(saved))
             {
-                _turns.AddRange(saved.Value.Select(m => new ChatTurnView(false, m.SpeakerName, m.Content, m.Id)));
+                _turns.AddRange(saved.Value.Select(ChatTurnView.Of));
             }
         }
 
         _streaming = false;
         Snackbar.Report(result);
+    }
+
+    /// <summary>Shows the reply so far as one turn per speaker; a segment only ever grows, so each keeps its place.</summary>
+    private void ShowSegments(IReadOnlyList<ReplySegment> segments, List<ChatTurnView> live)
+    {
+        for (var i = 0; i < segments.Count; i++)
+        {
+            if (i == live.Count)
+            {
+                var speaker = _session!.CharacterStates.Select(s => s.Character).FirstOrDefault(c => c.Id == segments[i].CharacterId);
+                live.Add(speaker is null
+                    ? new ChatTurnView(TurnVoice.Narration, ChatSession.NarratorName, "")
+                    : new ChatTurnView(TurnVoice.Character, speaker.Name, "", speakerId: speaker.Id));
+                _turns.Add(live[i]);
+            }
+
+            live[i].Replace(segments[i].Text);
+        }
     }
 
     private void Stop() => _stop?.Cancel();
@@ -204,13 +227,16 @@ public partial class ChatPage
         {
             _session.Scene = result.Value.Scene;
             _session.CharacterStates = result.Value.CharacterStates;
-            _subjects = Subjects(_session);
+            ShowCast(_session);
             StateHasChanged();
         }
     }
 
-    private static IReadOnlyList<(Guid, string)> Subjects(ChatSession session) =>
-        session.PresentCharacters(session.CharacterStates).Select(c => (c.Id, c.Name)).ToList();
+    private void ShowCast(ChatSession session)
+    {
+        _subjects = session.PresentCharacters(session.CharacterStates).Select(c => (c.Id, c.Name)).ToList();
+        _portraits = session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.ReferenceImageId);
+    }
 
     private IReadOnlyList<GeneratedImage> PicturesOf(ChatTurnView turn) =>
         _pictures.Where(p => p.MessageId == turn.MessageId).OrderBy(p => p.CreatedAt).ToList();

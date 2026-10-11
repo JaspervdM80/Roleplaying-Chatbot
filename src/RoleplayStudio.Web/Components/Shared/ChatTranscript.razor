@@ -1,21 +1,61 @@
 @inherits CancellableComponent
 
 <div class="chat-messages" @ref="_messageList" aria-live="polite">
-    @foreach (var turn in Turns)
+    @for (var i = 0; i < Turns.Count; i++)
     {
+        var turn = Turns[i];
+        var index = i;
         <div class="chat-entry" @key="turn">
-            <div class="@(turn.FromUser ? "chat-turn chat-turn-user" : "chat-turn")">
-                <div class="chat-turn-speaker">@turn.Speaker</div>
-                <div class="chat-turn-text">@turn.Text</div>
-            </div>
+            @switch (turn.Voice)
+            {
+                case TurnVoice.User:
+                    <div class="chat-turn chat-turn-user">
+                        <div class="chat-turn-speaker">@turn.Speaker</div>
+                        <div class="chat-turn-text">@Prose(turn.Text)</div>
+                    </div>
+                    break;
+                case TurnVoice.Narration:
+                    <div class="@($"chat-narration chat-turn-text{(IsLive(index) ? " chat-live" : null)}")">@Prose(turn.Text)</div>
+                    break;
+                default:
+                    <div class="chat-speech" style="@SpeakerInk(turn)">
+                        <Avatar Id="turn.SpeakerId ?? Guid.Empty" Name="@turn.Speaker" ImageId="PortraitOf(turn)" Size="36" Class="chat-speech-avatar" />
+                        <div class="chat-speech-speaker">@turn.Speaker</div>
+                        <div class="@($"chat-turn-text{(IsLive(index) ? " chat-live" : null)}")">@Prose(turn.Text)</div>
+                    </div>
+                    break;
+            }
             @if (TurnFooter is not null && turn.MessageId is not null)
             {
-                @TurnFooter(turn)
+                <div class="@(turn.FromUser ? "chat-turn-footer" : "chat-turn-footer chat-turn-footer-indented")">
+                    @TurnFooter(new TurnFooterContext(turn, EndsTurn(index)))
+                </div>
             }
         </div>
     }
-    @if (Streaming && Turns.Count > 0 && Turns[^1] is { FromUser: false, Text.Length: 0 })
+    @if (Waiting)
     {
         <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
     }
 </div>
+
+@code {
+    private static RenderFragment Prose(string text) => __builder =>
+    {
+        foreach (var run in ProseRun.Split(text))
+        {
+            switch (run.Style)
+            {
+                case ProseStyle.Emphasis:
+                    <em>@run.Text</em>
+                    break;
+                case ProseStyle.Strong:
+                    <strong>@run.Text</strong>
+                    break;
+                default:
+                    @run.Text
+                    break;
+            }
+        }
+    };
+}

@@ -70,7 +70,7 @@ public partial class PlaygroundPage
             return;
         }
 
-        _turns.Add(new ChatTurnView(true, "You", _draft!.Trim()));
+        _turns.Add(new ChatTurnView(TurnVoice.User, "You", _draft!.Trim()));
         _draft = null;
         _transcript?.RequestScrollToEnd();
         await StreamReplyAsync();
@@ -92,7 +92,7 @@ public partial class PlaygroundPage
     private async Task StreamReplyAsync()
     {
         var history = _turns.Select(t => new PlaygroundTurn(t.FromUser, t.Text)).ToList();
-        var reply = new ChatTurnView(false, _characterName.Trim(), "");
+        var reply = new ChatTurnView(TurnVoice.Character, _characterName.Trim(), "");
         _turns.Add(reply);
         _streaming = true;
         _stop = CancellationTokenSource.CreateLinkedTokenSource(Cancellation);

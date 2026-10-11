@@ -30,10 +30,10 @@
             </div>
         }
 
-        <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming">
-            <TurnFooter Context="turn">
-                <TurnPictures Turn="turn" Pictures="PicturesOf(turn)" Pending="PendingOf(turn)" Subjects="_subjects" Disabled="_streaming"
-                              OnPicture="subject => PictureAsync(turn, subject)" OnOpen="OpenAsync" OnCancel="CancelPictureAsync" />
+        <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming" Portraits="_portraits">
+            <TurnFooter Context="entry">
+                <TurnPictures Turn="entry.Turn" Pictures="PicturesOf(entry.Turn)" Pending="PendingOf(entry.Turn)" Subjects="_subjects" Disabled="_streaming"
+                              Actions="entry.EndsTurn" OnPicture="subject => PictureAsync(entry.Turn, subject)" OnOpen="OpenAsync" OnCancel="CancelPictureAsync" />
             </TurnFooter>
         </ChatTranscript>
 
