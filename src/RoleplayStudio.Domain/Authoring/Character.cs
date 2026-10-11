@@ -2,11 +2,10 @@ namespace RoleplayStudio.Domain.Authoring;
 
 public class Character : OwnedEntity
 {
-    public const int MinimumAge = 12;
     public const int MaxNameLength = 100;
 
     public string Name { get; set; } = "";
-    public int Age { get; set; } = MinimumAge;
+    public int? Age { get; set; }
     public string? Gender { get; set; }
     public string? ShortDescription { get; set; }
     public string? Personality { get; set; }
@@ -52,6 +51,6 @@ public class Character : OwnedEntity
             return new EditProblem(nameof(Name), "Give the character a name");
         }
 
-        return Age < 0 ? new EditProblem(nameof(Age), "The age cannot be negative") : null;
+        return Age is < 0 ? new EditProblem(nameof(Age), "The age cannot be negative") : null;
     }
 }

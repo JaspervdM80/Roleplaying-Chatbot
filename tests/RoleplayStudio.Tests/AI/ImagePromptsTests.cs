@@ -47,6 +47,7 @@ public class ImagePromptsTests
     [InlineData("A woman by a hearth.")]
     [InlineData("""{"caption":"Mira"}""")]
     [InlineData("""{"prompt":"   "}""")]
+    [InlineData("""{"prompt":"...","caption":"..."}""")]
     public void A_reply_without_a_prompt_is_no_prompt(string reply)
     {
         Assert.Null(ImagePrompts.Parse(reply));

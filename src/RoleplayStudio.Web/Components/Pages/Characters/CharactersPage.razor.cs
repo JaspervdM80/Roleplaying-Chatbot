@@ -31,7 +31,7 @@ public partial class CharactersPage
     }
 
     private static string Summary(Character character) =>
-        character.Gender is null ? $"{character.Age}" : $"{character.Age} · {character.Gender}";
+        string.Join(" · ", new[] { character.Age?.ToString(), character.Gender }.OfType<string>());
 
     private Task AddAsync() => OpenEditorAsync(null);
 

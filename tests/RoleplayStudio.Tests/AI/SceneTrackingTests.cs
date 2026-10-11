@@ -125,6 +125,34 @@ public class SceneTrackingTests
     }
 
     [Fact]
+    public void A_newcomer_the_story_gives_no_age_has_none()
+    {
+        var (session, cast) = MiraAlone();
+
+        var (bess, _) = Assert.Single(SceneTracking.Apply(session, cast, Parsed("""{"newcomers":[{"name":"Old Bess"}]}"""), "Sam", Now).Newcomers);
+
+        Assert.Null(bess.Age);
+    }
+
+    [Fact]
+    public void Fields_copied_from_the_answer_template_change_nothing_and_make_no_one()
+    {
+        var (session, cast) = MiraAlone();
+
+        var outcome = SceneTracking.Apply(
+            session,
+            cast,
+            Parsed("""{"location":"...","mood":"…","changes":[{"name":"Mira","outfit":"..."}],"newcomers":[{"name":"...","role":"..."}]}"""),
+            "Sam",
+            Now);
+
+        Assert.Empty(outcome.Newcomers);
+        Assert.Equal("The bar", session.Scene.Location);
+        Assert.Null(session.Scene.Mood);
+        Assert.Equal("An apron and clogs", session.CharacterStates[0].CurrentOutfit);
+    }
+
+    [Fact]
     public void An_age_written_as_text_is_still_read()
     {
         var newcomer = Assert.Single(Parsed("""{"newcomers":[{"name":"Old Bess","age":"61"}]}""").Newcomers);
@@ -223,14 +251,14 @@ public class SceneTrackingTests
     [Fact]
     public void A_character_the_user_wrote_is_never_renamed_or_restyled_by_the_story()
     {
-        var mira = new Character { Name = "Mira", Appearance = "Short and round" };
+        var mira = new Character { Name = "Mira", Age = 25, Appearance = "Short and round" };
         var session = new ChatSession();
         session.SetPresent([mira], Now);
         session.CharacterStates[0].Character = mira;
 
         var outcome = SceneTracking.Apply(session, new SceneCast(session.CharacterStates, []), Parsed("""{"changes":[{"name":"Mira","newName":"Mirabel","appearance":"Tall","age":40}]}"""), "Sam", Now);
 
-        Assert.Equal(("Mira", "Short and round", Character.MinimumAge), (mira.Name, mira.Appearance, mira.Age));
+        Assert.Equal(("Mira", "Short and round", (int?)25), (mira.Name, mira.Appearance, mira.Age));
         Assert.Empty(outcome.Restyled);
     }
 

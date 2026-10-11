@@ -65,18 +65,40 @@ public class PromptBuilderTests
     public void A_hint_to_let_someone_answer_names_them_for_this_reply_only()
     {
         var jun = Present("Jun");
-        var system = PromptBuilder.Build(Input([Present("Mira"), jun]) with { Hint = new DirectorHint.LetRespond(jun.Character.Id) }, Roomy)[0].Text;
+        var messages = PromptBuilder.Build(Input([Present("Mira"), jun]) with { Hint = new DirectorHint.LetRespond(jun.Character.Id) }, Roomy);
 
-        Assert.Contains("For this reply only: only Jun speaks", system);
-        Assert.DoesNotContain("For this reply only", PromptBuilder.Build(Input([Present("Mira"), jun]), Roomy)[0].Text);
+        Assert.Contains("for this reply only: only Jun speaks", messages[^1].Text);
+        Assert.DoesNotContain(PromptBuilder.Build(Input([Present("Mira"), jun]), Roomy), m => m.Text.Contains("for this reply only"));
+    }
+
+    [Fact]
+    public void A_hint_joins_the_users_last_message_so_turns_still_alternate()
+    {
+        var messages = PromptBuilder.Build(
+            Input([Present("Mira")], [Said(1, "Morning!"), Said(2, "A latte, please.", MessageRole.User)]) with { Hint = new DirectorHint.NarrationOnly() },
+            Roomy);
+
+        Assert.Equal([ChatRole.System, ChatRole.Assistant, ChatRole.User], messages.Select(m => m.Role));
+        Assert.StartsWith("A latte, please.", messages[^1].Text);
+        Assert.Contains("narration only", messages[^1].Text);
+        Assert.DoesNotContain("narration only", messages[0].Text);
+    }
+
+    [Fact]
+    public void A_hint_after_a_reply_comes_as_a_user_turn_of_its_own()
+    {
+        var messages = PromptBuilder.Build(Input([Present("Mira")], [Said(1, "Morning!")]) with { Hint = new DirectorHint.SkipAhead() }, Roomy);
+
+        Assert.Equal([ChatRole.System, ChatRole.Assistant, ChatRole.User], messages.Select(m => m.Role));
+        Assert.Contains("skip ahead in time", messages[^1].Text);
     }
 
     [Fact]
     public void A_hint_naming_someone_not_in_the_scene_adds_nothing()
     {
-        var system = PromptBuilder.Build(Input([Present("Mira")]) with { Hint = new DirectorHint.LetRespond(Guid.NewGuid()) }, Roomy)[0].Text;
+        var messages = PromptBuilder.Build(Input([Present("Mira")], [Said(1, "Hello.", MessageRole.User)]) with { Hint = new DirectorHint.LetRespond(Guid.NewGuid()) }, Roomy);
 
-        Assert.DoesNotContain("For this reply only", system);
+        Assert.Equal("Hello.", messages[^1].Text);
     }
 
     [Fact]

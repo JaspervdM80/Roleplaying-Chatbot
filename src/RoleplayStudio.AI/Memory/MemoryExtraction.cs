@@ -58,17 +58,14 @@ public static class MemoryExtraction
         var memories = new List<ExtractedMemory>();
         foreach (var item in items.EnumerateArray())
         {
-            if (item.ValueKind != JsonValueKind.Object
-                || !item.TryGetProperty("text", out var textElement)
-                || textElement.ValueKind != JsonValueKind.String
-                || textElement.GetString()?.Trim() is not { Length: > 0 } text)
+            if (StructuredOutput.Text(item, "text", MaxTextLength) is not { } text)
             {
                 continue;
             }
 
             memories.Add(new ExtractedMemory(
                 TypeOf(item),
-                text.Length > MaxTextLength ? text[..MaxTextLength] : text,
+                text,
                 ImportanceOf(item),
                 CharacterIdsOf(item, characters)));
         }

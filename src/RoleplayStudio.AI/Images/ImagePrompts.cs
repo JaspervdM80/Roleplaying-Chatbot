@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using Microsoft.Extensions.AI;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.Domain;
@@ -100,12 +99,12 @@ public static class ImagePrompts
     public static WrittenPrompt? Parse(string reply)
     {
         using var document = StructuredOutput.ParseObject(reply);
-        if (document is null || Text(document.RootElement, "prompt") is not { } prompt)
+        if (document is null || StructuredOutput.Text(document.RootElement, "prompt") is not { } prompt)
         {
             return null;
         }
 
-        return new WrittenPrompt(prompt, Text(document.RootElement, "caption") is { } caption ? Cut(caption, MaxCaptionLength) : null);
+        return new WrittenPrompt(prompt, StructuredOutput.Text(document.RootElement, "caption", MaxCaptionLength));
     }
 
     public static (string Prompt, string Negative) Compose(PictureBrief brief, WrittenPrompt written)
@@ -157,9 +156,6 @@ public static class ImagePrompts
             story.AppendLine(clean);
         }
     }
-
-    private static string? Text(JsonElement element, string property) =>
-        element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String ? TextFields.Clean(value.GetString()) : null;
 
     private static string Cut(string text, int length) => text.Length > length ? text[..length] : text;
 }

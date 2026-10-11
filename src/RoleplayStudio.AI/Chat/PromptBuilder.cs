@@ -42,8 +42,25 @@ public static partial class PromptBuilder
     public static IReadOnlyList<ChatMessage> Build(PromptInput input, PromptBudget budget)
     {
         var system = System(input, budget);
-        var remaining = budget.PromptTokens - TokenEstimate.Of(system);
-        return [new ChatMessage(ChatRole.System, system), .. Recent(input, remaining)];
+        var note = Steer(input) is { } steer ? $"(Out of character, for this reply only: {steer})" : null;
+        var remaining = budget.PromptTokens - TokenEstimate.Of(system) - TokenEstimate.Of(note ?? "");
+        List<ChatMessage> messages = [new ChatMessage(ChatRole.System, system), .. Recent(input, remaining)];
+        return note is null ? messages : WithNote(messages, note);
+    }
+
+    // After the history, where a model heeds it, and in a user turn: some chat templates refuse a later system message or two user turns in a row.
+    private static List<ChatMessage> WithNote(List<ChatMessage> messages, string note)
+    {
+        if (messages[^1].Role == ChatRole.User)
+        {
+            messages[^1] = new ChatMessage(ChatRole.User, $"{messages[^1].Text}\n\n{note}");
+        }
+        else
+        {
+            messages.Add(new ChatMessage(ChatRole.User, note));
+        }
+
+        return messages;
     }
 
     /// <summary>
@@ -141,11 +158,6 @@ public static partial class PromptBuilder
 
         text.AppendLine();
         text.Append(Instruction(input));
-        if (Steer(input) is { } steer)
-        {
-            text.AppendLine().AppendLine().Append($"For this reply only: {steer}");
-        }
-
         return text.ToString();
     }
 

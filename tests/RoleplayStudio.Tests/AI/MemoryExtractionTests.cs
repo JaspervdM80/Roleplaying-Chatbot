@@ -42,6 +42,14 @@ public class MemoryExtractionTests
         Assert.Empty(MemoryExtraction.Parse("""{"memories":[]}""", [Mira])!);
     }
 
+    [Fact]
+    public void A_memory_copied_from_the_answer_template_is_left_out()
+    {
+        var memories = MemoryExtraction.Parse("""{"memories":[{"type":"Fact","text":"...","importance":5,"characters":["Name"]},{"text":"Sam likes tea."}]}""", [Mira]);
+
+        Assert.Equal(["Sam likes tea."], memories!.Select(m => m.Text));
+    }
+
     [Theory]
     [InlineData("Nothing much happened.")]
     [InlineData("""{"memory":"Sam likes tea."}""")]
