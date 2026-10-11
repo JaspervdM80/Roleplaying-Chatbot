@@ -107,11 +107,42 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         user.Time.Advance(TimeSpan.FromMinutes(5));
 
         var sent = await user.Sessions.AddUserMessageAsync(session.Id, "  A latte, please. ");
-        var reply = await user.Sessions.AddReplyAsync(session.Id, "*nods* Coming up.");
+        var reply = await user.Sessions.ReplyAsync(session.Id, "*nods* Coming up.");
 
         Assert.Equal((2, MessageRole.User, "Sam", "A latte, please."), (sent.Value.Sequence, sent.Value.Role, sent.Value.SpeakerName, sent.Value.Content));
-        Assert.Equal((3, MessageRole.Character, "Mira"), (reply.Value.Sequence, reply.Value.Role, reply.Value.SpeakerName));
+        Assert.Equal((3, MessageRole.Character, "Mira"), (reply.Value[0].Sequence, reply.Value[0].Role, reply.Value[0].SpeakerName));
         Assert.Equal(user.Time.GetUtcNow(), (await user.Sessions.GetAsync(session.Id)).Value.LastActivityAt);
+    }
+
+    [Fact]
+    public async Task A_group_reply_is_saved_as_one_message_per_speaker_in_order()
+    {
+        var user = new StudioUser(postgres);
+        await user.ChatModelAsync();
+        var mira = await user.CharacterAsync("Mira");
+        var jun = await user.CharacterAsync("Jun");
+        var chatbot = await user.ChatbotAsync(mira, jun);
+        var scenario = await user.ScenarioAsync(chatbot, opening: null);
+        var session = (await user.Sessions.StartAsync(chatbot.Id, scenario.Id, (await user.PersonaAsync()).Id)).Value;
+
+        var saved = await user.Sessions.ReplyAsync(session.Id, "*The door bangs.*\n**Mira:** \"Morning!\"\n**Jun:** \"Hey.\"");
+
+        Assert.Equal(
+            [(1L, MessageRole.Narrator, (Guid?)null, "Narrator", "*The door bangs.*"), (2, MessageRole.Character, mira.Id, "Mira", "\"Morning!\""), (3, MessageRole.Character, jun.Id, "Jun", "\"Hey.\"")],
+            (await user.Sessions.GetAsync(session.Id)).Value.Messages.Select(m => (m.Sequence, m.Role, m.SpeakerCharacterId, m.SpeakerName, m.Content)));
+        Assert.Equal(3, saved.Value.Count);
+    }
+
+    [Fact]
+    public async Task A_segment_naming_a_character_who_is_not_present_is_saved_as_narration()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        var absent = await user.CharacterAsync("Thorne");
+
+        var saved = await user.Sessions.AddReplyAsync(session.Id, _ => [new ReplySegment(absent.Id, "\"I'm not here.\"")]);
+
+        Assert.Equal((MessageRole.Narrator, (Guid?)null), (saved.Value[0].Role, saved.Value[0].SpeakerCharacterId));
     }
 
     [Fact]
@@ -124,7 +155,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         Assert.Empty((await intruder.Sessions.ListAsync()).Value);
         Assert.True((await intruder.Sessions.GetAsync(session.Id)).IsFailure);
         Assert.True((await intruder.Sessions.AddUserMessageAsync(session.Id, "Hello?")).IsFailure);
-        Assert.True((await intruder.Sessions.AddReplyAsync(session.Id, "Hi.")).IsFailure);
+        Assert.True((await intruder.Sessions.ReplyAsync(session.Id, "Hi.")).IsFailure);
         Assert.True((await intruder.Sessions.DeleteAsync(session.Id)).IsFailure);
         Assert.True((await intruder.Sessions.SetModelAsync(session.Id, null)).IsFailure);
 

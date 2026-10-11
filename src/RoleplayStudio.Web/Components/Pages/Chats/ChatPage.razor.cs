@@ -177,7 +177,7 @@ public partial class ChatPage
             var saved = await Turns.SaveReplyAsync(Id, reply.Text);
             if (Snackbar.Report(saved))
             {
-                _turns.Add(new ChatTurnView(false, saved.Value.SpeakerName, saved.Value.Content, saved.Value.Id));
+                _turns.AddRange(saved.Value.Select(m => new ChatTurnView(false, m.SpeakerName, m.Content, m.Id)));
             }
         }
 

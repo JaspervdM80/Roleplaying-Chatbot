@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RoleplayStudio.Domain;
+using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Data;
@@ -136,27 +137,37 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
                 return NotFound(id).To<Message>();
             }
 
-            return await AppendAsync(db, session, MessageRole.User, null, session.Persona.Name, content);
+            return (await AppendAsync(db, session, [new NewLine(MessageRole.User, null, session.Persona.Name, content)]))[0];
         });
 
-    /// <summary>Saves a model reply, attributed to the one character present or else to the narrator.</summary>
-    public Task<Result<Message>> AddReplyAsync(Guid id, string text) =>
+    /// <summary>
+    /// Saves a model reply as one message per segment <paramref name="split"/> makes of it for the characters present.
+    /// A segment naming anyone not present is narration.
+    /// </summary>
+    public Task<Result<IReadOnlyList<Message>>> AddReplyAsync(Guid id, Func<IReadOnlyList<Character>, IReadOnlyList<ReplySegment>> split) =>
         ServiceOperation.RunOwnerAsync(currentUser, logger, "save the reply", CancellationToken.None, async ownerId =>
         {
-            if (TextFields.Clean(text) is not { } content)
-            {
-                return Result.Failure<Message>("The reply was empty");
-            }
-
             await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
             var session = await db.ChatSessions.Include(s => s.CharacterStates).ThenInclude(s => s.Character).SingleOrDefaultAsync(s => s.Id == id);
             if (session is null)
             {
-                return NotFound(id).To<Message>();
+                return NotFound(id).To<IReadOnlyList<Message>>();
             }
 
-            var (role, speakerId, speakerName) = ChatSession.ReplySpeaker(session.PresentCharacters(session.CharacterStates));
-            return await AppendAsync(db, session, role, speakerId, speakerName, content);
+            var present = session.PresentCharacters(session.CharacterStates);
+            var lines = split(present)
+                .Select(segment => (Speaker: present.FirstOrDefault(c => c.Id == segment.CharacterId), Content: TextFields.Clean(segment.Text)))
+                .Where(line => line.Content is not null)
+                .Select(line => line.Speaker is { } speaker
+                    ? new NewLine(MessageRole.Character, speaker.Id, speaker.Name, line.Content!)
+                    : new NewLine(MessageRole.Narrator, null, ChatSession.NarratorName, line.Content!))
+                .ToList();
+            if (lines.Count == 0)
+            {
+                return Result.Failure<IReadOnlyList<Message>>("The reply was empty");
+            }
+
+            return Result.Success(await AppendAsync(db, session, lines));
         });
 
     public Task<Result> DeleteAsync(Guid id) =>
@@ -175,25 +186,27 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
             return Result.Success();
         });
 
-    private async Task<Result<Message>> AppendAsync(ApplicationDbContext db, ChatSession session, MessageRole role, Guid? speakerId, string speakerName, string content)
+    private async Task<IReadOnlyList<Message>> AppendAsync(ApplicationDbContext db, ChatSession session, IReadOnlyList<NewLine> lines)
     {
         var now = time.GetUtcNow();
         var last = await db.Messages.Where(m => m.SessionId == session.Id).MaxAsync(m => (long?)m.Sequence) ?? 0;
-        var message = new Message
-        {
-            SessionId = session.Id,
-            Sequence = last + 1,
-            Role = role,
-            SpeakerCharacterId = speakerId,
-            SpeakerName = speakerName,
-            Content = content,
-            CreatedAt = now,
-        };
-        db.Messages.Add(message);
+        var messages = lines
+            .Select((line, i) => new Message
+            {
+                SessionId = session.Id,
+                Sequence = last + 1 + i,
+                Role = line.Role,
+                SpeakerCharacterId = line.SpeakerId,
+                SpeakerName = line.SpeakerName,
+                Content = line.Content,
+                CreatedAt = now,
+            })
+            .ToList();
+        db.Messages.AddRange(messages);
         session.LastActivityAt = now;
         await db.SaveChangesAsync();
-        logger.LogInformation("Added {Role} message {Sequence} to chat {SessionId}", role, message.Sequence, session.Id);
-        return message;
+        logger.LogInformation("Added {Count} message(s) from {Sequence} to chat {SessionId}", messages.Count, messages[0].Sequence, session.Id);
+        return messages;
     }
 
     private Result NotFound(Guid id)
@@ -201,4 +214,6 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
         logger.LogWarning("Chat {SessionId} was not found", id);
         return Result.Failure("That chat no longer exists");
     }
+
+    private sealed record NewLine(MessageRole Role, Guid? SpeakerId, string SpeakerName, string Content);
 }

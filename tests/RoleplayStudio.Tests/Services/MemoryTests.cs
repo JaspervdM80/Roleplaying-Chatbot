@@ -24,7 +24,7 @@ public class MemoryTests(PostgresFixture postgres)
         for (var i = 0; i < exchanges; i++)
         {
             Assert.True((await user.Sessions.AddUserMessageAsync(sessionId, line)).IsSuccess);
-            Assert.True((await user.Sessions.AddReplyAsync(sessionId, "Here you go.")).IsSuccess);
+            Assert.True((await user.Sessions.ReplyAsync(sessionId, "Here you go.")).IsSuccess);
         }
     }
 

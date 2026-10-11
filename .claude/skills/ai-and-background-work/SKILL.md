@@ -46,8 +46,24 @@ Memory extraction, state deltas and image prompts ask the utility model for JSON
 - Ids in model output (a character to update) are checked against the session's characters — a model
   can name someone who is not there.
 
-Speaker tags in a director reply (`**Name:**`) are parsed against the present cast; an unknown name
-becomes narration rather than a new character.
+## The director turn
+
+- **One call writes the whole turn.** With more than one character present the prompt asks for
+  `**Name:**` at the start of each speaker's lines and narration on lines of its own in `*italics*`.
+- **`SpeakerTagParser` splits the reply** by those tags at the start of a line, holding a line's start
+  back only while it could still be a tag split across chunks. A tag is matched against the present
+  cast (full name, or a first name only one of them has); an unknown name stays in the text as
+  narration rather than becoming a new character. Text before the first tag belongs to the one
+  character present, or is narration in a group. An untagged line continues whoever spoke last,
+  except that in a group a line opening in `*italics*` is narration.
+- **A reply is saved as one `Message` per segment** with `SpeakerCharacterId`.
+  `ChatSessionService.AddReplyAsync` checks every speaker against who is present, so a segment naming
+  anyone else is saved as narration.
+- **The prompt sends a turn back as the model wrote it**: consecutive non-user messages are one
+  assistant message, its character lines re-tagged, so the history shows the format it asks for.
+  Only a one-line turn in a chat with one character present goes back untagged, as that prompt asks.
+- **A group turn is several rows**, so a window counted in messages (recall's query, scene tracking,
+  image prompts) now covers fewer turns in a group chat than in a one-character one.
 
 ## Background work never blocks the user
 
