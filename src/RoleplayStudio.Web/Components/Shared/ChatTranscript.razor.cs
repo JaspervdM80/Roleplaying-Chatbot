@@ -1,21 +1,11 @@
-using System.Text;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using RoleplayStudio.Web.Theming;
 
 namespace RoleplayStudio.Web.Components.Shared;
 
-/// <summary>One turn as the transcript shows it; <see cref="MessageId"/> is null until the turn is saved.</summary>
-public sealed class ChatTurnView(bool fromUser, string speaker, string text, Guid? messageId = null)
-{
-    private readonly StringBuilder _text = new(text);
-
-    public Guid? MessageId { get; } = messageId;
-    public bool FromUser { get; } = fromUser;
-    public string Speaker { get; } = speaker;
-    public string Text => _text.ToString();
-
-    public void Append(string text) => _text.Append(text);
-}
+/// <summary>A saved turn under which the transcript shows a footer; <see cref="EndsTurn"/> is true only for the last model turn before the next user message.</summary>
+public readonly record struct TurnFooterContext(ChatTurnView Turn, bool EndsTurn);
 
 /// <summary>The scrolling list of chat turns; it follows new text only while the reader is at the bottom.</summary>
 public partial class ChatTranscript
@@ -33,9 +23,24 @@ public partial class ChatTranscript
     [Parameter]
     public bool Streaming { get; set; }
 
+    /// <summary>Each character's reference portrait by character id, for their avatar.</summary>
+    [Parameter]
+    public IReadOnlyDictionary<Guid, Guid?> Portraits { get; set; } = new Dictionary<Guid, Guid?>();
+
     /// <summary>Shown under each saved turn, such as its pictures.</summary>
     [Parameter]
-    public RenderFragment<ChatTurnView>? TurnFooter { get; set; }
+    public RenderFragment<TurnFooterContext>? TurnFooter { get; set; }
+
+    private bool Waiting => Streaming && (Turns.Count == 0 || Turns[^1].MessageId is not null || Turns[^1].Text.Length == 0);
+
+    private bool IsLive(int index) => Streaming && index == Turns.Count - 1 && Turns[index].MessageId is null;
+
+    private bool EndsTurn(int index) => index == Turns.Count - 1 || Turns[index + 1].FromUser;
+
+    private Guid? PortraitOf(ChatTurnView turn) => turn.SpeakerId is { } id ? Portraits.GetValueOrDefault(id) : null;
+
+    private static string SpeakerInk(ChatTurnView turn) =>
+        turn.SpeakerId is { } id ? $"--speaker-ink: var({AppTheme.ToneOf(id)})" : "--speaker-ink: var(--ink-muted)";
 
     /// <summary>Jumps to the newest turn on the next render even if the reader had scrolled up, as after sending.</summary>
     public void RequestScrollToEnd() => _scrollToEnd = true;

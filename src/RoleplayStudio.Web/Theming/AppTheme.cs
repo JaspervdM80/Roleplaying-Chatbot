@@ -38,10 +38,11 @@ public static class AppTheme
     private static readonly string Picked = At(Primary, 0.06);
     private static readonly string PickedLine = At(Primary, 0.24);
 
-    // A character's colour; Avatar picks one from their id, so it never changes.
+    // A character's colour, picked from their id so it never changes.
     private static readonly string[] Tones = [Primary, Info, Accent, Success];
 
-    public static int ToneCount => Tones.Length;
+    /// <summary>The name of the tone variable for a character, the same wherever they appear.</summary>
+    public static string ToneOf(Guid id) => $"--tone-{(uint)id.GetHashCode() % (uint)Tones.Length}";
 
     public const string Scrim = "rgba(5,3,8,0.7)";
     public const string Shadow = "rgba(0,0,0,0.45)";

@@ -29,9 +29,7 @@ else
     // An unsaved entity has no id yet, so it waits in a neutral colour rather than showing one that changes on save.
     private string ToneStyle => Id == Guid.Empty
         ? "--avatar-ink: var(--ink-muted); --avatar-tint: var(--selected)"
-        : $"--avatar-ink: var(--tone-{Tone}); --avatar-tint: var(--tone-{Tone}-tint)";
-
-    private int Tone => (int)((uint)Id.GetHashCode() % (uint)AppTheme.ToneCount);
+        : $"--avatar-ink: var({AppTheme.ToneOf(Id)}); --avatar-tint: var({AppTheme.ToneOf(Id)}-tint)";
 
     private string Letter => string.IsNullOrWhiteSpace(Name) ? "?" : Name.Trim().EnumerateRunes().First().ToString().ToUpperInvariant();
 }
