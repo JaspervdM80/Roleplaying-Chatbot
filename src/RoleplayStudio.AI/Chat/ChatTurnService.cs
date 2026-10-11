@@ -10,6 +10,7 @@ namespace RoleplayStudio.AI.Chat;
 
 public sealed class ChatTurnService(
     ChatSessionService sessions,
+    ChatHistoryService history,
     ModelProfileService profiles,
     IChatClientFactory clients,
     MemoryRecall recall,
@@ -94,12 +95,55 @@ public sealed class ChatTurnService(
     public async Task<Result<IReadOnlyList<Message>>> SaveReplyAsync(Guid sessionId, string text)
     {
         var saved = await sessions.AddReplyAsync(sessionId, present => SpeakerTagParser.Parse(text, present));
-        if (saved.IsSuccess && await currentUser.GetUserIdAsync() is { Length: > 0 } ownerId)
+        if (saved.IsSuccess)
         {
-            upkeepQueue.Enqueue(new UpkeepJob(ownerId, sessionId));
+            await QueueUpkeepAsync(sessionId);
         }
 
         return saved;
+    }
+
+    /// <summary>Rewords one of the user's messages and drops everything after it; the reply to it is streamed next.</summary>
+    public async Task<Result> EditAsync(Guid sessionId, Guid messageId, string text)
+    {
+        var edited = await history.EditUserMessageAsync(sessionId, messageId, text);
+        if (edited.IsSuccess)
+        {
+            await QueueUpkeepAsync(sessionId);
+        }
+
+        return edited;
+    }
+
+    /// <summary>Drops the last reply and what it left in the scene and memory; the new one is streamed next.</summary>
+    public async Task<Result> TakeBackReplyAsync(Guid sessionId)
+    {
+        var taken = await history.TakeBackReplyAsync(sessionId);
+        if (taken.IsSuccess)
+        {
+            await QueueUpkeepAsync(sessionId);
+        }
+
+        return taken;
+    }
+
+    public async Task<Result<ChatSession>> BranchAsync(Guid sessionId, Guid messageId)
+    {
+        var branched = await history.BranchAsync(sessionId, messageId);
+        if (branched.IsSuccess)
+        {
+            await QueueUpkeepAsync(branched.Value.Id);
+        }
+
+        return branched;
+    }
+
+    private async Task QueueUpkeepAsync(Guid sessionId)
+    {
+        if (await currentUser.GetUserIdAsync() is { Length: > 0 } ownerId)
+        {
+            upkeepQueue.Enqueue(new UpkeepJob(ownerId, sessionId));
+        }
     }
 
     private static PromptInput InputFor(ChatSession session, IReadOnlyList<MemoryEntry> memories) => new(

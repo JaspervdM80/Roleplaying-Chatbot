@@ -17,4 +17,7 @@ public class Message : Entity
     public string Content { get; set; } = "";
     public int TokenCount { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Set on the first message of each scene-tracking pass; null on the others.</summary>
+    public SceneSnapshot? SceneBefore { get; set; }
 }

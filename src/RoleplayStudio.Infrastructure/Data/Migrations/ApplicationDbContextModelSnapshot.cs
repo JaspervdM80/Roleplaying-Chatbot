@@ -446,6 +446,10 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("HistoryVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset>("LastActivityAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1025,6 +1029,62 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                         .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsOne("RoleplayStudio.Domain.Chats.SceneSnapshot", "SceneBefore", b1 =>
+                        {
+                            b1.Property<Guid>("MessageId");
+
+                            b1.Property<string>("Location");
+
+                            b1.Property<string>("Mood");
+
+                            b1.PrimitiveCollection<string>("PresentCharacterIds")
+                                .IsRequired();
+
+                            b1.Property<string>("TimeOfDay");
+
+                            b1.HasKey("MessageId");
+
+                            b1.ToTable("Messages");
+
+                            b1
+                                .ToJson("SceneBefore")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MessageId");
+
+                            b1.OwnsMany("RoleplayStudio.Domain.Chats.CharacterSnapshot", "Characters", b2 =>
+                                {
+                                    b2.Property<Guid>("SceneSnapshotMessageId");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAdd();
+
+                                    b2.Property<int>("Affinity");
+
+                                    b2.Property<string>("AppearanceChanges");
+
+                                    b2.Property<Guid>("CharacterId");
+
+                                    b2.Property<string>("CurrentOutfit");
+
+                                    b2.Property<string>("RelationshipToPersona");
+
+                                    b2.Property<string>("Status");
+
+                                    b2.HasKey("SceneSnapshotMessageId", "__synthesizedOrdinal");
+
+                                    b2.ToTable("Messages");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("SceneSnapshotMessageId");
+                                });
+
+                            b1.Navigation("Characters");
+                        });
+
+                    b.Navigation("SceneBefore");
                 });
 
             modelBuilder.Entity("RoleplayStudio.Domain.Memory.MemoryEntry", b =>

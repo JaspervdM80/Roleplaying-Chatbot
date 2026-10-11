@@ -81,7 +81,7 @@ public partial class ChatPage
 
     protected override async Task OnParametersSetAsync()
     {
-        var result = await Sessions.GetAsync(Id, Cancellation);
+        var result = await LoadChatAsync();
         if (result.IsCancelled)
         {
             return;
@@ -93,6 +93,21 @@ public partial class ChatPage
             return;
         }
 
+        var profiles = await Profiles.ListAsync(Cancellation);
+        if (profiles.IsSuccess)
+        {
+            _chatModels = profiles.Value.Where(p => p.IsChatModel).ToList();
+        }
+    }
+
+    private async Task<Result> LoadChatAsync()
+    {
+        var result = await Sessions.GetAsync(Id, Cancellation);
+        if (result.IsFailure)
+        {
+            return result;
+        }
+
         _session = result.Value;
         _turns.Clear();
         _turns.AddRange(_session.Messages.Select(ChatTurnView.Of));
@@ -100,12 +115,7 @@ public partial class ChatPage
         ShowCast(_session);
         await LoadCastAsync();
         await LoadPicturesAsync();
-
-        var profiles = await Profiles.ListAsync(Cancellation);
-        if (profiles.IsSuccess)
-        {
-            _chatModels = profiles.Value.Where(p => p.IsChatModel).ToList();
-        }
+        return result;
     }
 
     private async Task SetModelAsync(Guid? profileId)
@@ -171,8 +181,57 @@ public partial class ChatPage
         await StreamReplyAsync(hint);
     }
 
+    private void DirectFromMenu(DirectorHint hint) => FromMenu(() => DirectAsync(hint));
+
     // A menu item awaits its handler before the menu closes, which would keep it open for the whole reply.
-    private void DirectFromMenu(DirectorHint hint) => _ = InvokeAsync(() => DirectAsync(hint));
+    private void FromMenu(Func<Task> action) => _ = InvokeAsync(action);
+
+    private async Task EditAsync(ChatTurnView turn)
+    {
+        if (!CanDirect || turn.MessageId is not { } messageId)
+        {
+            return;
+        }
+
+        var parameters = new DialogParameters<EditMessageDialog> { { d => d.Text, turn.Text } };
+        var dialog = await Dialogs.ShowAsync<EditMessageDialog>("Edit your message", parameters, DialogServiceExtensions.Options);
+        if (await dialog.Result is { Canceled: false, Data: string text })
+        {
+            await RewriteAsync(() => Turns.EditAsync(Id, messageId, text));
+        }
+    }
+
+    private async Task RegenerateAsync()
+    {
+        if (CanDirect)
+        {
+            await RewriteAsync(() => Turns.TakeBackReplyAsync(Id));
+        }
+    }
+
+    /// <summary>Rewrites the chat's past, shows it as it now stands, and streams the reply that follows.</summary>
+    private async Task RewriteAsync(Func<Task<Result>> rewrite)
+    {
+        _streaming = true;
+        var rewritten = await rewrite();
+        _streaming = false;
+        if (Snackbar.Report(rewritten) && Snackbar.Report(await LoadChatAsync()))
+        {
+            await StreamReplyAsync();
+        }
+    }
+
+    private async Task BranchAsync(ChatTurnView turn)
+    {
+        if (CanDirect && turn.MessageId is { } messageId)
+        {
+            var branched = await Turns.BranchAsync(Id, messageId);
+            if (Snackbar.Report(branched, "Branched into a new chat"))
+            {
+                Navigation.NavigateTo(AppRoutes.Chat(branched.Value.Id));
+            }
+        }
+    }
 
     private async Task MoveSceneAsync()
     {

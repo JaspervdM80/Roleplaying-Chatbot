@@ -1,0 +1,32 @@
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_text" Label="Your message" Variant="Variant.Outlined" Lines="3" Sizing="InputSizing.Auto" MaxLines="12" Immediate="true" AutoFocus="true"
+                      HelperText="Everything after this message is removed and answered again." />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="!CanSave" OnClick="Save">Save and resend</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string? _text;
+
+    [CascadingParameter]
+    private IMudDialogInstance Dialog { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public string Text { get; set; } = "";
+
+    private bool CanSave => !string.IsNullOrWhiteSpace(_text) && _text.Trim() != Text.Trim();
+
+    protected override void OnInitialized() => _text = Text;
+
+    private void Save()
+    {
+        if (CanSave)
+        {
+            Dialog.Close(DialogResult.Ok(_text!.Trim()));
+        }
+    }
+}

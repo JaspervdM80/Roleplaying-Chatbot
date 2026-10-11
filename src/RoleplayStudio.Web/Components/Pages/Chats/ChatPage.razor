@@ -34,7 +34,8 @@
         <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming" Portraits="_portraits">
             <TurnFooter Context="entry">
                 <TurnPictures Turn="entry.Turn" Pictures="PicturesOf(entry.Turn)" Pending="PendingOf(entry.Turn)" Subjects="_subjects" Disabled="_streaming"
-                              Actions="entry.EndsTurn" OnPicture="subject => PictureAsync(entry.Turn, subject)" OnOpen="OpenAsync" OnCancel="CancelPictureAsync" />
+                              Actions="entry.EndsTurn" OnPicture="subject => PictureAsync(entry.Turn, subject)" OnOpen="OpenAsync" OnCancel="CancelPictureAsync"
+                              MoreActions="@(entry.Turn.FromUser || entry.EndsTurn ? TurnMenu(entry.Turn) : null)" />
             </TurnFooter>
         </ChatTranscript>
 
@@ -92,3 +93,21 @@
         <ScenePanel Session="_session" Toggled="_sceneToggled" OnClose="ToggleScene" Pictures="_pictures" Pending="_pending" OnOpen="OpenAsync" />
     }
 </div>
+
+@code {
+    private RenderFragment TurnMenu(ChatTurnView turn) => __builder =>
+    {
+        <MudMenu Icon="@Icons.Material.Filled.MoreHoriz" AriaLabel="Message actions" Disabled="_streaming" Class="turn-more"
+                 AnchorOrigin="@(turn.FromUser ? Origin.BottomRight : Origin.BottomLeft)" TransformOrigin="@(turn.FromUser ? Origin.TopRight : Origin.TopLeft)">
+            @if (turn.FromUser)
+            {
+                <MudMenuItem OnClick="() => FromMenu(() => EditAsync(turn))">Edit</MudMenuItem>
+            }
+            else if (turn == _turns[^1] && _turns.Any(t => t.FromUser))
+            {
+                <MudMenuItem OnClick="() => FromMenu(RegenerateAsync)">Write the reply again</MudMenuItem>
+            }
+            <MudMenuItem OnClick="() => BranchAsync(turn)">Branch from here</MudMenuItem>
+        </MudMenu>
+    };
+}

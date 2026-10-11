@@ -91,6 +91,11 @@ the same rules:
 - In-process only: one app instance. Scaling out needs a real queue.
 - Jobs for one session are processed in order, or a summary can be written over messages a later
   extraction has not seen.
+- **A rewind wins over upkeep in flight.** Editing, taking back a reply and branching go through
+  `ChatHistoryService` (via `ChatTurnService`, which queues upkeep after them), which holds the chat's
+  row locked from its reads to its save. A job that read the chat before a rewind fails its save on
+  `ChatSession.HistoryVersion`; the worker logs that conflict, and only that one, at Information and
+  drops the job, since the rewind's own job reads the chat as it now is.
 
 ## Scene tracking
 

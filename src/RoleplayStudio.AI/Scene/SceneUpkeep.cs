@@ -62,6 +62,15 @@ public sealed class SceneUpkeep(
         }
 
         var lastSequence = messages.Max(m => m.Sequence);
+        var firstId = messages[^1].Id;
+        if (await db.Messages.SingleOrDefaultAsync(m => m.Id == firstId, cancellationToken) is not { } first)
+        {
+            logger.LogDebug("Chat {SessionId} was rewound while its scene was tracked; skipped", session.Id);
+            return;
+        }
+
+        first.SceneBefore = session.Snapshot();
+
         var update = SceneTracking.Parse(reply.Value);
         SceneOutcome? outcome = null;
         if (update is null)

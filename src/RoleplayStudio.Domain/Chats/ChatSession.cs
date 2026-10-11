@@ -1,6 +1,10 @@
 using RoleplayStudio.Domain.Authoring;
+using RoleplayStudio.Domain.Memory;
 
 namespace RoleplayStudio.Domain.Chats;
+
+/// <summary>What a rewind took out besides the messages: memories mined from them, and states of anyone met in them.</summary>
+public sealed record RewoundHistory(IReadOnlyList<MemoryEntry> DroppedMemories, IReadOnlyList<CharacterState> DroppedStates);
 
 public class ChatSession : OwnedEntity
 {
@@ -19,6 +23,9 @@ public class ChatSession : OwnedEntity
 
     /// <summary>The last message memory extraction has read; later messages have not been mined for memories yet.</summary>
     public long MemoriesExtractedUpToSequence { get; set; }
+
+    /// <summary>Moved on by every rewind, so upkeep that read the chat before one cannot save over it.</summary>
+    public int HistoryVersion { get; set; }
 
     public List<Message> Messages { get; set; } = [];
     public List<CharacterState> CharacterStates { get; set; } = [];
@@ -97,6 +104,136 @@ public class ChatSession : OwnedEntity
 
     public IReadOnlyList<Character> PresentCharacters(IReadOnlyList<CharacterState> states) =>
         PresentStates(states).Select(s => s.Character).ToList();
+
+    public SceneSnapshot Snapshot() => new()
+    {
+        Location = Scene.Location,
+        TimeOfDay = Scene.TimeOfDay,
+        Mood = Scene.Mood,
+        PresentCharacterIds = [.. Scene.PresentCharacterIds],
+        Characters = CharacterStates.Select(CharacterSnapshot.Of).ToList(),
+    };
+
+    /// <summary>
+    /// Undoes what the messages from <paramref name="fromSequence"/> on left in the scene, the summary and memory, so
+    /// upkeep reads the messages before them again; removing those messages is the caller's step.
+    /// </summary>
+    public RewoundHistory Rewind(long fromSequence, IReadOnlyList<Message> messages, IReadOnlyList<MemoryEntry> memories)
+    {
+        HistoryVersion++;
+
+        // One extraction pass shares its source range, so a pass that read any removed message is read again whole.
+        var reread = memories.Where(m => m.SourceToSequence >= fromSequence).ToList();
+        var droppedMemories = reread.Where(m => !m.IsPinned).ToList();
+        var rereadFrom = reread.Select(m => m.SourceFromSequence ?? fromSequence).Append(fromSequence).Min();
+        MemoriesExtractedUpToSequence = Math.Min(MemoriesExtractedUpToSequence, rereadFrom - 1);
+
+        if (Summary.CoveredUpToSequence >= fromSequence)
+        {
+            Summary = new SessionSummary();
+        }
+
+        var droppedStates = Scene.TrackedUpToSequence >= fromSequence ? RestoreScene(fromSequence, messages) : [];
+        return new RewoundHistory(droppedMemories, droppedStates);
+    }
+
+    private IReadOnlyList<CharacterState> RestoreScene(long fromSequence, IReadOnlyList<Message> messages)
+    {
+        var checkpoint = messages.Where(m => m.Sequence <= fromSequence && m.SceneBefore is not null).MaxBy(m => m.Sequence);
+        if (checkpoint?.SceneBefore is not { } snapshot)
+        {
+            // Tracked before snapshots were kept: what it changed cannot be undone, only tracked on from here.
+            Scene.TrackedUpToSequence = fromSequence - 1;
+            return [];
+        }
+
+        Scene = new SceneState
+        {
+            Location = snapshot.Location,
+            TimeOfDay = snapshot.TimeOfDay,
+            Mood = snapshot.Mood,
+            PresentCharacterIds = [.. snapshot.PresentCharacterIds],
+            TrackedUpToSequence = checkpoint.Sequence - 1,
+        };
+
+        var dropped = new List<CharacterState>();
+        foreach (var state in CharacterStates.ToList())
+        {
+            if (snapshot.Characters.Find(c => c.CharacterId == state.CharacterId) is not { } saved)
+            {
+                CharacterStates.Remove(state);
+                dropped.Add(state);
+                continue;
+            }
+
+            saved.ApplyTo(state);
+        }
+
+        return dropped;
+    }
+
+    /// <summary>
+    /// A new chat holding this one's <paramref name="messages"/> up to and including <paramref name="upToSequence"/>,
+    /// with the scene, summary and the <paramref name="memories"/> as they stood there. The message after that point,
+    /// when given, is read only for the scene it was tracked from.
+    /// </summary>
+    public (ChatSession Branch, IReadOnlyList<MemoryEntry> Memories) Branch(long upToSequence, IReadOnlyList<Message> messages, IReadOnlyList<MemoryEntry> memories, DateTimeOffset now)
+    {
+        var branch = new ChatSession
+        {
+            Title = $"{Title} (branch)",
+            ScenarioId = ScenarioId,
+            PersonaId = PersonaId,
+            ChatModelProfileId = ChatModelProfileId,
+            LastActivityAt = now,
+            Scene = new SceneState
+            {
+                Location = Scene.Location,
+                TimeOfDay = Scene.TimeOfDay,
+                Mood = Scene.Mood,
+                PresentCharacterIds = [.. Scene.PresentCharacterIds],
+                TrackedUpToSequence = Scene.TrackedUpToSequence,
+            },
+            Summary = new SessionSummary { Text = Summary.Text, CoveredUpToSequence = Summary.CoveredUpToSequence },
+            MemoriesExtractedUpToSequence = MemoriesExtractedUpToSequence,
+        };
+
+        branch.Messages = messages.Where(m => m.Sequence <= upToSequence).Select(m => new Message
+        {
+            SessionId = branch.Id,
+            Sequence = m.Sequence,
+            Role = m.Role,
+            SpeakerCharacterId = m.SpeakerCharacterId,
+            SpeakerName = m.SpeakerName,
+            Content = m.Content,
+            TokenCount = m.TokenCount,
+            CreatedAt = m.CreatedAt,
+            SceneBefore = m.SceneBefore?.Copy(),
+        }).ToList();
+
+        // The character is linked by id only: setting the navigation would add a copy of them too.
+        branch.CharacterStates = CharacterStates
+            .Select(s => CharacterSnapshot.Of(s).ApplyTo(new CharacterState { SessionId = branch.Id, CharacterId = s.CharacterId, UpdatedAt = s.UpdatedAt }))
+            .ToList();
+
+        var copies = memories.Select(m => new MemoryEntry
+        {
+            SessionId = branch.Id,
+            Type = m.Type,
+            Text = m.Text,
+            Embedding = m.Embedding,
+            Importance = m.Importance,
+            RelatedCharacterIds = [.. m.RelatedCharacterIds],
+            SourceFromSequence = m.SourceFromSequence,
+            SourceToSequence = m.SourceToSequence,
+            IsPinned = m.IsPinned,
+            CreatedAt = m.CreatedAt,
+            LastRecalledAt = m.LastRecalledAt,
+        }).ToList();
+
+        var rewound = branch.Rewind(upToSequence + 1, messages, copies);
+        return (branch, copies.Except(rewound.DroppedMemories).ToList());
+    }
 
     /// <summary>Who a model reply is attributed to: the one character present, or the narrator for a group or an empty scene.</summary>
     public static (MessageRole Role, Guid? CharacterId, string Name) ReplySpeaker(IReadOnlyList<Character> present) =>

@@ -26,16 +26,22 @@
             }
         </div>
     }
-    @if (!Turn.FromUser && Actions && OnPicture.HasDelegate)
+    @if (CanPicture || MoreActions is not null)
     {
-        <MudMenu Label="Picture this" StartIcon="@Icons.Material.Outlined.Image" Variant="Variant.Text" Size="Size.Small" Disabled="Disabled"
-                 AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" Class="turn-picture-this">
-            <MudMenuItem OnClick="() => OnPicture.InvokeAsync(null)">The scene</MudMenuItem>
-            @foreach (var (id, name) in Subjects)
+        <div class="turn-actions">
+            @if (CanPicture)
             {
-                <MudMenuItem OnClick="() => OnPicture.InvokeAsync(id)">@name</MudMenuItem>
+                <MudMenu Label="Picture this" StartIcon="@Icons.Material.Outlined.Image" Variant="Variant.Text" Size="Size.Small" Disabled="Disabled"
+                         AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" Class="turn-picture-this">
+                    <MudMenuItem OnClick="() => OnPicture.InvokeAsync(null)">The scene</MudMenuItem>
+                    @foreach (var (id, name) in Subjects)
+                    {
+                        <MudMenuItem OnClick="() => OnPicture.InvokeAsync(id)">@name</MudMenuItem>
+                    }
+                </MudMenu>
             }
-        </MudMenu>
+            @MoreActions
+        </div>
     }
 </div>
 
@@ -66,6 +72,12 @@
 
     [Parameter]
     public EventCallback<GeneratedImage> OnOpen { get; set; }
+
+    /// <summary>Shown beside "Picture this", such as the turn's own menu.</summary>
+    [Parameter]
+    public RenderFragment? MoreActions { get; set; }
+
+    private bool CanPicture => !Turn.FromUser && Actions && OnPicture.HasDelegate;
 
     [Parameter]
     public EventCallback<PendingPicture> OnCancel { get; set; }

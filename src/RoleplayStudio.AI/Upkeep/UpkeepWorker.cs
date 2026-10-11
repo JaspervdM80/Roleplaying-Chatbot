@@ -1,7 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Scene;
+using RoleplayStudio.Domain.Chats;
 
 namespace RoleplayStudio.AI.Upkeep;
 
@@ -31,6 +33,12 @@ public sealed class UpkeepWorker(UpkeepQueue queue, SceneUpkeep scene, MemoryUpk
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
             return false;
+        }
+        catch (DbUpdateConcurrencyException exception) when (exception.Entries.Any(e => e.Entity is ChatSession))
+        {
+            // The rewind queued its own job, which reads the chat as it is now.
+            logger.LogInformation("{Step} for chat {SessionId} was dropped: the chat was rewound while it ran", step, job.SessionId);
+            return true;
         }
         catch (Exception exception)
         {

@@ -129,11 +129,20 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.HasOne<ModelProfile>().WithMany().HasForeignKey(x => x.ChatModelProfileId).OnDelete(DeleteBehavior.SetNull);
             e.OwnsOne(x => x.Scene, o => o.ToJson());
             e.OwnsOne(x => x.Summary, o => o.ToJson());
+            e.Property(x => x.HistoryVersion).IsConcurrencyToken();
             e.HasMany(x => x.Messages).WithOne().HasForeignKey(x => x.SessionId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(x => x.CharacterStates).WithOne().HasForeignKey(x => x.SessionId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        builder.Entity<Message>(e => e.HasIndex(x => new { x.SessionId, x.Sequence }).IsUnique());
+        builder.Entity<Message>(e =>
+        {
+            e.HasIndex(x => new { x.SessionId, x.Sequence }).IsUnique();
+            e.OwnsOne(x => x.SceneBefore, o =>
+            {
+                o.ToJson();
+                o.OwnsMany(x => x.Characters);
+            });
+        });
 
         builder.Entity<CharacterState>(e =>
         {

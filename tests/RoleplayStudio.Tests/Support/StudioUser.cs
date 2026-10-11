@@ -23,6 +23,7 @@ public sealed class StudioUser(PostgresFixture postgres)
     public CharacterService Characters => new(postgres.DbFactory, User, NullLogger<CharacterService>.Instance);
     public ChatbotService Chatbots => new(postgres.DbFactory, User, NullLogger<ChatbotService>.Instance);
     public ChatSessionService Sessions => new(postgres.DbFactory, User, Time, NullLogger<ChatSessionService>.Instance);
+    public ChatHistoryService History => new(postgres.DbFactory, User, Time, NullLogger<ChatHistoryService>.Instance);
     public ModelProfileService Profiles => new(postgres.DbFactory, User, NullLogger<ModelProfileService>.Instance);
 
     public UpkeepQueue UpkeepQueue { get; } = new(NullLogger<UpkeepQueue>.Instance);
@@ -41,7 +42,7 @@ public sealed class StudioUser(PostgresFixture postgres)
         new(postgres.DbFactory, clients, notifier ?? new SceneNotifier(), PictureQueue, Time, NullLogger<SceneUpkeep>.Instance);
 
     public ChatTurnService Turns(IChatClientFactory clients) =>
-        new(Sessions, Profiles, clients, Recall(clients), UpkeepQueue, User, NullLogger<ChatTurnService>.Instance);
+        new(Sessions, History, Profiles, clients, Recall(clients), UpkeepQueue, User, NullLogger<ChatTurnService>.Instance);
 
     public async Task<Persona> PersonaAsync(string name = "Sam") => (await Personas.CreateAsync(new Persona { Name = name })).Value;
 
