@@ -6,6 +6,7 @@ using MudBlazor;
 using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Images;
 using RoleplayStudio.AI.Scene;
+using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Media;
 using RoleplayStudio.Domain.Models;
@@ -64,7 +65,13 @@ public partial class ChatPage
     [Parameter]
     public Guid Id { get; set; }
 
+    private IReadOnlyList<Character> _cast = [];
+
     private bool CanSend => _session is not null && !_streaming && !string.IsNullOrWhiteSpace(_draft);
+
+    private bool CanDirect => _session is not null && !_streaming;
+
+    private IReadOnlyList<Character> Offstage => _cast.Where(c => _subjects.All(s => s.Id != c.Id)).ToList();
 
     protected override void OnInitialized()
     {
@@ -91,6 +98,7 @@ public partial class ChatPage
         _turns.AddRange(_session.Messages.Select(ChatTurnView.Of));
         _transcript?.RequestScrollToEnd();
         ShowCast(_session);
+        await LoadCastAsync();
         await LoadPicturesAsync();
 
         var profiles = await Profiles.ListAsync(Cancellation);
@@ -118,11 +126,14 @@ public partial class ChatPage
 
     private async Task SendAsync()
     {
-        if (!CanSend)
+        if (CanSend && await SendDraftAsync())
         {
-            return;
+            await StreamReplyAsync();
         }
+    }
 
+    private async Task<bool> SendDraftAsync()
+    {
         var text = _draft!.Trim();
         _draft = null;
         _streaming = true;
@@ -131,12 +142,50 @@ public partial class ChatPage
         if (!Snackbar.Report(sent))
         {
             _draft = text;
-            return;
+            return false;
         }
 
         _turns.Add(ChatTurnView.Of(sent.Value));
         _transcript?.RequestScrollToEnd();
-        await StreamReplyAsync();
+        return true;
+    }
+
+    /// <summary>Sends what the user has written first, so the hint steers the answer to it.</summary>
+    private async Task DirectAsync(DirectorHint hint)
+    {
+        if (!CanDirect || (!string.IsNullOrWhiteSpace(_draft) && !await SendDraftAsync()))
+        {
+            return;
+        }
+
+        _streaming = true;
+        var directed = await Turns.DirectAsync(Id, hint);
+        _streaming = false;
+        if (!Snackbar.Report(directed))
+        {
+            return;
+        }
+
+        await ReloadSceneAsync();
+        _transcript?.RequestScrollToEnd();
+        await StreamReplyAsync(hint);
+    }
+
+    // A menu item awaits its handler before the menu closes, which would keep it open for the whole reply.
+    private void DirectFromMenu(DirectorHint hint) => _ = InvokeAsync(() => DirectAsync(hint));
+
+    private async Task MoveSceneAsync()
+    {
+        if (!CanDirect)
+        {
+            return;
+        }
+
+        var dialog = await Dialogs.ShowAsync<MoveSceneDialog>("Move the scene", DialogServiceExtensions.Options with { MaxWidth = MaxWidth.ExtraSmall });
+        if (await dialog.Result is { Canceled: false, Data: string place })
+        {
+            await DirectAsync(new DirectorHint.MoveTo(place));
+        }
     }
 
     private async Task ContinueAsync()
@@ -148,7 +197,7 @@ public partial class ChatPage
         }
     }
 
-    private async Task StreamReplyAsync()
+    private async Task StreamReplyAsync(DirectorHint? hint = null)
     {
         var parser = new SpeakerTagParser(_session!.PresentCharacters(_session.CharacterStates));
         var streamed = new StringBuilder();
@@ -170,6 +219,7 @@ public partial class ChatPage
                     StateHasChanged();
                 }
             },
+            hint,
             _stop.Token);
 
         _stop.Dispose();
@@ -228,7 +278,18 @@ public partial class ChatPage
             _session.Scene = result.Value.Scene;
             _session.CharacterStates = result.Value.CharacterStates;
             ShowCast(_session);
+            await LoadCastAsync();
             StateHasChanged();
+        }
+    }
+
+    // Scene tracking can add a newcomer to the cast, so the cast is read again with the scene.
+    private async Task LoadCastAsync()
+    {
+        var cast = await Sessions.ListCastAsync(Id, Cancellation);
+        if (cast.IsSuccess)
+        {
+            _cast = cast.Value;
         }
     }
 

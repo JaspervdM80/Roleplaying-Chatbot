@@ -122,6 +122,74 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
             return Result.Success();
         });
 
+    /// <summary>The cast of the chat's chatbot, by name, whether or not they are in the scene.</summary>
+    public Task<Result<IReadOnlyList<Character>>> ListCastAsync(Guid id, CancellationToken cancellationToken = default) =>
+        ServiceOperation.RunOwnerAsync<IReadOnlyList<Character>>(currentUser, logger, "load the cast", cancellationToken, async ownerId =>
+        {
+            await using var db = await dbFactory.CreateForOwnerAsync(ownerId, cancellationToken);
+            var chatbotId = await db.ChatSessions.Where(s => s.Id == id).Select(s => (Guid?)s.Scenario.ChatbotId).SingleOrDefaultAsync(cancellationToken);
+            if (chatbotId is null)
+            {
+                return NotFound(id).To<IReadOnlyList<Character>>();
+            }
+
+            var cast = await db.Chatbots
+                .CastOf(chatbotId.Value)
+                .OrderBy(c => c.Name)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+            logger.LogDebug("Listed {CastCount} cast members for chat {SessionId}", cast.Count, id);
+            return Result.Success<IReadOnlyList<Character>>(cast);
+        });
+
+    /// <summary>Puts a member of the chatbot's cast in the scene beside whoever is there already.</summary>
+    public Task<Result> BringInAsync(Guid id, Guid characterId) =>
+        ServiceOperation.RunOwnerAsync(currentUser, logger, "bring them in", CancellationToken.None, async ownerId =>
+        {
+            await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
+            var session = await db.ChatSessions.Include(s => s.Scenario).Include(s => s.CharacterStates).SingleOrDefaultAsync(s => s.Id == id);
+            if (session is null)
+            {
+                return NotFound(id);
+            }
+
+            var character = await db.Chatbots.CastOf(session.Scenario.ChatbotId).SingleOrDefaultAsync(c => c.Id == characterId);
+            if (character is null)
+            {
+                logger.LogWarning("Character {CharacterId} is not in the cast of chat {SessionId}", characterId, id);
+                return Result.Failure("They are no longer in this chatbot's cast");
+            }
+
+            var before = session.CharacterStates.ToList();
+            session.BringIn(character, time.GetUtcNow());
+            // Added to its DbSet: see known_issues, "A child row added to a loaded parent's collection".
+            db.CharacterStates.AddRange(session.CharacterStates.Except(before));
+            await db.SaveChangesAsync();
+            logger.LogInformation("Brought character {CharacterId} into chat {SessionId}", characterId, id);
+            return Result.Success();
+        });
+
+    public Task<Result> MoveSceneAsync(Guid id, string location) =>
+        ServiceOperation.RunOwnerAsync(currentUser, logger, "move the scene", CancellationToken.None, async ownerId =>
+        {
+            if (TextFields.Clean(location) is not { } place)
+            {
+                return Result.Failure("Say where the scene moves to");
+            }
+
+            await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
+            var session = await db.ChatSessions.SingleOrDefaultAsync(s => s.Id == id);
+            if (session is null)
+            {
+                return NotFound(id);
+            }
+
+            session.Scene.Location = place;
+            await db.SaveChangesAsync();
+            logger.LogInformation("Moved the scene of chat {SessionId}", id);
+            return Result.Success();
+        });
+
     public Task<Result<Message>> AddUserMessageAsync(Guid id, string text) =>
         ServiceOperation.RunOwnerAsync(currentUser, logger, "send the message", CancellationToken.None, async ownerId =>
         {

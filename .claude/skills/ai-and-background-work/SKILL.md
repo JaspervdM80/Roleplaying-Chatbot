@@ -64,6 +64,11 @@ Memory extraction, state deltas and image prompts ask the utility model for JSON
   Only a one-line turn in a chat with one character present goes back untagged, as that prompt asks.
 - **A group turn is several rows**, so a window counted in messages (recall's query, scene tracking,
   image prompts) now covers fewer turns in a group chat than in a one-character one.
+- **A `DirectorHint` steers one reply and is never stored.** It ends the system prompt as "For this
+  reply only: …"; a hint naming someone not present adds nothing. A hint that changes the scene
+  (bringing a cast member in, moving the place) is applied by `ChatTurnService.DirectAsync` *before*
+  the reply streams, so the prompt, the speaker parser and the saved speakers all see the new scene.
+  Only the chatbot's cast can be brought in. Skipping time is left to scene tracking to read back.
 
 ## Background work never blocks the user
 

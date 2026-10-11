@@ -18,10 +18,18 @@ public sealed class ChatTurnService(
     ILogger<ChatTurnService> logger)
 {
     /// <summary>
-    /// Streams the next reply to the chat as it stands into <paramref name="onText"/>. Saving it is the caller's
-    /// step, so a stopped reply is kept as far as it got.
+    /// Makes the change to the scene a hint asks for, so the reply it steers is written into that scene. A hint that
+    /// changes nothing succeeds.
     /// </summary>
-    public Task<Result> StreamReplyAsync(Guid sessionId, Action<string> onText, CancellationToken cancellationToken = default) =>
+    public Task<Result> DirectAsync(Guid sessionId, DirectorHint hint) => hint switch
+    {
+        DirectorHint.BringIn(var characterId) => sessions.BringInAsync(sessionId, characterId),
+        DirectorHint.MoveTo(var location) => sessions.MoveSceneAsync(sessionId, location),
+        _ => Task.FromResult(Result.Success()),
+    };
+
+    /// <summary>Streams the next reply, steered by <paramref name="hint"/> for this reply only; saving is the caller's step, so a stopped reply keeps what it got.</summary>
+    public Task<Result> StreamReplyAsync(Guid sessionId, Action<string> onText, DirectorHint? hint = null, CancellationToken cancellationToken = default) =>
         ServiceOperation.RunAsync(logger, "stream a reply", cancellationToken, async () =>
         {
             var loaded = await sessions.GetAsync(sessionId, cancellationToken);
@@ -60,7 +68,7 @@ public sealed class ChatTurnService(
             // Memories enrich a reply; failing to recall them must not stop one.
             var memories = recalled.IsSuccess ? recalled.Value : [];
             using var client = created.Value;
-            var messages = PromptBuilder.Build(InputFor(session, memories), PromptBudget.For(profile));
+            var messages = PromptBuilder.Build(InputFor(session, memories) with { Hint = hint }, PromptBudget.For(profile));
 
             return await ProviderErrors.TranslateAsync(profile, logger, async () =>
             {

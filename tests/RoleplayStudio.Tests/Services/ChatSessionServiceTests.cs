@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RoleplayStudio.AI.Chat;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Infrastructure.Data;
@@ -192,6 +193,81 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         Assert.Equal("Coming up.", streamed);
         Assert.Contains("apron", client.LastMessages![0].Text);
         Assert.Equal("A latte, please.", client.LastMessages[^1].Text);
+    }
+
+    [Fact]
+    public async Task Bringing_someone_in_puts_them_in_the_scene_and_in_the_next_reply()
+    {
+        var user = new StudioUser(postgres);
+        await user.ChatModelAsync();
+        var mira = await user.CharacterAsync("Mira");
+        var jun = await user.CharacterAsync("Jun", outfit: "A wet raincoat");
+        var chatbot = await user.ChatbotAsync(mira, jun);
+        var scenario = await user.ScenarioAsync(chatbot, starting: mira);
+        var session = (await user.Sessions.StartAsync(chatbot.Id, scenario.Id, (await user.PersonaAsync()).Id)).Value;
+        var client = new FakeChatClient(["*The door bangs open.*\n\n**Jun:** Anyone got a towel?"]);
+        var turns = user.Turns(new FakeChatClientFactory(client));
+        var hint = new DirectorHint.BringIn(jun.Id);
+        var streamed = "";
+
+        var directed = await turns.DirectAsync(session.Id, hint);
+        Assert.True(directed.IsSuccess, directed.Error);
+        var reply = await turns.StreamReplyAsync(session.Id, text => streamed += text, hint);
+        Assert.True(reply.IsSuccess, reply.Error);
+        var saved = (await turns.SaveReplyAsync(session.Id, streamed)).Value;
+
+        var scene = (await user.Sessions.GetSceneAsync(session.Id)).Value;
+        Assert.Equal([mira.Id, jun.Id], scene.Scene.PresentCharacterIds);
+        Assert.Equal("A wet raincoat", scene.CharacterStates.Single(s => s.CharacterId == jun.Id).CurrentOutfit);
+        Assert.Contains("Jun arrives", client.LastMessages![0].Text);
+        Assert.Equal(jun.Id, saved[^1].SpeakerCharacterId);
+    }
+
+    [Fact]
+    public async Task The_cast_of_a_chat_is_its_chatbots_whole_cast_and_only_its_owner_can_list_it()
+    {
+        var owner = new StudioUser(postgres);
+        var other = new StudioUser(postgres);
+        await owner.ChatModelAsync();
+        var mira = await owner.CharacterAsync("Mira");
+        var jun = await owner.CharacterAsync("Jun");
+        var chatbot = await owner.ChatbotAsync(mira, jun);
+        var scenario = await owner.ScenarioAsync(chatbot, starting: mira);
+        var session = (await owner.Sessions.StartAsync(chatbot.Id, scenario.Id, (await owner.PersonaAsync()).Id)).Value;
+
+        Assert.Equal(["Jun", "Mira"], (await owner.Sessions.ListCastAsync(session.Id)).Value.Select(c => c.Name));
+        Assert.True((await other.Sessions.ListCastAsync(session.Id)).IsFailure);
+    }
+
+    [Fact]
+    public async Task Only_a_member_of_the_chatbots_cast_can_be_brought_in()
+    {
+        var owner = new StudioUser(postgres);
+        var other = new StudioUser(postgres);
+        var session = await owner.ChatAsync();
+        var outsider = await owner.CharacterAsync("Jun");
+        var theirs = await other.CharacterAsync("Thorne");
+
+        Assert.True((await owner.Sessions.BringInAsync(session.Id, outsider.Id)).IsFailure);
+        Assert.True((await owner.Sessions.BringInAsync(session.Id, theirs.Id)).IsFailure);
+        Assert.True((await other.Sessions.BringInAsync(session.Id, theirs.Id)).IsFailure);
+        Assert.Single((await owner.Sessions.GetSceneAsync(session.Id)).Value.Scene.PresentCharacterIds);
+    }
+
+    [Fact]
+    public async Task Moving_the_scene_sets_the_place_the_next_reply_is_written_in()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync();
+        var client = new FakeChatClient(["*They step out onto the pier.*"]);
+        var turns = user.Turns(new FakeChatClientFactory(client));
+        var hint = new DirectorHint.MoveTo("  The harbour  ");
+
+        Assert.True((await turns.DirectAsync(session.Id, hint)).IsSuccess);
+        Assert.True((await turns.StreamReplyAsync(session.Id, _ => { }, hint)).IsSuccess);
+
+        Assert.Equal("The harbour", (await user.Sessions.GetSceneAsync(session.Id)).Value.Scene.Location);
+        Assert.Contains("Location: The harbour", client.LastMessages![0].Text);
     }
 
     [Fact]
