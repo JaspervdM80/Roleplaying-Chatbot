@@ -1,0 +1,33 @@
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_place" Label="Where to?" Placeholder="The harbour, at dawn" Variant="Variant.Outlined" Immediate="true" AutoFocus="true"
+                      OnKeyDown="OnKeyDown" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="string.IsNullOrWhiteSpace(_place)" OnClick="Move">Move</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string? _place;
+
+    [CascadingParameter]
+    private IMudDialogInstance Dialog { get; set; } = null!;
+
+    private void Move()
+    {
+        if (!string.IsNullOrWhiteSpace(_place))
+        {
+            Dialog.Close(DialogResult.Ok(_place.Trim()));
+        }
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            Move();
+        }
+    }
+}

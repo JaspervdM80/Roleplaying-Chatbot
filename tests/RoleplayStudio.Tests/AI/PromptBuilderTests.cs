@@ -62,6 +62,24 @@ public class PromptBuilderTests
     }
 
     [Fact]
+    public void A_hint_to_let_someone_answer_names_them_for_this_reply_only()
+    {
+        var jun = Present("Jun");
+        var system = PromptBuilder.Build(Input([Present("Mira"), jun]) with { Hint = new DirectorHint.LetRespond(jun.Character.Id) }, Roomy)[0].Text;
+
+        Assert.Contains("For this reply only: only Jun speaks", system);
+        Assert.DoesNotContain("For this reply only", PromptBuilder.Build(Input([Present("Mira"), jun]), Roomy)[0].Text);
+    }
+
+    [Fact]
+    public void A_hint_naming_someone_not_in_the_scene_adds_nothing()
+    {
+        var system = PromptBuilder.Build(Input([Present("Mira")]) with { Hint = new DirectorHint.LetRespond(Guid.NewGuid()) }, Roomy)[0].Text;
+
+        Assert.DoesNotContain("For this reply only", system);
+    }
+
+    [Fact]
     public void Messages_follow_in_sequence_with_the_user_as_user_and_everyone_else_as_assistant()
     {
         var messages = PromptBuilder.Build(Input([Present("Mira")], [Said(2, "A latte, please.", MessageRole.User), Said(1, "Morning!")]), Roomy);

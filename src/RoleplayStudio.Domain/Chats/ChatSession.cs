@@ -58,12 +58,30 @@ public class ChatSession : OwnedEntity
     /// <summary>Puts exactly these characters in the scene; anyone who leaves keeps their state for when they come back.</summary>
     public void SetPresent(IReadOnlyList<Character> present, DateTimeOffset now)
     {
-        foreach (var character in present.Where(c => CharacterStates.All(s => s.CharacterId != c.Id)))
+        foreach (var character in present)
         {
-            CharacterStates.Add(new CharacterState { CharacterId = character.Id, CurrentOutfit = character.DefaultOutfit, UpdatedAt = now });
+            MeetIfNew(character, now);
         }
 
         Scene.PresentCharacterIds = present.Select(c => c.Id).Distinct().ToList();
+    }
+
+    /// <summary>Adds one character to the scene, in the clothes they left in if they were met before.</summary>
+    public void BringIn(Character character, DateTimeOffset now)
+    {
+        MeetIfNew(character, now);
+        if (!Scene.PresentCharacterIds.Contains(character.Id))
+        {
+            Scene.PresentCharacterIds = [.. Scene.PresentCharacterIds, character.Id];
+        }
+    }
+
+    private void MeetIfNew(Character character, DateTimeOffset now)
+    {
+        if (CharacterStates.All(s => s.CharacterId != character.Id))
+        {
+            CharacterStates.Add(new CharacterState { CharacterId = character.Id, CurrentOutfit = character.DefaultOutfit, UpdatedAt = now });
+        }
     }
 
     /// <summary>Characters met earlier in this chat who are not in the scene now.</summary>

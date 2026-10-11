@@ -12,6 +12,9 @@ public static class AuthoringQueries
     public static IQueryable<Chatbot> WithCastAndScenarios(this IQueryable<Chatbot> chatbots) =>
         chatbots.WithCast().Include(c => c.Scenarios);
 
+    public static IQueryable<Character> CastOf(this IQueryable<Chatbot> chatbots, Guid chatbotId) =>
+        chatbots.Where(c => c.Id == chatbotId).SelectMany(c => c.Cast.Select(m => m.Character));
+
     public static IQueryable<ChatSession> WithScenarioAndPersona(this IQueryable<ChatSession> sessions) =>
         sessions
             .Include(s => s.Scenario).ThenInclude(s => s.Chatbot)

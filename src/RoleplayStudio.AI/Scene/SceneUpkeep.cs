@@ -53,7 +53,7 @@ public sealed class SceneUpkeep(
         }
 
         var chatbotId = session.Scenario.ChatbotId;
-        var cast = await db.Chatbots.Where(c => c.Id == chatbotId).SelectMany(c => c.Cast.Select(m => m.Character)).ToListAsync(cancellationToken);
+        var cast = await db.Chatbots.CastOf(chatbotId).ToListAsync(cancellationToken);
         var known = new SceneCast(session.CharacterStates, cast);
         var reply = await utility.AskAsync(SceneTracking.Prompt(session, session.Persona.Name, known, messages), cancellationToken);
         if (reply.IsFailure)

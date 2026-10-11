@@ -21,7 +21,8 @@ public sealed record PromptInput(
     IReadOnlyList<PresentCharacter> MetEarlier,
     SessionSummary Summary,
     IReadOnlyList<MemoryEntry> Memories,
-    IReadOnlyList<Message> Messages);
+    IReadOnlyList<Message> Messages,
+    DirectorHint? Hint = null);
 
 public sealed record PromptBudget(int ContextWindow, int ReplyTokens)
 {
@@ -140,7 +141,33 @@ public static partial class PromptBuilder
 
         text.AppendLine();
         text.Append(Instruction(input));
+        if (Steer(input) is { } steer)
+        {
+            text.AppendLine().AppendLine().Append($"For this reply only: {steer}");
+        }
+
         return text.ToString();
+    }
+
+    /// <summary>A hint naming someone not in the scene adds nothing; the scene is changed before the prompt is built.</summary>
+    private static string? Steer(PromptInput input)
+    {
+        string? Present(Guid id) => input.Present.FirstOrDefault(p => p.Character.Id == id)?.Character.Name;
+
+        return input.Hint switch
+        {
+            DirectorHint.LetRespond(var id) when Present(id) is { } name =>
+                $"only {name} speaks and acts; everyone else stays quiet.",
+            DirectorHint.BringIn(var id) when Present(id) is { } name =>
+                $"{name} arrives in the scene now. Show them coming in and let them take part.",
+            DirectorHint.SkipAhead =>
+                "skip ahead in time to the next moment worth playing. Say in a line of narration how much time has passed and what changed, then carry on from there.",
+            DirectorHint.NarrationOnly =>
+                "write narration only, describing the scene and what happens; no one speaks.",
+            DirectorHint.MoveTo(var location) =>
+                $"the scene moves to {location}. Narrate getting there and carry on in the new place.",
+            _ => null,
+        };
     }
 
     private static string? MetEarlier(IReadOnlyList<PresentCharacter> characters) =>
