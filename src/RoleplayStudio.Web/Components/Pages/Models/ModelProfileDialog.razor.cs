@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using RoleplayStudio.AI.Images.ComfyUI;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Services;
@@ -41,7 +42,16 @@ public partial class ModelProfileDialog
     {
         ProviderKind.Ollama => "qwen3:8b",
         ProviderKind.Runware => "runware:101@1",
+        ProviderKind.ComfyUI => ComfyUIWorkflows.Names.FirstOrDefault() ?? "",
         _ => "mistralai/mistral-nemo",
+    };
+
+    private string? ModelIdHelp => _profile.Provider switch
+    {
+        ProviderKind.Ollama => _ollamaProblem,
+        ProviderKind.Runware => "A Runware model id, such as runware:101@1 for FLUX.1 dev.",
+        ProviderKind.ComfyUI => $"The workflow set to draw with: {string.Join(", ", ComfyUIWorkflows.Names)}.",
+        _ => null,
     };
 
     protected override async Task OnInitializedAsync()
@@ -107,6 +117,11 @@ public partial class ModelProfileDialog
         _profile.Provider = preset.Provider;
         _profile.BaseUrl = preset.BaseUrl;
         _profile.ApiKeySetting = preset.ApiKeySetting;
+        if (preset.Provider == ProviderKind.ComfyUI && string.IsNullOrWhiteSpace(_profile.ModelId))
+        {
+            _profile.ModelId = ComfyUIWorkflows.Names.FirstOrDefault() ?? "";
+        }
+
         if (string.IsNullOrWhiteSpace(_profile.Name) || ProviderPreset.All.Any(p => p.Label == _profile.Name))
         {
             _profile.Name = preset.Label;

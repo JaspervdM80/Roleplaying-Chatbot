@@ -6,6 +6,7 @@ using OllamaSharp;
 using OllamaSharp.Models.Chat;
 using OpenAI;
 using RoleplayStudio.AI.Images;
+using RoleplayStudio.AI.Images.ComfyUI;
 using IImageGenerator = RoleplayStudio.AI.Images.IImageGenerator;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Services;
@@ -21,8 +22,11 @@ public interface IChatClientFactory
     Result<IImageGenerator> CreateImageGenerator(ModelProfile profile);
 }
 
-public sealed class ChatClientFactory(IConfiguration configuration, RunwareModelCatalog? runwareModels = null) : IChatClientFactory
+/// <summary>Builds model clients; with <paramref name="recordPromptText"/> every call's prompt and reply go into its trace, so only Development turns it on.</summary>
+public sealed class ChatClientFactory(IConfiguration configuration, RunwareModelCatalog? runwareModels = null, bool recordPromptText = false) : IChatClientFactory
 {
+    public const string TelemetrySource = "RoleplayStudio.AI";
+
     // Not IHttpClientFactory: the service defaults put a 10-second resilience timeout on every client, far shorter than a generation.
     internal static readonly SocketsHttpHandler Handler = new() { PooledConnectionLifetime = TimeSpan.FromMinutes(5) };
 
@@ -33,12 +37,13 @@ public sealed class ChatClientFactory(IConfiguration configuration, RunwareModel
             return Result.Failure<IChatClient>(problem);
         }
 
-        return profile.Provider switch
+        var client = profile.Provider switch
         {
             ProviderKind.OpenAICompatible => CreateOpenAICompatible(profile),
             ProviderKind.Ollama => CreateOllama(profile),
             _ => Result.Failure<IChatClient>("{0} models cannot chat", profile.Provider),
         };
+        return client.IsSuccess ? Result.Success(Traced(client.Value)) : client;
     }
 
     public Result<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGenerator(ModelProfile profile)
@@ -69,6 +74,13 @@ public sealed class ChatClientFactory(IConfiguration configuration, RunwareModel
             return Result.Failure<IImageGenerator>(problem);
         }
 
+        if (profile.Provider == ProviderKind.ComfyUI)
+        {
+            return ComfyUIWorkflows.Find(profile.ModelId) is { } workflows
+                ? Result.Success<IImageGenerator>(new ComfyUIImageGenerator(new HttpClient(Handler, disposeHandler: false) { Timeout = Timeout.InfiniteTimeSpan }, new Uri(profile.Address!), workflows))
+                : Result.Failure<IImageGenerator>("There is no ComfyUI workflow set called {0}; use one of {1}", profile.ModelId, string.Join(", ", ComfyUIWorkflows.Names));
+        }
+
         if (profile.Provider != ProviderKind.Runware)
         {
             return Result.Failure<IImageGenerator>("{0} models cannot draw images", profile.Provider);
@@ -91,6 +103,9 @@ public sealed class ChatClientFactory(IConfiguration configuration, RunwareModel
         Temperature = (float?)profile.Temperature,
         MaxOutputTokens = profile.MaxOutputTokens,
     };
+
+    private IChatClient Traced(IChatClient client) =>
+        client.AsBuilder().UseOpenTelemetry(sourceName: TelemetrySource, configure: c => c.EnableSensitiveData = recordPromptText).Build();
 
     private Result<IChatClient> CreateOpenAICompatible(ModelProfile profile)
     {

@@ -25,6 +25,11 @@ public sealed class PictureDrawing(
 {
     public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(90);
 
+    // A local ComfyUI loads its models on the first picture and may be drawing something else first.
+    public static readonly TimeSpan LocalTimeout = TimeSpan.FromMinutes(10);
+
+    public static TimeSpan TimeoutFor(ProviderKind provider) => provider == ProviderKind.ComfyUI ? LocalTimeout : Timeout;
+
     private sealed record Plan(
         string Prompt,
         string Negative,
@@ -71,9 +76,10 @@ public sealed class PictureDrawing(
         notifier.Notify(new PictureChange(job.Id, job.SessionId, job.CharacterId, null));
 
         var seed = plan.Seed ?? Random.Shared.NextInt64(1, uint.MaxValue);
-        var request = new ImageRequest(plan.Prompt, traits.TakesNegativePrompt ? plan.Negative : null, plan.Width, plan.Height, seed, plan.References);
+        var request = new ImageRequest(plan.Prompt, traits.TakesNegativePrompt ? plan.Negative : null, plan.Width, plan.Height, seed, plan.References, IsPortrait: job.SessionId is null);
+        var limit = TimeoutFor(profile.Provider);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(Timeout);
+        timeout.CancelAfter(limit);
         var drawn = await ProviderErrors.TranslateAsync(profile, logger, async () =>
         {
             try
@@ -83,7 +89,7 @@ public sealed class PictureDrawing(
             catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
                 logger.LogWarning("Model profile {ProfileId} did not draw a picture in time", profile.Id);
-                return Result.Failure<GeneratedPicture>("No picture within {0} seconds", Timeout.TotalSeconds);
+                return Result.Failure<GeneratedPicture>("No picture within {0} seconds", limit.TotalSeconds);
             }
         });
         if (drawn.IsFailure)

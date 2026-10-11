@@ -86,7 +86,7 @@ public partial class ChatPage
 
         _session = result.Value;
         _turns.Clear();
-        _turns.AddRange(_session.Messages.Select(m => new ChatTurnView(m.Role == MessageRole.User, m.SpeakerName, m.Content, m.Id)));
+        _turns.AddRange(_session.Messages.Select(TurnOf));
         _transcript?.RequestScrollToEnd();
         _subjects = Subjects(_session);
         await LoadPicturesAsync();
@@ -132,7 +132,7 @@ public partial class ChatPage
             return;
         }
 
-        _turns.Add(new ChatTurnView(true, sent.Value.SpeakerName, sent.Value.Content, sent.Value.Id));
+        _turns.Add(TurnOf(sent.Value));
         _transcript?.RequestScrollToEnd();
         await StreamReplyAsync();
     }
@@ -177,7 +177,7 @@ public partial class ChatPage
             var saved = await Turns.SaveReplyAsync(Id, reply.Text);
             if (Snackbar.Report(saved))
             {
-                _turns.Add(new ChatTurnView(false, saved.Value.SpeakerName, saved.Value.Content, saved.Value.Id));
+                _turns.Add(TurnOf(saved.Value));
             }
         }
 
@@ -205,9 +205,21 @@ public partial class ChatPage
             _session.Scene = result.Value.Scene;
             _session.CharacterStates = result.Value.CharacterStates;
             _subjects = Subjects(_session);
+            var names = _session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.Name);
+            foreach (var turn in _turns)
+            {
+                if (turn.SpeakerCharacterId is { } speakerId && names.TryGetValue(speakerId, out var name))
+                {
+                    turn.Speaker = name;
+                }
+            }
+
             StateHasChanged();
         }
     }
+
+    private static ChatTurnView TurnOf(Message message) =>
+        new(message.Role == MessageRole.User, message.SpeakerName, message.Content, message.Id, message.SpeakerCharacterId);
 
     private static IReadOnlyList<(Guid, string)> Subjects(ChatSession session) =>
         session.PresentCharacters(session.CharacterStates).Select(c => (c.Id, c.Name)).ToList();

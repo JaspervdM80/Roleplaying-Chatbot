@@ -173,6 +173,7 @@ public class SceneTrackingTests
 
         Assert.Equal("Tom", stablehand.Name);
         Assert.Empty(outcome.Newcomers);
+        Assert.Equal([stablehand], outcome.Renamed);
         Assert.Equal([stablehand.Id], session.Scene.PresentCharacterIds);
     }
 

@@ -1,0 +1,146 @@
+{
+  "model": {
+    "class_type": "NunchakuFluxDiTLoader",
+    "_meta": {
+      "title": "Nunchaku FLUX DiT Loader"
+    },
+    "inputs": {
+      "model_path": "svdq-int4_r32-flux.1-dev.safetensors",
+      "cache_threshold": 0,
+      "attention": "nunchaku-fp16",
+      "cpu_offload": "auto",
+      "device_id": 0,
+      "data_type": "float16",
+      "i2f_mode": "enabled"
+    }
+  },
+  "clip": {
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "CLIP-L and T5"
+    },
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "flux",
+      "device": "default"
+    }
+  },
+  "vae": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX VAE"
+    },
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    }
+  },
+  "positive": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Prompt"
+    },
+    "inputs": {
+      "text": "{{prompt}}",
+      "clip": [
+        "clip",
+        0
+      ]
+    }
+  },
+  "guidance": {
+    "class_type": "FluxGuidance",
+    "inputs": {
+      "guidance": 3.5,
+      "conditioning": [
+        "positive",
+        0
+      ]
+    }
+  },
+  "negative": {
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "No negative prompt (FLUX ignores it)"
+    },
+    "inputs": {
+      "conditioning": [
+        "positive",
+        0
+      ]
+    }
+  },
+  "sampling": {
+    "class_type": "ModelSamplingFlux",
+    "inputs": {
+      "model": [
+        "model",
+        0
+      ],
+      "max_shift": 1.15,
+      "base_shift": 0.5,
+      "width": "{{width}}",
+      "height": "{{height}}"
+    }
+  },
+  "latent": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": "{{width}}",
+      "height": "{{height}}",
+      "batch_size": 1
+    }
+  },
+  "sampler": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "sampling",
+        0
+      ],
+      "seed": "{{seed}}",
+      "steps": 24,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": [
+        "guidance",
+        0
+      ],
+      "negative": [
+        "negative",
+        0
+      ],
+      "latent_image": [
+        "latent",
+        0
+      ],
+      "denoise": 1
+    }
+  },
+  "decode": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "sampler",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "output": {
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Picture for Roleplay Studio"
+    },
+    "inputs": {
+      "images": [
+        "decode",
+        0
+      ]
+    }
+  }
+}

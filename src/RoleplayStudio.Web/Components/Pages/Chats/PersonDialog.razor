@@ -1,0 +1,52 @@
+@using RoleplayStudio.AI.Images
+
+<MudDialog Class="person-dialog">
+    <TitleContent>
+        <div class="person-title">
+            <Avatar Id="Person.Id" Name="@Person.Name" ImageId="Person.PortraitId" Size="56" />
+            <div class="person-title-text">
+                <h2>@Person.Name</h2>
+                @if (Person.Status is not null)
+                {
+                    <span class="person-status">@Person.Status</span>
+                }
+            </div>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        @if (Person.PortraitId is { } portraitId)
+        {
+            <img src="@ImageEndpoints.Url(portraitId)" alt="Portrait of @Person.Name" class="person-portrait" />
+        }
+
+        <dl class="person-facts">
+            @Fact("Age", Person.Age?.ToString())
+            @Fact("Gender", Person.Gender)
+            @Fact("About", Person.Description)
+            @Fact("Personality", Person.Personality)
+            @Fact("Looks", Person.Looks)
+            @Fact("Wearing", Person.Wearing)
+            @Fact("Changes", Person.Changes)
+        </dl>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => Dialog.Close()">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance Dialog { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public ScenePerson Person { get; set; } = null!;
+
+    private static RenderFragment Fact(string label, string? value) => __builder =>
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            <dt>@label</dt>
+            <dd>@value</dd>
+        }
+    };
+}

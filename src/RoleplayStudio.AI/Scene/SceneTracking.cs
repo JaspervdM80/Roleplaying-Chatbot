@@ -36,8 +36,8 @@ public sealed record SceneUpdate(
 /// <summary>The characters a tracked scene can name: those met in this chat, and the rest of the chatbot's cast.</summary>
 public sealed record SceneCast(IReadOnlyList<CharacterState> Met, IReadOnlyList<Character> Cast);
 
-/// <summary>What applying an update did to characters: newcomers made (not yet saved or cast), and characters whose lasting looks were filled in.</summary>
-public sealed record SceneOutcome(IReadOnlyList<(Character Character, string? Role)> Newcomers, IReadOnlyList<Character> Restyled);
+/// <summary>What applying an update did to characters: newcomers made (not yet saved or cast), those renamed, and those whose lasting looks were filled in.</summary>
+public sealed record SceneOutcome(IReadOnlyList<(Character Character, string? Role)> Newcomers, IReadOnlyList<Character> Renamed, IReadOnlyList<Character> Restyled);
 
 public static class SceneTracking
 {
@@ -53,8 +53,9 @@ public static class SceneTracking
         instructions.AppendLine("- where it is, the time of day, and the mood, each in a few words;");
         instructions.AppendLine($"- who is in the scene with {personaName} now: everyone who arrived stays until the story says they left;");
         instructions.AppendLine("- for anyone whose clothes, looks or feelings changed: their outfit as it is now, lasting changes to how they look, and a one- or two-word status (how they feel, like \"Warm\" or \"Wary\");");
-        instructions.AppendLine("- newcomers: named people who speak or act and are not one of the known characters. Describe them from the story, inventing only what is needed to picture them, and always give an age, estimated from the story if it is not said. Someone unnamed who speaks can be named by what they are, like \"The stablehand\".");
+        instructions.AppendLine("- newcomers: named people who speak or act and are not one of the known characters. A newcomer is one person, never a group: give each member of a group their own entry. Describe them from the story, inventing only what is needed to picture them, and always give an age, estimated from the story if it is not said. Someone unnamed who speaks can be named by what they are, like \"The stablehand\".");
         instructions.AppendLine("- for a known character marked \"introduced in this story\": when the story now gives their real name, their new name; when it tells more about how they look, their lasting looks as a whole, old details kept; and their age or gender once the story makes it clear.");
+        instructions.AppendLine("A known character still called by what they are, like \"The stablehand\", is not a newcomer once the story names them: when \"Tom\" turns out to be the stablehand, report a change for \"The stablehand\" with newName \"Tom\", and no newcomer called Tom.");
         instructions.AppendLine("Lasting looks are what stays the same from picture to picture: face, hair colour, length and style, eye colour, skin, build and height, and marks like scars or tattoos. Give a newcomer's looks in that detail too.");
         instructions.AppendLine("Use the known characters' names exactly as written below, also for someone who was just renamed.");
         instructions.AppendLine();
@@ -209,7 +210,7 @@ public static class SceneTracking
         }
 
         var newcomers = created.Select(c => c.Item1).ToList();
-        return new SceneOutcome(created, restyled.Except(newcomers).Distinct().ToList());
+        return new SceneOutcome(created, formerNames.Values.Distinct().ToList(), restyled.Except(newcomers).Distinct().ToList());
     }
 
     private static string? Fit(string name)

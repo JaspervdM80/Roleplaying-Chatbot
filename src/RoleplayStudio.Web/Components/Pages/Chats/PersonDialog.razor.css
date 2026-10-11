@@ -1,0 +1,63 @@
+.person-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.person-title-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.person-title-text h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.person-status {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--accent);
+}
+
+.person-portrait {
+    display: block;
+    width: 100%;
+    max-height: 50dvh;
+    object-fit: contain;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    background: var(--surface-raised);
+}
+
+.person-facts {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 10px 16px;
+    font-size: 0.9375rem;
+}
+
+.person-facts dt {
+    color: var(--ink-subtle);
+}
+
+.person-facts dd {
+    margin: 0;
+    white-space: pre-line;
+}
+
+@media (max-width: 599.98px) {
+    .person-facts {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2px;
+    }
+
+    .person-facts dd + dt {
+        margin-top: 10px;
+    }
+}

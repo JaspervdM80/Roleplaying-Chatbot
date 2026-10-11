@@ -23,6 +23,7 @@
                 @if (IsImage)
                 {
                     <MudSelectItem Value="ProviderKind.Runware">Runware</MudSelectItem>
+                    <MudSelectItem Value="ProviderKind.ComfyUI">ComfyUI (local)</MudSelectItem>
                 }
                 else
                 {
@@ -50,7 +51,7 @@
             {
                 <MudTextField @bind-Value="_profile.ModelId" Label="Model id" Required="true" MaxLength="200" Variant="Variant.Outlined"
                               Placeholder="@ModelIdPlaceholder"
-                              HelperText="@(_profile.Provider == ProviderKind.Ollama ? _ollamaProblem : IsImage ? "A Runware model id, such as runware:101@1 for FLUX.1 dev." : null)" />
+                              HelperText="@ModelIdHelp" />
             }
             @if (_profile.Provider is ProviderKind.OpenAICompatible or ProviderKind.Runware)
             {

@@ -10,6 +10,7 @@ public sealed record ProviderPreset(string Label, ProviderKind Provider, string?
         new("Featherless", ProviderKind.OpenAICompatible, "https://api.featherless.ai/v1", "Providers:Featherless:ApiKey"),
         new("Ollama", ProviderKind.Ollama, ModelProfile.DefaultOllamaUrl, null),
         new("Runware", ProviderKind.Runware, ModelProfile.DefaultRunwareUrl, "Providers:Runware:ApiKey", ModelRole.Image),
+        new("ComfyUI (local)", ProviderKind.ComfyUI, ModelProfile.DefaultComfyUIUrl, null, ModelRole.Image),
     ];
 
     public override string ToString() => Label;

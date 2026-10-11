@@ -5,13 +5,14 @@ using Microsoft.JSInterop;
 namespace RoleplayStudio.Web.Components.Shared;
 
 /// <summary>One turn as the transcript shows it; <see cref="MessageId"/> is null until the turn is saved.</summary>
-public sealed class ChatTurnView(bool fromUser, string speaker, string text, Guid? messageId = null)
+public sealed class ChatTurnView(bool fromUser, string speaker, string text, Guid? messageId = null, Guid? speakerCharacterId = null)
 {
     private readonly StringBuilder _text = new(text);
 
     public Guid? MessageId { get; } = messageId;
     public bool FromUser { get; } = fromUser;
-    public string Speaker { get; } = speaker;
+    public Guid? SpeakerCharacterId { get; } = speakerCharacterId;
+    public string Speaker { get; set; } = speaker;
     public string Text => _text.ToString();
 
     public void Append(string text) => _text.Append(text);

@@ -1,6 +1,7 @@
 @using RoleplayStudio.AI.Images
 @using RoleplayStudio.Domain.Chats
 @using RoleplayStudio.Domain.Media
+@inject IDialogService Dialogs
 
 <div class="scene-host @(Toggled ? "scene-toggled" : null)">
     <div class="scene-scrim" @onclick="OnClose"></div>
@@ -41,7 +42,7 @@
                 }
                 @foreach (var state in _present)
                 {
-                    @Person(state.Character.Id, state.Character.Name, state.Character.ReferenceImageId, state.Status, state.CurrentOutfit)
+                    @Person(ScenePerson.Of(state))
                 }
             </section>
 
@@ -51,14 +52,14 @@
                     <h3 id="scene-met" class="scene-heading">Met earlier</h3>
                     @foreach (var state in _metEarlier)
                     {
-                        @Person(state.Character.Id, state.Character.Name, state.Character.ReferenceImageId, state.Status, state.CurrentOutfit)
+                        @Person(ScenePerson.Of(state))
                     }
                 </section>
             }
 
             <section class="scene-group scene-you" aria-labelledby="scene-you">
                 <h3 id="scene-you" class="scene-heading">You</h3>
-                @Person(Session.Persona.Id, Session.Persona.Name, null, null, Session.Persona.DefaultOutfit)
+                @Person(ScenePerson.Of(Session.Persona))
             </section>
 
             @if (Pictures.Count > 0 || Pending.Count > 0)
@@ -122,23 +123,30 @@
         _metEarlier = Session.AbsentStates(Session.CharacterStates);
     }
 
-    private static RenderFragment Person(Guid id, string name, Guid? portraitId, string? status, string? wearing) => __builder =>
+    private RenderFragment Person(ScenePerson person) => __builder =>
     {
-        <div class="scene-person">
-            <Avatar Id="id" Name="@name" ImageId="portraitId" />
-            <div class="scene-person-text">
-                <div class="scene-person-name">
-                    <span>@name</span>
-                    @if (status is not null)
+        <button type="button" class="scene-person" @onclick="() => ShowAsync(person)">
+            <Avatar Id="person.Id" Name="@person.Name" ImageId="person.PortraitId" />
+            <span class="scene-person-text">
+                <span class="scene-person-name">
+                    <span>@person.Name</span>
+                    @if (person.Status is not null)
                     {
-                        <span class="scene-person-status">@status</span>
+                        <span class="scene-person-status">@person.Status</span>
                     }
-                </div>
-                @if (wearing is not null)
+                </span>
+                @if (person.Wearing is not null)
                 {
-                    <span class="scene-person-wearing">@wearing</span>
+                    <span class="scene-person-wearing">@person.Wearing</span>
                 }
-            </div>
-        </div>
+            </span>
+        </button>
     };
+
+    private async Task ShowAsync(ScenePerson person)
+    {
+        var parameters = new DialogParameters<PersonDialog> { { d => d.Person, person } };
+        var dialog = await Dialogs.ShowAsync<PersonDialog>(person.Name, parameters, DialogServiceExtensions.Options);
+        await dialog.Result;
+    }
 }
