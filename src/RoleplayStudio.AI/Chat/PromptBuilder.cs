@@ -232,7 +232,7 @@ public static partial class PromptBuilder
     private static string Instruction(PromptInput input)
     {
         var persona = input.Persona.Name;
-        return input.Present.Count switch
+        var turn = input.Present.Count switch
         {
             0 => $"Narrate the scene around {persona}. Never write {persona}'s words or actions; the user does that.",
             1 => $"Write as {input.Present[0].Character.Name}, staying in character. Put actions in *asterisks*. Never write {persona}'s words or actions; the user does that.",
@@ -240,7 +240,13 @@ public static partial class PromptBuilder
                 + $"Start each character's lines on a new line with their name in bold, like **{input.Present[0].Character.Name}:**, "
                 + $"and write narration on lines of its own in *italics*. Never write {persona}'s words or actions; the user does that.",
         };
+        return $"{turn}\n{People(persona)}";
     }
+
+    private static string People(string persona) =>
+        "When someone new appears, describe in a sentence or two how they look the first time they are seen. " +
+        $"Call anyone {persona} already knows, like a friend, relative, classmate or colleague, by their name from the start, giving them one if they have none yet; " +
+        "a stranger stays nameless until they are introduced.";
 
     private static void Section(StringBuilder text, string heading, string? body)
     {

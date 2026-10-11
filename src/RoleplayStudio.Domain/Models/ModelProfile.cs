@@ -40,15 +40,18 @@ public class ModelProfile : OwnedEntity
 
     public const string DefaultRunwareUrl = "https://api.runware.ai/v1";
 
+    public const string DefaultComfyUIUrl = "http://127.0.0.1:8188";
+
     public static bool CanChat(ProviderKind provider) => provider is ProviderKind.OpenAICompatible or ProviderKind.Ollama;
 
-    public static bool CanDraw(ProviderKind provider) => provider is ProviderKind.Runware;
+    public static bool CanDraw(ProviderKind provider) => provider is ProviderKind.Runware or ProviderKind.ComfyUI;
 
     /// <summary>Where a provider is reached when the profile names no base URL; null when it must name one.</summary>
     public static string? DefaultAddress(ProviderKind provider) => provider switch
     {
         ProviderKind.Ollama => DefaultOllamaUrl,
         ProviderKind.Runware => DefaultRunwareUrl,
+        ProviderKind.ComfyUI => DefaultComfyUIUrl,
         _ => null,
     };
 
@@ -98,7 +101,7 @@ public class ModelProfile : OwnedEntity
 
         if (Role is ModelRole.Image && !CanDraw(Provider))
         {
-            return "Image models need an image provider such as Runware";
+            return "Image models need an image provider: Runware or ComfyUI";
         }
 
         if (BaseUrl is not null && !(Uri.TryCreate(BaseUrl, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"))

@@ -338,6 +338,15 @@ public partial class ChatPage
             _session.CharacterStates = result.Value.CharacterStates;
             ShowCast(_session);
             await LoadCastAsync();
+            var names = _session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.Name);
+            foreach (var turn in _turns)
+            {
+                if (turn.SpeakerId is { } speakerId && names.TryGetValue(speakerId, out var name))
+                {
+                    turn.Speaker = name;
+                }
+            }
+
             StateHasChanged();
         }
     }

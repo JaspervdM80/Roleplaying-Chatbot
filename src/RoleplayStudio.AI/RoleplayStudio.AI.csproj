@@ -12,6 +12,10 @@
     <PackageReference Include="OllamaSharp" Version="5.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Images\ComfyUI\Workflows\**\*.json" LogicalName="comfyui-workflows/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

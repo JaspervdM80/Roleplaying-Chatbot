@@ -81,6 +81,29 @@
 .scene-person {
     display: flex;
     gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 4px;
+    margin-inline: -4px;
+    box-sizing: content-box;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.scene-person:focus-visible {
+    outline: 2px solid var(--accent);
+}
+
+@media (hover: hover) {
+    .scene-person:hover {
+        background: var(--selected);
+    }
 }
 
 .scene-person-text {

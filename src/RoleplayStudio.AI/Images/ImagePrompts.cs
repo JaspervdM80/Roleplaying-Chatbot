@@ -116,7 +116,7 @@ public static class ImagePrompts
         return (Cut(prompt, MaxPromptLength), "blurry, low quality, deformed, distorted, bad anatomy, disfigured, mutated, extra limbs, ugly, poorly drawn, bad proportions, cloned face, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers");
     }
 
-    public static string? AgeFor(int? age) => age is { } years ? $"{years}-year-old" : null;
+    public static string? AgeFor(int? age) => age is { } years ? years < 18 ? "18-years-old" : $"{years}-year-old" : null;
 
     public static string Moment(IEnumerable<Message> messages) => Transcript.Of(messages);
 

@@ -1,0 +1,287 @@
+{
+  "model": {
+    "class_type": "NunchakuFluxDiTLoader",
+    "_meta": {
+      "title": "Nunchaku FLUX DiT Loader"
+    },
+    "inputs": {
+      "model_path": "svdq-int4_r32-flux.1-kontext-dev.safetensors",
+      "cache_threshold": 0,
+      "attention": "nunchaku-fp16",
+      "cpu_offload": "auto",
+      "device_id": 0,
+      "data_type": "float16",
+      "i2f_mode": "enabled"
+    }
+  },
+  "clip": {
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "CLIP-L and T5"
+    },
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "flux",
+      "device": "default"
+    }
+  },
+  "vae": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "FLUX VAE"
+    },
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    }
+  },
+  "positive": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Prompt"
+    },
+    "inputs": {
+      "text": "{{prompt}}",
+      "clip": [
+        "clip",
+        0
+      ]
+    }
+  },
+  "reference1_image": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Reference image 1"
+    },
+    "inputs": {
+      "image": "{{reference1}}"
+    }
+  },
+  "reference1_scale": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "reference1_image",
+        0
+      ]
+    }
+  },
+  "reference1_latent": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "reference1_scale",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "reference1": {
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "Add reference image 1"
+    },
+    "inputs": {
+      "conditioning": [
+        "positive",
+        0
+      ],
+      "latent": [
+        "reference1_latent",
+        0
+      ]
+    }
+  },
+  "reference2_image": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Reference image 2"
+    },
+    "inputs": {
+      "image": "{{reference2}}"
+    }
+  },
+  "reference2_scale": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "reference2_image",
+        0
+      ]
+    }
+  },
+  "reference2_latent": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "reference2_scale",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "reference2": {
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "Add reference image 2"
+    },
+    "inputs": {
+      "conditioning": [
+        "reference1",
+        0
+      ],
+      "latent": [
+        "reference2_latent",
+        0
+      ]
+    }
+  },
+  "reference3_image": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Reference image 3"
+    },
+    "inputs": {
+      "image": "{{reference3}}"
+    }
+  },
+  "reference3_scale": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "reference3_image",
+        0
+      ]
+    }
+  },
+  "reference3_latent": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "reference3_scale",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "reference3": {
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "Add reference image 3"
+    },
+    "inputs": {
+      "conditioning": [
+        "reference2",
+        0
+      ],
+      "latent": [
+        "reference3_latent",
+        0
+      ]
+    }
+  },
+  "guidance": {
+    "class_type": "FluxGuidance",
+    "inputs": {
+      "guidance": 2.5,
+      "conditioning": [
+        "reference3",
+        0
+      ]
+    }
+  },
+  "negative": {
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "No negative prompt (FLUX ignores it)"
+    },
+    "inputs": {
+      "conditioning": [
+        "positive",
+        0
+      ]
+    }
+  },
+  "sampling": {
+    "class_type": "ModelSamplingFlux",
+    "inputs": {
+      "model": [
+        "model",
+        0
+      ],
+      "max_shift": 1.15,
+      "base_shift": 0.5,
+      "width": "{{width}}",
+      "height": "{{height}}"
+    }
+  },
+  "latent": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": "{{width}}",
+      "height": "{{height}}",
+      "batch_size": 1
+    }
+  },
+  "sampler": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "sampling",
+        0
+      ],
+      "seed": "{{seed}}",
+      "steps": 20,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": [
+        "guidance",
+        0
+      ],
+      "negative": [
+        "negative",
+        0
+      ],
+      "latent_image": [
+        "latent",
+        0
+      ],
+      "denoise": 1
+    }
+  },
+  "decode": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "sampler",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "output": {
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Picture for Roleplay Studio"
+    },
+    "inputs": {
+      "images": [
+        "decode",
+        0
+      ]
+    }
+  }
+}

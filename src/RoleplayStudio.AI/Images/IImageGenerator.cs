@@ -3,7 +3,7 @@ namespace RoleplayStudio.AI.Images;
 public sealed record ReferenceImage(byte[] Data, string ContentType);
 
 /// <summary>A picture to draw; a generator leaves out what its model does not take, and draws at the nearest size it allows.</summary>
-public sealed record ImageRequest(string Prompt, string? NegativePrompt, int Width, int Height, long Seed, IReadOnlyList<ReferenceImage>? References = null);
+public sealed record ImageRequest(string Prompt, string? NegativePrompt, int Width, int Height, long Seed, IReadOnlyList<ReferenceImage>? References = null, bool IsPortrait = false);
 
 /// <summary>The picture as drawn; <see cref="Seed"/> is null when the model takes no seed, so the picture cannot be drawn the same way again.</summary>
 public sealed record GeneratedPicture(byte[] Data, string ContentType, long? Seed, int Width, int Height);

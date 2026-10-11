@@ -1,0 +1,97 @@
+{
+  "checkpoint": {
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Juggernaut XL"
+    },
+    "inputs": {
+      "ckpt_name": "juggernautXL_ragnarok.safetensors"
+    }
+  },
+  "positive": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Prompt"
+    },
+    "inputs": {
+      "text": "{{prompt}}",
+      "clip": [
+        "checkpoint",
+        1
+      ]
+    }
+  },
+  "negative": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    },
+    "inputs": {
+      "text": "{{negative}}",
+      "clip": [
+        "checkpoint",
+        1
+      ]
+    }
+  },
+  "latent": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": "{{width}}",
+      "height": "{{height}}",
+      "batch_size": 1
+    }
+  },
+  "sampler": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "checkpoint",
+        0
+      ],
+      "seed": "{{seed}}",
+      "steps": 30,
+      "cfg": 4.5,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "positive": [
+        "positive",
+        0
+      ],
+      "negative": [
+        "negative",
+        0
+      ],
+      "latent_image": [
+        "latent",
+        0
+      ],
+      "denoise": 1
+    }
+  },
+  "decode": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "sampler",
+        0
+      ],
+      "vae": [
+        "checkpoint",
+        2
+      ]
+    }
+  },
+  "output": {
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Picture for Roleplay Studio"
+    },
+    "inputs": {
+      "images": [
+        "decode",
+        0
+      ]
+    }
+  }
+}
