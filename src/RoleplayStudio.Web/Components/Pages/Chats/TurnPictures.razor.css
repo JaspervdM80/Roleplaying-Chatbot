@@ -61,10 +61,18 @@
     aspect-ratio: 3 / 4;
 }
 
-.turn-footer ::deep .turn-picture-this {
-    align-self: flex-start;
+.turn-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.turn-footer ::deep .turn-picture-this .mud-button-root {
+.turn-actions ::deep .turn-picture-this .mud-button-root {
     min-height: 44px;
+}
+
+.turn-actions ::deep .turn-more .mud-icon-button {
+    width: 44px;
+    height: 44px;
+    color: var(--ink-muted);
 }

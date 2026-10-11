@@ -78,6 +78,7 @@ builder.Services.AddScoped<PersonaService>();
 builder.Services.AddScoped<CharacterService>();
 builder.Services.AddScoped<ChatbotService>();
 builder.Services.AddScoped<ChatSessionService>();
+builder.Services.AddScoped<ChatHistoryService>();
 builder.Services.AddScoped<ChatTurnService>();
 builder.Services.AddSingleton<MemoryEmbeddings>();
 builder.Services.AddScoped<MemoryRecall>();

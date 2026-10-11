@@ -46,6 +46,13 @@ no characters" — and the director prompt silently loses its cast.
 - **`SessionSummary.CoveredUpToSequence`** marks which messages the summary already contains; the
   short-term window starts after it. `ChatSession.MemoriesExtractedUpToSequence` does the same for
   memory extraction. Rewriting history (edit, regenerate, branch) must move both back.
+- **History is rewritten only through `ChatSession.Rewind`** (and `Branch`, which rewinds its copy).
+  It drops every memory of an extraction pass that read a removed message (except one the user pinned)
+  and reads that pass again,
+  clears a summary covering one, and puts the scene and everyone's state back from the newest
+  `Message.SceneBefore` at or before the rewind point; a state for someone met later goes. Scene
+  tracking stores that snapshot on the first message of each pass. Each rewind moves
+  `HistoryVersion`, a concurrency token, on.
 - **`MemoryEntry.Embedding` has a fixed dimension** (`EmbeddingDimensions`). See the `migrations`
   skill before changing the embedding model.
 - **Who is present is `Scene.PresentCharacterIds`**, set only through `ChatSession.SetPresent` and read
