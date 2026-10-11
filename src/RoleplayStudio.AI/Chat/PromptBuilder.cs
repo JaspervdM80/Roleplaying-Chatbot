@@ -45,26 +45,54 @@ public static partial class PromptBuilder
         return [new ChatMessage(ChatRole.System, system), .. Recent(input, remaining)];
     }
 
-    /// <summary>The messages after the summary, newest kept first; the latest is always sent, whatever it costs.</summary>
+    /// <summary>
+    /// The turns after the summary, newest kept first; the latest is always sent, whatever it costs. A reply saved as
+    /// several speakers goes back as one turn in the tagged form the model wrote it in.
+    /// </summary>
     private static IEnumerable<ChatMessage> Recent(PromptInput input, int tokens)
     {
-        var kept = new List<Message>();
-        foreach (var message in input.Messages.Where(m => m.Sequence > input.Summary.CoveredUpToSequence).OrderByDescending(m => m.Sequence))
+        var kept = new List<ChatMessage>();
+        var messages = input.Messages.Where(m => m.Sequence > input.Summary.CoveredUpToSequence).OrderBy(m => m.Sequence);
+        foreach (var turn in Turns(messages, soloCharacter: input.Present.Count == 1).Reverse())
         {
-            tokens -= TokenEstimate.Of(message.Content);
+            tokens -= TokenEstimate.Of(turn.Text);
             if (tokens < 0 && kept.Count > 0)
             {
                 break;
             }
 
-            kept.Add(message);
+            kept.Add(turn);
         }
 
-        return kept
-            .AsEnumerable()
-            .Reverse()
-            .Select(m => new ChatMessage(m.Role == MessageRole.User ? ChatRole.User : ChatRole.Assistant, m.Content));
+        kept.Reverse();
+        return kept;
     }
+
+    /// <summary>Character lines are tagged unless the turn is one line in a chat with one character, which writes untagged.</summary>
+    private static IEnumerable<ChatMessage> Turns(IEnumerable<Message> messages, bool soloCharacter)
+    {
+        var turns = new List<List<Message>>();
+        foreach (var message in messages)
+        {
+            if (turns.Count == 0 || message.Role == MessageRole.User || turns[^1][^1].Role == MessageRole.User)
+            {
+                turns.Add([message]);
+            }
+            else
+            {
+                turns[^1].Add(message);
+            }
+        }
+
+        return turns
+            .Select(t => t[0].Role == MessageRole.User
+                ? new ChatMessage(ChatRole.User, t[0].Content)
+                : new ChatMessage(ChatRole.Assistant, soloCharacter && t.Count == 1 ? t[0].Content : string.Join("\n\n", t.Select(Tagged))))
+            .ToList();
+    }
+
+    private static string Tagged(Message message) =>
+        message.Role == MessageRole.Character ? $"**{message.SpeakerName}:** {message.Content}" : message.Content;
 
     private static string System(PromptInput input, PromptBudget budget)
     {
@@ -169,7 +197,9 @@ public static partial class PromptBuilder
         {
             0 => $"Narrate the scene around {persona}. Never write {persona}'s words or actions; the user does that.",
             1 => $"Write as {input.Present[0].Character.Name}, staying in character. Put actions in *asterisks*. Never write {persona}'s words or actions; the user does that.",
-            _ => $"Voice only the characters present ({string.Join(", ", input.Present.Select(p => p.Character.Name))}). Start each character's lines with their name in bold, like **{input.Present[0].Character.Name}:**, and put narration in *asterisks*. Never write {persona}'s words or actions; the user does that.",
+            _ => $"Direct the scene: narrate, and voice only the characters present ({string.Join(", ", input.Present.Select(p => p.Character.Name))}); no one else speaks. "
+                + $"Start each character's lines on a new line with their name in bold, like **{input.Present[0].Character.Name}:**, "
+                + $"and write narration on lines of its own in *italics*. Never write {persona}'s words or actions; the user does that.",
         };
     }
 

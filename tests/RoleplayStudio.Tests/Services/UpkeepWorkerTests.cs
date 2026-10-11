@@ -43,7 +43,7 @@ public class UpkeepWorkerTests(PostgresFixture postgres)
             for (var i = 0; i < 10; i++)
             {
                 Assert.True((await user.Sessions.AddUserMessageAsync(session.Id, new string('x', 1_500))).IsSuccess);
-                Assert.True((await user.Sessions.AddReplyAsync(session.Id, new string('y', 1_500))).IsSuccess);
+                Assert.True((await user.Sessions.ReplyAsync(session.Id, new string('y', 1_500))).IsSuccess);
             }
         }
 

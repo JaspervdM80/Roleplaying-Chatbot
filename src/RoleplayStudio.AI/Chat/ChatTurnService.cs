@@ -79,10 +79,13 @@ public sealed class ChatTurnService(
             });
         });
 
-    /// <summary>Saves a streamed reply, then queues scene and memory upkeep for the chat without waiting on it.</summary>
-    public async Task<Result<Message>> SaveReplyAsync(Guid sessionId, string text)
+    /// <summary>
+    /// Saves a streamed reply as one message per speaker, then queues scene and memory upkeep for the chat without
+    /// waiting on it.
+    /// </summary>
+    public async Task<Result<IReadOnlyList<Message>>> SaveReplyAsync(Guid sessionId, string text)
     {
-        var saved = await sessions.AddReplyAsync(sessionId, text);
+        var saved = await sessions.AddReplyAsync(sessionId, present => SpeakerTagParser.Parse(text, present));
         if (saved.IsSuccess && await currentUser.GetUserIdAsync() is { Length: > 0 } ownerId)
         {
             upkeepQueue.Enqueue(new UpkeepJob(ownerId, sessionId));

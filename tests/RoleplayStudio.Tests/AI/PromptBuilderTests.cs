@@ -71,6 +71,34 @@ public class PromptBuilderTests
     }
 
     [Fact]
+    public void A_reply_saved_as_several_speakers_goes_back_as_one_turn_in_the_tagged_form()
+    {
+        var messages = PromptBuilder.Build(
+            Input(
+                [Present("Mira"), Present("Jun")],
+                [
+                    Said(1, "Two lattes.", MessageRole.User),
+                    Said(2, "*The machine hisses.*", MessageRole.Narrator),
+                    new Message { Sequence = 3, Role = MessageRole.Character, SpeakerName = "Mira", Content = "\"Coming up.\"" },
+                    new Message { Sequence = 4, Role = MessageRole.Character, SpeakerName = "Jun", Content = "\"Make mine a double.\"" },
+                ]),
+            Roomy);
+
+        Assert.Equal([ChatRole.System, ChatRole.User, ChatRole.Assistant], messages.Select(m => m.Role));
+        Assert.Equal("*The machine hisses.*\n\n**Mira:** \"Coming up.\"\n\n**Jun:** \"Make mine a double.\"", messages[2].Text);
+    }
+
+    [Fact]
+    public void In_a_group_a_reply_from_one_speaker_keeps_its_tag_so_the_model_knows_who_said_it()
+    {
+        var messages = PromptBuilder.Build(
+            Input([Present("Mira"), Present("Jun")], [new Message { Sequence = 1, Role = MessageRole.Character, SpeakerName = "Mira", Content = "\"Morning!\"" }]),
+            Roomy);
+
+        Assert.Equal("**Mira:** \"Morning!\"", messages[1].Text);
+    }
+
+    [Fact]
     public void Messages_the_summary_covers_give_way_to_the_summary()
     {
         var messages = PromptBuilder.Build(
@@ -90,8 +118,8 @@ public class PromptBuilderTests
         var older = new string('a', room * 4);
         var latest = new string('b', room * 8);
 
-        var fits = PromptBuilder.Build(Input([Present("Mira")], [Said(1, older), Said(2, "short")]), budget);
-        var overflows = PromptBuilder.Build(Input([Present("Mira")], [Said(1, "short"), Said(2, latest)]), budget);
+        var fits = PromptBuilder.Build(Input([Present("Mira")], [Said(1, older, MessageRole.User), Said(2, "short")]), budget);
+        var overflows = PromptBuilder.Build(Input([Present("Mira")], [Said(1, "short", MessageRole.User), Said(2, latest)]), budget);
 
         Assert.Equal(["short"], fits.Skip(1).Select(m => m.Text));
         Assert.Equal([latest], overflows.Skip(1).Select(m => m.Text));
