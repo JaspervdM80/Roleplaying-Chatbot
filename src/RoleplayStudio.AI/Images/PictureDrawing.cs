@@ -25,6 +25,11 @@ public sealed class PictureDrawing(
 {
     public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(90);
 
+    // A local ComfyUI loads its models on the first picture and may be drawing something else first.
+    public static readonly TimeSpan LocalTimeout = TimeSpan.FromMinutes(10);
+
+    public static TimeSpan TimeoutFor(ProviderKind provider) => provider == ProviderKind.ComfyUI ? LocalTimeout : Timeout;
+
     private sealed record Plan(
         string Prompt,
         string Negative,
@@ -42,21 +47,13 @@ public sealed class PictureDrawing(
     public async Task<Result<Guid>> DrawAsync(PictureJob job, CancellationToken cancellationToken)
     {
         await using var db = await dbFactory.CreateForOwnerAsync(job.OwnerId, cancellationToken);
-        var profile = await db.ModelProfiles.PreferredFor(ModelRole.Image).AsNoTracking().FirstOrDefaultAsync(cancellationToken);
-        if (profile is null)
+        var opened = await PreferredModel.OpenAsync(db, ModelRole.Image, clients.CreateImageGenerator, PictureService.NoImageModel, logger, cancellationToken);
+        if (opened.IsFailure)
         {
-            logger.LogWarning("No image model; skipped a picture for owner {OwnerId}", job.OwnerId);
-            return Result.Failure<Guid>(PictureService.NoImageModel);
+            return opened.To<Guid>();
         }
 
-        var created = clients.CreateImageGenerator(profile);
-        if (created.IsFailure)
-        {
-            logger.LogWarning("Model profile {ProfileId} cannot be turned into an image generator", profile.Id);
-            return created.To<Guid>();
-        }
-
-        var generator = created.Value;
+        var (profile, generator) = opened.Value;
         var traits = await generator.TraitsAsync(cancellationToken);
         var planned = job.RedrawOf is { } redrawOf
             ? await RedrawPlanAsync(db, redrawOf, traits.MaxReferenceImages, cancellationToken)
@@ -71,9 +68,10 @@ public sealed class PictureDrawing(
         notifier.Notify(new PictureChange(job.Id, job.SessionId, job.CharacterId, null));
 
         var seed = plan.Seed ?? Random.Shared.NextInt64(1, uint.MaxValue);
-        var request = new ImageRequest(plan.Prompt, traits.TakesNegativePrompt ? plan.Negative : null, plan.Width, plan.Height, seed, plan.References);
+        var request = new ImageRequest(plan.Prompt, traits.TakesNegativePrompt ? plan.Negative : null, plan.Width, plan.Height, seed, plan.References, IsPortrait: job.SessionId is null);
+        var limit = TimeoutFor(profile.Provider);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(Timeout);
+        timeout.CancelAfter(limit);
         var drawn = await ProviderErrors.TranslateAsync(profile, logger, async () =>
         {
             try
@@ -83,7 +81,7 @@ public sealed class PictureDrawing(
             catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
                 logger.LogWarning("Model profile {ProfileId} did not draw a picture in time", profile.Id);
-                return Result.Failure<GeneratedPicture>("No picture within {0} seconds", Timeout.TotalSeconds);
+                return Result.Failure<GeneratedPicture>("No picture within {0} seconds", limit.TotalSeconds);
             }
         });
         if (drawn.IsFailure)
@@ -205,7 +203,7 @@ public sealed class PictureDrawing(
         }
         else
         {
-            states = session.PresentStates(session.CharacterStates);
+            states = session.PresentStates();
         }
 
         var numbering = new ReferenceNumbering(await LoadReferencesAsync(db, states.Select(s => s.Character.ReferenceImageId).OfType<Guid>().ToList(), cancellationToken), maxReferences);

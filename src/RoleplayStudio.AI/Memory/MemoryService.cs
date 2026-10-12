@@ -85,7 +85,7 @@ public sealed class MemoryService(
             var memory = session is null ? null : await db.Memories.SingleOrDefaultAsync(m => m.Id == input.Id && m.SessionId == sessionId);
             if (session is null || memory is null)
             {
-                return MemoryNotFound(sessionId, input.Id).To<MemoryEntry>();
+                return MemoryNotFound(input.Id).To<MemoryEntry>();
             }
 
             var oldText = memory.Text;
@@ -112,7 +112,7 @@ public sealed class MemoryService(
             await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
             if (await FindAsync(db, sessionId, memoryId) is not { } memory)
             {
-                return MemoryNotFound(sessionId, memoryId);
+                return MemoryNotFound(memoryId);
             }
 
             memory.IsPinned = pinned;
@@ -127,7 +127,7 @@ public sealed class MemoryService(
             await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
             if (await FindAsync(db, sessionId, memoryId) is not { } memory)
             {
-                return MemoryNotFound(sessionId, memoryId);
+                return MemoryNotFound(memoryId);
             }
 
             db.Memories.Remove(memory);
@@ -201,15 +201,7 @@ public sealed class MemoryService(
         return Result.Failure<MemoryEntry>(problem.Message);
     }
 
-    private Result ChatNotFound(Guid sessionId)
-    {
-        logger.LogWarning("Chat {SessionId} was not found", sessionId);
-        return Result.Failure("That chat no longer exists");
-    }
+    private Result ChatNotFound(Guid sessionId) => ServiceOperation.NotFound(logger, sessionId, "That chat no longer exists");
 
-    private Result MemoryNotFound(Guid sessionId, Guid memoryId)
-    {
-        logger.LogWarning("Memory {MemoryId} of chat {SessionId} was not found", memoryId, sessionId);
-        return Result.Failure("That memory no longer exists");
-    }
+    private Result MemoryNotFound(Guid memoryId) => ServiceOperation.NotFound(logger, memoryId, "That memory no longer exists");
 }

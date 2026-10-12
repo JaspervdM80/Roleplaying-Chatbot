@@ -22,6 +22,9 @@ description: Working in RoleplayStudio.AI — model providers behind IChatClient
   host in the `BaseUrl` setting beside it (`Providers:OpenRouter:ApiKey` → `Providers:OpenRouter:BaseUrl`,
   in `appsettings.json`); otherwise any signed-in friend could point a profile at their own server.
 - `IChatClientFactory` is the seam tests fake; `ChatClientFactory` builds the real clients.
+- **Every chat client is traced** (`ChatClientFactory.TelemetrySource`). Only in Development does the
+  trace carry the prompt and reply text, for reading in the Aspire dashboard's Traces; anywhere else
+  it holds timings and token counts, never text.
 - **Provider HTTP never goes through `IHttpClientFactory`.** The service defaults put the standard
   resilience handler on every factory client, with a 10-second attempt timeout that kills any
   generation. The factory shares one `SocketsHttpHandler` instead.
@@ -47,6 +50,10 @@ Memory extraction, state deltas and image prompts ask the utility model for JSON
   can name someone who is not there.
 - **Read a string field through `StructuredOutput.Text`.** A weak model copies the answer template
   back, and its `"..."` would otherwise become a newcomer named "...", or a memory.
+- **A name a model wrote is matched through `CharacterNames`** (full name, or a first name only one
+  character has), never by a comparison of its own.
+- **A job opens its model through `PreferredModel.OpenAsync`**: the owner's preferred profile for the
+  role, made into a client, with a missing profile or a profile that cannot be built as a failure.
 
 ## The director turn
 
@@ -111,7 +118,9 @@ the same rules:
 - **A newcomer becomes a real `Character`**, owned by the chat's owner and added to the chatbot's
   cast with the role the model gave, marked with `IntroducedInSessionId`. That chat's tracking may
   rename them and fill in their age, gender and lasting looks as the story reveals them; a character
-  the user wrote, or one they have since edited (the edit clears the mark), is never changed. A new
+  the user wrote, or one they have since edited (the edit clears the mark), is never changed. A rename
+  rewrites `Message.SpeakerName` on the lines they already spoke in that chat, and the chat page
+  relabels its turns by `SpeakerCharacterId` when the scene reloads. A new
   portrait is queued for a newcomer, and one that renews the reference when their looks were filled
   in (`PictureJob.RenewsReference`). A name already in the cast or met in the chat (exactly, or by a
   first name only one character has) is that character, never a copy. The persona, and a name no
@@ -177,6 +186,12 @@ Files go through `IImageStore`, never a path built in a page.
   through `ImageService.OpenAsync`, so another user's id is a 404; the endpoint hands the request's
   user to the `AuthenticationStateProvider` first, since outside a component nothing else does.
 - Testing an `Image` profile on the models page draws and stores a real picture.
+- **A `ComfyUI` profile's model id names a workflow set** embedded from
+  `Images/ComfyUI/Workflows/<set>/` (`portrait`, `scene`, optional `references`), chosen per picture by
+  `ImageRequest.IsPortrait` and whether references are sent. The template conventions (the `output`
+  node, the placeholders, `referenceN` slots) are in `docs/comfyui.md`. A local server gets
+  `PictureDrawing.LocalTimeout`, since the first picture loads the models; a picture nobody waits for
+  is taken off ComfyUI's queue.
 - **Pages ask through `PictureService`; `PictureDrawing` does the work** in the background. A job
   carries its owner like an upkeep job and saves with `ImageService.StoreAsync` in a context scoped to
   that owner. `PictureQueue` also holds what is waiting or being drawn, so a page shows placeholders

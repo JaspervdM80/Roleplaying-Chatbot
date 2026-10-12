@@ -30,6 +30,8 @@ public Task<Result<Character>> CreateAsync(Character character) =>
 ```
 
 Expected misses return `Result.Failure(...)` explicitly from inside the lambda, after a `LogWarning`.
+A row that is gone or not the caller's is `ServiceOperation.NotFound(logger, id, "That character no longer exists")`:
+the whole sentence, so it stays one translatable template.
 Only unexpected exceptions fall through to the wrapper, which logs the error once. The one sanctioned
 catch is `ProviderErrors.TranslateAsync` in the AI project: a wrong key, model or address is an
 expected miss with a readable message, not an error.

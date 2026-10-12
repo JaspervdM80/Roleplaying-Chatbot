@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Pgvector;
 using Pgvector.EntityFrameworkCore;
+using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Infrastructure.Data;

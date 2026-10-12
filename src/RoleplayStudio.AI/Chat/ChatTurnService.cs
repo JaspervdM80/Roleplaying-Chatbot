@@ -92,50 +92,30 @@ public sealed class ChatTurnService(
     /// Saves a streamed reply as one message per speaker, then queues scene and memory upkeep for the chat without
     /// waiting on it.
     /// </summary>
-    public async Task<Result<IReadOnlyList<Message>>> SaveReplyAsync(Guid sessionId, string text)
-    {
-        var saved = await sessions.AddReplyAsync(sessionId, present => SpeakerTagParser.Parse(text, present));
-        if (saved.IsSuccess)
-        {
-            await QueueUpkeepAsync(sessionId);
-        }
-
-        return saved;
-    }
+    public Task<Result<IReadOnlyList<Message>>> SaveReplyAsync(Guid sessionId, string text) =>
+        ThenUpkeepAsync(sessions.AddReplyAsync(sessionId, present => SpeakerTagParser.Parse(text, present)), _ => sessionId);
 
     /// <summary>Rewords one of the user's messages and drops everything after it; the reply to it is streamed next.</summary>
-    public async Task<Result> EditAsync(Guid sessionId, Guid messageId, string text)
-    {
-        var edited = await history.EditUserMessageAsync(sessionId, messageId, text);
-        if (edited.IsSuccess)
-        {
-            await QueueUpkeepAsync(sessionId);
-        }
-
-        return edited;
-    }
+    public Task<Result> EditAsync(Guid sessionId, Guid messageId, string text) =>
+        ThenUpkeepAsync(history.EditUserMessageAsync(sessionId, messageId, text), _ => sessionId);
 
     /// <summary>Drops the last reply and what it left in the scene and memory; the new one is streamed next.</summary>
-    public async Task<Result> TakeBackReplyAsync(Guid sessionId)
+    public Task<Result> TakeBackReplyAsync(Guid sessionId) =>
+        ThenUpkeepAsync(history.TakeBackReplyAsync(sessionId), _ => sessionId);
+
+    public Task<Result<ChatSession>> BranchAsync(Guid sessionId, Guid messageId) =>
+        ThenUpkeepAsync(history.BranchAsync(sessionId, messageId), branched => branched.Value.Id);
+
+    private async Task<TResult> ThenUpkeepAsync<TResult>(Task<TResult> change, Func<TResult, Guid> chatOf)
+        where TResult : Result
     {
-        var taken = await history.TakeBackReplyAsync(sessionId);
-        if (taken.IsSuccess)
+        var result = await change;
+        if (result.IsSuccess)
         {
-            await QueueUpkeepAsync(sessionId);
+            await QueueUpkeepAsync(chatOf(result));
         }
 
-        return taken;
-    }
-
-    public async Task<Result<ChatSession>> BranchAsync(Guid sessionId, Guid messageId)
-    {
-        var branched = await history.BranchAsync(sessionId, messageId);
-        if (branched.IsSuccess)
-        {
-            await QueueUpkeepAsync(branched.Value.Id);
-        }
-
-        return branched;
+        return result;
     }
 
     private async Task QueueUpkeepAsync(Guid sessionId)
@@ -151,8 +131,8 @@ public sealed class ChatTurnService(
         session.Scenario,
         session.Persona,
         session.Scene,
-        session.PresentStates(session.CharacterStates).Select(s => new PresentCharacter(s.Character, s)).ToList(),
-        session.AbsentStates(session.CharacterStates).Select(s => new PresentCharacter(s.Character, s)).ToList(),
+        session.PresentStates().Select(s => new PresentCharacter(s.Character, s)).ToList(),
+        session.AbsentStates().Select(s => new PresentCharacter(s.Character, s)).ToList(),
         session.Summary,
         memories,
         session.Messages);

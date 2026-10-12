@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Infrastructure.Services;
 
@@ -35,7 +36,7 @@ public sealed class PlaygroundChatService(ModelProfileService profiles, IChatCli
             }
 
             using var client = created.Value;
-            var messages = PlaygroundPrompt.Build(character, history);
+            var messages = PlaygroundPrompt.Build(character, history, PromptBudget.For(profile));
 
             return await ProviderErrors.TranslateAsync(profile, logger, async () =>
             {

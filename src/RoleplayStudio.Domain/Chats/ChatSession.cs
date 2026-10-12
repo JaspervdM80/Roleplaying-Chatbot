@@ -92,27 +92,20 @@ public class ChatSession : OwnedEntity
     }
 
     /// <summary>Characters met earlier in this chat who are not in the scene now.</summary>
-    public IReadOnlyList<CharacterState> AbsentStates(IReadOnlyList<CharacterState> states) =>
-        states.Where(s => !Scene.PresentCharacterIds.Contains(s.CharacterId)).OrderBy(s => s.Character.Name).ToList();
+    public IReadOnlyList<CharacterState> AbsentStates() =>
+        CharacterStates.Where(s => !Scene.PresentCharacterIds.Contains(s.CharacterId)).OrderBy(s => s.Character.Name).ToList();
 
     /// <summary>The states of the characters in the scene now, in the order they appear in it.</summary>
-    public IReadOnlyList<CharacterState> PresentStates(IReadOnlyList<CharacterState> states) =>
+    public IReadOnlyList<CharacterState> PresentStates() =>
         Scene.PresentCharacterIds
-            .Select(id => states.FirstOrDefault(s => s.CharacterId == id))
+            .Select(id => CharacterStates.FirstOrDefault(s => s.CharacterId == id))
             .OfType<CharacterState>()
             .ToList();
 
-    public IReadOnlyList<Character> PresentCharacters(IReadOnlyList<CharacterState> states) =>
-        PresentStates(states).Select(s => s.Character).ToList();
+    public IReadOnlyList<Character> PresentCharacters() =>
+        PresentStates().Select(s => s.Character).ToList();
 
-    public SceneSnapshot Snapshot() => new()
-    {
-        Location = Scene.Location,
-        TimeOfDay = Scene.TimeOfDay,
-        Mood = Scene.Mood,
-        PresentCharacterIds = [.. Scene.PresentCharacterIds],
-        Characters = CharacterStates.Select(CharacterSnapshot.Of).ToList(),
-    };
+    public SceneSnapshot Snapshot() => SceneSnapshot.Of(Scene, CharacterStates);
 
     /// <summary>
     /// Undoes what the messages from <paramref name="fromSequence"/> on left in the scene, the summary and memory, so
@@ -147,14 +140,7 @@ public class ChatSession : OwnedEntity
             return [];
         }
 
-        Scene = new SceneState
-        {
-            Location = snapshot.Location,
-            TimeOfDay = snapshot.TimeOfDay,
-            Mood = snapshot.Mood,
-            PresentCharacterIds = [.. snapshot.PresentCharacterIds],
-            TrackedUpToSequence = checkpoint.Sequence - 1,
-        };
+        Scene = snapshot.ToScene(trackedUpToSequence: checkpoint.Sequence - 1);
 
         var dropped = new List<CharacterState>();
         foreach (var state in CharacterStates.ToList())
@@ -186,14 +172,7 @@ public class ChatSession : OwnedEntity
             PersonaId = PersonaId,
             ChatModelProfileId = ChatModelProfileId,
             LastActivityAt = now,
-            Scene = new SceneState
-            {
-                Location = Scene.Location,
-                TimeOfDay = Scene.TimeOfDay,
-                Mood = Scene.Mood,
-                PresentCharacterIds = [.. Scene.PresentCharacterIds],
-                TrackedUpToSequence = Scene.TrackedUpToSequence,
-            },
+            Scene = Scene.Copy(),
             Summary = new SessionSummary { Text = Summary.Text, CoveredUpToSequence = Summary.CoveredUpToSequence },
             MemoriesExtractedUpToSequence = MemoriesExtractedUpToSequence,
         };
@@ -251,6 +230,15 @@ public class SceneState
 
     /// <summary>The last message scene tracking has read; later messages may have moved people, clothes or the place.</summary>
     public long TrackedUpToSequence { get; set; }
+
+    public SceneState Copy() => new()
+    {
+        Location = Location,
+        TimeOfDay = TimeOfDay,
+        Mood = Mood,
+        PresentCharacterIds = [.. PresentCharacterIds],
+        TrackedUpToSequence = TrackedUpToSequence,
+    };
 }
 
 /// <summary>Rolling summary of the messages that no longer fit in the short-term window.</summary>

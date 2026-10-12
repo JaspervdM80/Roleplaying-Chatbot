@@ -30,7 +30,7 @@ public sealed class ChatTurnView(TurnVoice voice, string speaker, string text, G
     public Guid? MessageId { get; } = messageId;
     public TurnVoice Voice { get; } = voice;
     public bool FromUser => Voice == TurnVoice.User;
-    public string Speaker { get; } = speaker;
+    public string Speaker { get; set; } = speaker;
 
     /// <summary>The character speaking; null for the user, narration, or a character not saved anywhere (the playground).</summary>
     public Guid? SpeakerId { get; } = speakerId;

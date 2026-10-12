@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using OpenTelemetry.Trace;
 using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Images;
 using RoleplayStudio.AI.Memory;
@@ -69,7 +70,11 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 builder.Services.AddScoped<ICurrentUser, AuthenticationStateCurrentUser>();
 builder.Services.AddScoped<ModelProfileService>();
 builder.Services.AddSingleton(services => RunwareModelCatalog.Create(services.GetRequiredService<TimeProvider>(), services.GetRequiredService<ILogger<RunwareModelCatalog>>()));
-builder.Services.AddSingleton<IChatClientFactory, ChatClientFactory>();
+builder.Services.AddSingleton<IChatClientFactory>(services => new ChatClientFactory(
+    services.GetRequiredService<IConfiguration>(),
+    services.GetRequiredService<RunwareModelCatalog>(),
+    recordPromptText: builder.Environment.IsDevelopment()));
+builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddSource(ChatClientFactory.TelemetrySource));
 builder.Services.AddScoped<ModelConnectionService>();
 builder.Services.AddScoped<OllamaModelCatalog>();
 builder.Services.AddScoped<PlaygroundChatService>();

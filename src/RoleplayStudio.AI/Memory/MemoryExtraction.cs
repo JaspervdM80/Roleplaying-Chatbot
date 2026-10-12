@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
+using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
@@ -93,7 +94,7 @@ public static class MemoryExtraction
 
         return names.EnumerateArray()
             .Where(n => n.ValueKind == JsonValueKind.String)
-            .Select(n => characters.FirstOrDefault(c => string.Equals(c.Name, n.GetString()?.Trim(), StringComparison.OrdinalIgnoreCase)))
+            .Select(n => CharacterNames.Find(characters, n.GetString()!))
             .OfType<Character>()
             .Select(c => c.Id)
             .Distinct()

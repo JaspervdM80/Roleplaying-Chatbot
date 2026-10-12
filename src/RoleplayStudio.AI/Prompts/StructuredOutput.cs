@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using RoleplayStudio.Domain;
 
-namespace RoleplayStudio.AI.Memory;
+namespace RoleplayStudio.AI.Prompts;
 
 public static partial class StructuredOutput
 {

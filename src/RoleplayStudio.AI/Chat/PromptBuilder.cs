@@ -1,11 +1,13 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
-using RoleplayStudio.AI.Memory;
+using RoleplayStudio.AI.Prompts;
+using RoleplayStudio.Domain;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Domain.Models;
+using static RoleplayStudio.AI.Prompts.PromptText;
 
 namespace RoleplayStudio.AI.Chat;
 
@@ -120,7 +122,7 @@ public static partial class PromptBuilder
         Section(text, "World", input.Chatbot.WorldDescription);
         Section(text, "Tone and rules", input.Chatbot.ToneAndRules);
 
-        Section(text, $"{persona.Name} (played by the user)", Join(
+        Section(text, $"{persona.Name} (played by the user)", Lines(
             Labelled("Age", persona.Age),
             Labelled("Gender", persona.Gender),
             persona.Description,
@@ -130,7 +132,7 @@ public static partial class PromptBuilder
 
         foreach (var (character, state) in input.Present)
         {
-            Section(text, character.Name, Join(
+            Section(text, character.Name, Lines(
                 Labelled("Age", character.Age),
                 Labelled("Gender", character.Gender),
                 character.ShortDescription,
@@ -145,7 +147,7 @@ public static partial class PromptBuilder
 
         Section(text, "Met earlier, not here now", MetEarlier(input.MetEarlier));
 
-        Section(text, "Scenario", Join(
+        Section(text, "Scenario", Lines(
             input.Scenario.Title,
             input.Scenario.Premise,
             Labelled("Location", input.Scene.Location),
@@ -183,9 +185,7 @@ public static partial class PromptBuilder
     }
 
     private static string? MetEarlier(IReadOnlyList<PresentCharacter> characters) =>
-        characters.Count == 0
-            ? null
-            : string.Join("\n", characters.Select(c => $"- {c.Character.Name}{(string.IsNullOrWhiteSpace(c.Character.ShortDescription) ? "" : $": {c.Character.ShortDescription.Trim()}")}"));
+        Lines([.. characters.Select(c => TextFields.Clean(c.Character.ShortDescription) is { } description ? $"- {c.Character.Name}: {description}" : $"- {c.Character.Name}")]);
 
     private static string? Memories(IReadOnlyList<MemoryEntry> memories, int tokens)
     {
@@ -232,7 +232,7 @@ public static partial class PromptBuilder
     private static string Instruction(PromptInput input)
     {
         var persona = input.Persona.Name;
-        return input.Present.Count switch
+        var turn = input.Present.Count switch
         {
             0 => $"Narrate the scene around {persona}. Never write {persona}'s words or actions; the user does that.",
             1 => $"Write as {input.Present[0].Character.Name}, staying in character. Put actions in *asterisks*. Never write {persona}'s words or actions; the user does that.",
@@ -240,24 +240,15 @@ public static partial class PromptBuilder
                 + $"Start each character's lines on a new line with their name in bold, like **{input.Present[0].Character.Name}:**, "
                 + $"and write narration on lines of its own in *italics*. Never write {persona}'s words or actions; the user does that.",
         };
+        return $"{turn}\n{People(persona)}";
     }
 
-    private static void Section(StringBuilder text, string heading, string? body)
-    {
-        if (!string.IsNullOrWhiteSpace(body))
-        {
-            text.AppendLine().AppendLine($"## {heading}").AppendLine(body.Trim());
-        }
-    }
+    private static string People(string persona) =>
+        "When someone new appears, describe in a sentence or two how they look the first time they are seen. " +
+        $"Call anyone {persona} already knows, like a friend, relative, classmate or colleague, by their name from the start, giving them one if they have none yet; " +
+        "a stranger stays nameless until they are introduced.";
 
-    private static string? Labelled(string label, object? value, string separator = " ") =>
-        value is null ? null : $"{label}:{separator}{value}";
-
-    private static string? Join(params string?[] parts)
-    {
-        var present = parts.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
-        return present.Count == 0 ? null : string.Join("\n", present);
-    }
+    private static void Section(StringBuilder text, string heading, string? body) => PromptText.Section(text, $"## {heading}", body);
 
     [GeneratedRegex(@"(?<=[.!?…])\s+")]
     private static partial Regex SentenceBreak();

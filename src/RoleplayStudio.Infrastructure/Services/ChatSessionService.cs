@@ -222,7 +222,7 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
                 return NotFound(id).To<IReadOnlyList<Message>>();
             }
 
-            var present = session.PresentCharacters(session.CharacterStates);
+            var present = session.PresentCharacters();
             var lines = split(present)
                 .Select(segment => (Speaker: present.FirstOrDefault(c => c.Id == segment.CharacterId), Content: TextFields.Clean(segment.Text)))
                 .Where(line => line.Content is not null)
@@ -277,11 +277,7 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
         return messages;
     }
 
-    private Result NotFound(Guid id)
-    {
-        logger.LogWarning("Chat {SessionId} was not found", id);
-        return Result.Failure("That chat no longer exists");
-    }
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That chat no longer exists");
 
     private sealed record NewLine(MessageRole Role, Guid? SpeakerId, string SpeakerName, string Content);
 }

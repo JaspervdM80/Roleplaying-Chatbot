@@ -78,7 +78,7 @@ public class SceneTests(PostgresFixture postgres)
         var theirs = await other.Sessions.GetSceneAsync(session.Id);
 
         Assert.True(mine.IsSuccess, mine.Error);
-        Assert.Equal("Mira", Assert.Single(mine.Value.PresentCharacters(mine.Value.CharacterStates)).Name);
+        Assert.Equal("Mira", Assert.Single(mine.Value.PresentCharacters()).Name);
         Assert.Empty(mine.Value.Messages);
         Assert.True(theirs.IsFailure);
         Assert.False(theirs.IsCancelled);
@@ -147,6 +147,24 @@ public class SceneTests(PostgresFixture postgres)
         Assert.Equal(("Bess Harrow", "Stout, grey bun, a burn scar on one forearm"), (bess.Name, bess.Appearance));
         Assert.True(user.PictureQueue.Reader.TryRead(out var renewed));
         Assert.Equal((bess.Id, true), (renewed.CharacterId!.Value, renewed.RenewsReference));
+    }
+
+    [Fact]
+    public async Task Someone_renamed_takes_the_new_name_on_the_lines_they_already_spoke_in_the_chat()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        await user.UtilityModelAsync();
+        await user.SceneUpkeep(Utility("""{"present":["Old Bess"],"newcomers":[{"name":"Old Bess","age":61}]}""")).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+        var spoken = await user.Sessions.ReplyAsync(session.Id, "Evening, love.");
+        Assert.Equal("Old Bess", spoken.Value.Single().SpeakerName);
+
+        await user.SceneUpkeep(Utility("""{"changes":[{"name":"Old Bess","newName":"Bess Harrow"}]}""")).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+
+        await using var db = await postgres.DbFactory.CreateForOwnerAsync(user.User.UserId!);
+        var speakers = await db.Messages.Where(m => m.SessionId == session.Id && m.Role != MessageRole.User).Select(m => m.SpeakerName).ToListAsync();
+        Assert.Contains("Bess Harrow", speakers);
+        Assert.DoesNotContain("Old Bess", speakers);
     }
 
     [Fact]

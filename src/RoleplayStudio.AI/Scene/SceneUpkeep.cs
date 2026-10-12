@@ -10,6 +10,7 @@ namespace RoleplayStudio.AI.Scene;
 
 /// <summary>
 /// After a turn: reads the new messages for where the scene is, who is in it and what they wear, and meets newcomers.
+/// Someone renamed takes the new name on the messages they spoke in this chat too.
 /// A newcomer, or someone the chat introduced whose looks it filled in, gets a portrait drawn when there is an image model.
 /// </summary>
 public sealed class SceneUpkeep(
@@ -94,6 +95,13 @@ public sealed class SceneUpkeep(
 
         session.Scene.TrackedUpToSequence = lastSequence;
         await db.SaveChangesAsync(cancellationToken);
+        foreach (var character in outcome?.Renamed ?? [])
+        {
+            await db.Messages
+                .Where(m => m.SessionId == session.Id && m.SpeakerCharacterId == character.Id)
+                .ExecuteUpdateAsync(m => m.SetProperty(x => x.SpeakerName, character.Name), cancellationToken);
+        }
+
         logger.LogInformation("Tracked the scene of chat {SessionId} up to message {Sequence}; met {NewcomerCount} newcomers", session.Id, lastSequence, outcome?.Newcomers.Count ?? 0);
         notifier.Notify(session.Id);
 

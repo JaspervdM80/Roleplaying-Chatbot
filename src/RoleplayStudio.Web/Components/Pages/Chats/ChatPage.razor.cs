@@ -146,9 +146,7 @@ public partial class ChatPage
     {
         var text = _draft!.Trim();
         _draft = null;
-        _streaming = true;
-        var sent = await Sessions.AddUserMessageAsync(Id, text);
-        _streaming = false;
+        var sent = await WhileStreamingAsync(() => Sessions.AddUserMessageAsync(Id, text));
         if (!Snackbar.Report(sent))
         {
             _draft = text;
@@ -168,9 +166,7 @@ public partial class ChatPage
             return;
         }
 
-        _streaming = true;
-        var directed = await Turns.DirectAsync(Id, hint);
-        _streaming = false;
+        var directed = await WhileStreamingAsync(() => Turns.DirectAsync(Id, hint));
         if (!Snackbar.Report(directed))
         {
             return;
@@ -212,9 +208,7 @@ public partial class ChatPage
     /// <summary>Rewrites the chat's past, shows it as it now stands, and streams the reply that follows.</summary>
     private async Task RewriteAsync(Func<Task<Result>> rewrite)
     {
-        _streaming = true;
-        var rewritten = await rewrite();
-        _streaming = false;
+        var rewritten = await WhileStreamingAsync(rewrite);
         if (Snackbar.Report(rewritten) && Snackbar.Report(await LoadChatAsync()))
         {
             await StreamReplyAsync();
@@ -256,12 +250,13 @@ public partial class ChatPage
         }
     }
 
-    private async Task StreamReplyAsync(DirectorHint? hint = null)
+    private Task StreamReplyAsync(DirectorHint? hint = null) => WhileStreamingAsync(() => StreamAndSaveReplyAsync(hint));
+
+    private async Task StreamAndSaveReplyAsync(DirectorHint? hint)
     {
-        var parser = new SpeakerTagParser(_session!.PresentCharacters(_session.CharacterStates));
+        var parser = new SpeakerTagParser(_session!.PresentCharacters());
         var streamed = new StringBuilder();
         var live = new List<ChatTurnView>();
-        _streaming = true;
         _stop = CancellationTokenSource.CreateLinkedTokenSource(Cancellation);
         var sinceRender = Stopwatch.StartNew();
 
@@ -295,8 +290,27 @@ public partial class ChatPage
             }
         }
 
-        _streaming = false;
         Snackbar.Report(result);
+    }
+
+    /// <summary>Keeps the send box and turn actions off while <paramref name="work"/> runs, and turns them back on even when it throws.</summary>
+    private Task WhileStreamingAsync(Func<Task> work) => WhileStreamingAsync(async () =>
+    {
+        await work();
+        return true;
+    });
+
+    private async Task<T> WhileStreamingAsync<T>(Func<Task<T>> work)
+    {
+        _streaming = true;
+        try
+        {
+            return await work();
+        }
+        finally
+        {
+            _streaming = false;
+        }
     }
 
     /// <summary>Shows the reply so far as one turn per speaker; a segment only ever grows, so each keeps its place.</summary>
@@ -338,6 +352,15 @@ public partial class ChatPage
             _session.CharacterStates = result.Value.CharacterStates;
             ShowCast(_session);
             await LoadCastAsync();
+            var names = _session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.Name);
+            foreach (var turn in _turns)
+            {
+                if (turn.SpeakerId is { } speakerId && names.TryGetValue(speakerId, out var name))
+                {
+                    turn.Speaker = name;
+                }
+            }
+
             StateHasChanged();
         }
     }
@@ -354,7 +377,7 @@ public partial class ChatPage
 
     private void ShowCast(ChatSession session)
     {
-        _subjects = session.PresentCharacters(session.CharacterStates).Select(c => (c.Id, c.Name)).ToList();
+        _subjects = session.PresentCharacters().Select(c => (c.Id, c.Name)).ToList();
         _portraits = session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.ReferenceImageId);
     }
 

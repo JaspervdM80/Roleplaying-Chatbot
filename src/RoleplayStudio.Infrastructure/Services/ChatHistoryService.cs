@@ -139,9 +139,5 @@ public sealed class ChatHistoryService(IDbContextFactory<ApplicationDbContext> d
         await db.SaveChangesAsync();
     }
 
-    private Result NotFound(Guid id)
-    {
-        logger.LogWarning("Chat {SessionId} was not found", id);
-        return Result.Failure("That chat no longer exists");
-    }
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That chat no longer exists");
 }
