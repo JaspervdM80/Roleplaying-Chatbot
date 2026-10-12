@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RoleplayStudio.AI.Chat;
+using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Chats;
@@ -17,7 +19,9 @@ public sealed class MemoryUpkeep(
     TimeProvider time,
     ILogger<MemoryUpkeep> logger)
 {
-    private const int KnownMemoriesShown = 40;
+    private const int RelatedMemoriesShown = 30;
+    private const int NewestMemoriesShown = 10;
+    private const int QueryMessages = 6;
 
     public async Task RunAsync(UpkeepJob job, CancellationToken cancellationToken)
     {
@@ -83,12 +87,7 @@ public sealed class MemoryUpkeep(
             return false;
         }
 
-        var known = await db.Memories
-            .Where(m => m.SessionId == session.Id)
-            .OrderByDescending(m => m.CreatedAt)
-            .Take(KnownMemoriesShown)
-            .Select(m => m.Text)
-            .ToListAsync(cancellationToken);
+        var known = await KnownMemoriesAsync(db, session, pending, cancellationToken);
         var characters = session.CharacterStates.Select(s => s.Character).ToList();
         var reply = await utility.AskAsync(MemoryExtraction.Prompt(pending, known, session.Persona.Name, characters), cancellationToken);
         if (reply.IsFailure)
@@ -126,13 +125,38 @@ public sealed class MemoryUpkeep(
         return extracted is { Count: > 0 };
     }
 
+    /// <summary>The memories closest to the new messages, so the model can tell what it would repeat, then the newest, which may have no vector yet.</summary>
+    private async Task<IReadOnlyList<string>> KnownMemoriesAsync(ApplicationDbContext db, ChatSession session, IReadOnlyList<Message> pending, CancellationToken cancellationToken)
+    {
+        var memories = db.Memories.Where(m => m.SessionId == session.Id);
+        var newest = await memories
+            .OrderByDescending(m => m.CreatedAt)
+            .Select(m => m.Text)
+            .Take(RelatedMemoriesShown + NewestMemoriesShown)
+            .ToListAsync(cancellationToken);
+        if (newest.Count < RelatedMemoriesShown + NewestMemoriesShown)
+        {
+            return newest;
+        }
+
+        var vector = (await embeddings.EmbedAsync(db, [Transcript.Of(pending.TakeLast(QueryMessages))], cancellationToken))[0];
+        if (vector is null)
+        {
+            return newest;
+        }
+
+        var related = await MemoryRecall.NearestAsync(db, memories, vector, RelatedMemoriesShown, cancellationToken);
+        return related.Select(h => h.Memory.Text).Concat(newest.Take(NewestMemoriesShown)).Distinct().ToList();
+    }
+
     /// <summary>Folds the oldest messages into the summary a bounded piece at a time until the rest fit; true when the summary changed.</summary>
     private async Task<bool> SummarizeAsync(ApplicationDbContext db, ChatSession session, IReadOnlyList<Message> messages, UtilityModel utility, CancellationToken cancellationToken)
     {
         var changed = false;
+        var words = SessionSummarizing.WordsFor(await ChatBudgetAsync(db, session, cancellationToken));
         while (SessionSummarizing.ToFold(messages, session.Summary.CoveredUpToSequence) is { Count: > 0 } fold)
         {
-            var reply = await utility.AskAsync(SessionSummarizing.Prompt(session.Summary.Text, fold, session.Persona.Name), cancellationToken);
+            var reply = await utility.AskAsync(SessionSummarizing.Prompt(session.Summary.Text, fold, session.Persona.Name, words), cancellationToken);
             if (reply.IsFailure)
             {
                 break;
@@ -158,6 +182,11 @@ public sealed class MemoryUpkeep(
 
         return changed;
     }
+
+    private static async Task<PromptBudget> ChatBudgetAsync(ApplicationDbContext db, ChatSession session, CancellationToken cancellationToken) =>
+        await db.ModelProfiles.AsNoTracking().SingleOrDefaultAsync(p => p.Id == session.ChatModelProfileId, cancellationToken) is { } profile
+            ? PromptBudget.For(profile)
+            : new PromptBudget(PromptBudget.DefaultContextWindow, PromptBudget.DefaultReplyTokens);
 
     private static async Task<bool> SummaryUnchangedAsync(ApplicationDbContext db, ChatSession session, CancellationToken cancellationToken)
     {

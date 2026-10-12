@@ -79,4 +79,12 @@ public class MemoryExtractionTests
     {
         Assert.Null(MemoryExtraction.Parse(reply, [Mira]));
     }
+
+    [Fact]
+    public void The_prompt_says_what_every_kind_of_memory_is_for()
+    {
+        var instructions = MemoryExtraction.Prompt([], [], "Sam", [Mira])[0].Text;
+
+        Assert.All(Enum.GetNames<MemoryType>(), type => Assert.Contains($"- {type}: ", instructions));
+    }
 }

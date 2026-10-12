@@ -59,7 +59,7 @@
 
             <section class="scene-group scene-you" aria-labelledby="scene-you">
                 <h3 id="scene-you" class="scene-heading">You</h3>
-                @Person(ScenePerson.Of(Session.Persona))
+                @Person(ScenePerson.Of(Session.Persona, Session.Scene))
             </section>
 
             @if (Pictures.Count > 0 || Pending.Count > 0)

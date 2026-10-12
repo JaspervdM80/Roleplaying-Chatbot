@@ -30,7 +30,7 @@ public sealed class PictureDrawing(
 
     private sealed record Plan(
         string Prompt,
-        string Negative,
+        string? Negative,
         string? Caption,
         int Width,
         int Height,
@@ -56,7 +56,7 @@ public sealed class PictureDrawing(
         var traits = await generator.TraitsAsync(cancellationToken);
         var planned = job.RedrawOf is { } redrawOf
             ? await RedrawPlanAsync(db, redrawOf, traits.MaxReferenceImages, cancellationToken)
-            : await PlanAsync(db, job, traits.MaxReferenceImages, cancellationToken);
+            : await PlanAsync(db, job, traits, cancellationToken);
         if (planned.IsFailure)
         {
             return planned.To<Guid>();
@@ -67,7 +67,7 @@ public sealed class PictureDrawing(
         notifier.Notify(new PictureChange(job.Id, job.SessionId, job.CharacterId, null));
 
         var seed = plan.Seed ?? Random.Shared.NextInt64(1, uint.MaxValue);
-        var request = new ImageRequest(plan.Prompt, traits.TakesNegativePrompt ? plan.Negative : null, plan.Width, plan.Height, seed, plan.References, IsPortrait: job.SessionId is null);
+        var request = new ImageRequest(plan.Prompt, traits.TakesNegativePrompt ? plan.Negative ?? traits.NegativePrompt : null, plan.Width, plan.Height, seed, plan.References, IsPortrait: job.SessionId is null);
         var limit = TimeoutFor(profile.Provider);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(limit);
@@ -128,9 +128,9 @@ public sealed class PictureDrawing(
         return Result.Success(saved.Value.Id);
     }
 
-    private async Task<Result<Plan>> PlanAsync(ApplicationDbContext db, PictureJob job, int maxReferences, CancellationToken cancellationToken)
+    private async Task<Result<Plan>> PlanAsync(ApplicationDbContext db, PictureJob job, ImageModelTraits traits, CancellationToken cancellationToken)
     {
-        var briefed = await _briefing.BriefAsync(db, job, maxReferences, cancellationToken);
+        var briefed = await _briefing.BriefAsync(db, job, traits.MaxReferenceImages, cancellationToken);
         if (briefed.IsFailure)
         {
             return briefed.To<Plan>();
@@ -143,7 +143,7 @@ public sealed class PictureDrawing(
             return Result.Failure<Plan>(PictureService.NoUtilityModel);
         }
 
-        var reply = await utility.AskAsync(ImagePrompts.Prompt(brief), cancellationToken);
+        var reply = await utility.AskAsync(ImagePrompts.Prompt(brief, traits.WantsTags), cancellationToken);
         if (reply.IsFailure)
         {
             return reply.To<Plan>();
@@ -155,10 +155,9 @@ public sealed class PictureDrawing(
             return Result.Failure<Plan>("The utility model did not write a usable prompt; try again");
         }
 
-        var (prompt, negative) = ImagePrompts.Compose(brief, written);
         var (width, height) = ImagePrompts.SizeFor(brief);
         var seed = job.RenewsReference ? null : subject?.ImageSeed;
-        return new Plan(prompt, negative, written.Caption, width, height, seed, memoryIds, subject, referenceImageIds, references);
+        return new Plan(ImagePrompts.Compose(brief, written), null, written.Caption, width, height, seed, memoryIds, subject, referenceImageIds, references);
     }
 
     private async Task<Result<Plan>> RedrawPlanAsync(ApplicationDbContext db, Guid imageId, int maxReferences, CancellationToken cancellationToken)
@@ -186,7 +185,7 @@ public sealed class PictureDrawing(
         // Drawn again with a new seed: the stored seed would only give back the same picture.
         return new Plan(
             image.Prompt,
-            image.NegativePrompt ?? string.Empty,
+            image.NegativePrompt,
             image.Caption,
             image.Width,
             image.Height,

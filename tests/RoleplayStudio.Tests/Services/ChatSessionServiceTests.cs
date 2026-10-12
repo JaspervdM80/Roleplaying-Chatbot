@@ -192,7 +192,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         Assert.True(result.IsSuccess, result.Error);
         Assert.Equal("Coming up.", streamed);
         Assert.Contains("apron", client.LastMessages![0].Text);
-        Assert.Equal("A latte, please.", client.LastMessages[^1].Text);
+        Assert.StartsWith("A latte, please.", client.LastMessages[^1].Text);
     }
 
     [Fact]

@@ -16,6 +16,13 @@ public sealed record ImageModelTraits(bool TakesNegativePrompt, bool TakesSeed, 
     /// <summary>A model nothing is known about: diffusion models of the Stable Diffusion family take a negative prompt and a seed.</summary>
     public static readonly ImageModelTraits Unknown = new(true, true, 0, []);
 
+    public const string DefaultNegativePrompt = "blurry, low quality, deformed, distorted, bad anatomy, disfigured, mutated, extra limbs, ugly, poorly drawn, bad proportions, cloned face, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers";
+
+    public string? NegativePrompt => TakesNegativePrompt ? DefaultNegativePrompt : null;
+
+    // A model that takes a negative prompt is of the Stable Diffusion family, whose CLIP encoder reads tags; Flux and later read sentences.
+    public bool WantsTags => TakesNegativePrompt;
+
     /// <summary>The size asked for when any is allowed; otherwise, of the allowed sizes closest in shape, the one closest in area.</summary>
     public ImageSize Fit(int width, int height)
     {

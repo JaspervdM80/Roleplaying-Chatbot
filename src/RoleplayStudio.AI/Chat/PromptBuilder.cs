@@ -37,6 +37,9 @@ public sealed record PromptBudget(int ContextWindow, int ReplyTokens)
     public int PromptTokens => Math.Max(ContextWindow - ReplyTokens, 0);
     public int SummaryTokens => PromptTokens * 15 / 100;
     public int MemoryTokens => PromptTokens * 15 / 100;
+
+    /// <summary>Shared by the persona's and the present characters' sheets, so long backstories cannot crowd out the history.</summary>
+    public int SheetTokens => PromptTokens * 30 / 100;
 }
 
 public static partial class PromptBuilder
@@ -44,13 +47,13 @@ public static partial class PromptBuilder
     public static IReadOnlyList<ChatMessage> Build(PromptInput input, PromptBudget budget)
     {
         var system = System(input, budget);
-        var note = Steer(input) is { } steer ? $"(Out of character, for this reply only: {steer})" : null;
-        var remaining = budget.PromptTokens - TokenEstimate.Of(system) - TokenEstimate.Of(note ?? "");
+        var note = Steer(input) is { } steer ? $"(Out of character: {Instruction(input)} For this reply only: {steer})" : $"(Out of character: {Instruction(input)})";
+        var remaining = budget.PromptTokens - TokenEstimate.Of(system) - TokenEstimate.Of(note);
         List<ChatMessage> messages = [new ChatMessage(ChatRole.System, system), .. Recent(input, remaining)];
-        return note is null ? messages : WithNote(messages, note);
+        return WithNote(messages, note);
     }
 
-    // After the history, where a model heeds it, and in a user turn: some chat templates refuse a later system message or two user turns in a row.
+    // How to write the reply goes after the history, where a model heeds it, and in a user turn: some chat templates refuse a later system message or two user turns in a row.
     private static List<ChatMessage> WithNote(List<ChatMessage> messages, string note)
     {
         if (messages[^1].Role == ChatRole.User)
@@ -117,50 +120,87 @@ public static partial class PromptBuilder
     private static string System(PromptInput input, PromptBudget budget)
     {
         var persona = input.Persona;
+        var sheetTokens = budget.SheetTokens / (input.Present.Count + 1);
         var text = new StringBuilder();
-        text.AppendLine($"You are the narrator of a roleplay set in {input.Chatbot.Name}. The user plays {persona.Name}.");
+        text.AppendLine(Role(input));
         Section(text, "World", input.Chatbot.WorldDescription);
         Section(text, "Tone and rules", input.Chatbot.ToneAndRules);
 
-        Section(text, $"{persona.Name} (played by the user)", Lines(
-            Labelled("Age", persona.Age),
-            Labelled("Gender", persona.Gender),
-            persona.Description,
-            Labelled("Personality", persona.Personality),
-            Labelled("Looks", persona.Appearance),
-            Labelled("Wearing", persona.DefaultOutfit)));
+        Section(text, $"{persona.Name} (played by the user)", Sheet(
+            sheetTokens,
+            new Field("Age", persona.Age?.ToString()),
+            new Field("Gender", persona.Gender),
+            new Field(null, persona.Description, Trimmable: true),
+            new Field("Personality", persona.Personality, Trimmable: true),
+            new Field("Looks", persona.Appearance),
+            new Field("Wearing now", input.Scene.PersonaWears(persona))));
 
         foreach (var (character, state) in input.Present)
         {
-            Section(text, character.Name, Lines(
-                Labelled("Age", character.Age),
-                Labelled("Gender", character.Gender),
-                character.ShortDescription,
-                Labelled("Personality", character.Personality),
-                Labelled("Speech style", character.SpeechStyle),
-                Labelled("Backstory", character.Backstory),
-                Labelled("Boundaries", character.Boundaries),
-                Labelled("Looks", character.Appearance),
-                Labelled("Wearing now", state.CurrentOutfit),
-                Labelled("Changes since the start", state.AppearanceChanges)));
+            Section(text, character.Name, Sheet(
+                sheetTokens,
+                new Field("Age", character.Age?.ToString()),
+                new Field("Gender", character.Gender),
+                new Field(null, character.ShortDescription, Trimmable: true),
+                new Field("Personality", character.Personality, Trimmable: true),
+                new Field("Speech style", character.SpeechStyle),
+                new Field("Backstory", character.Backstory, Trimmable: true),
+                new Field("Boundaries", character.Boundaries),
+                new Field("Looks", character.Appearance),
+                new Field("Wearing now", state.CurrentOutfit),
+                new Field("Changes since the start", state.AppearanceChanges),
+                new Field("Feeling", state.Status)));
         }
 
         Section(text, "Met earlier, not here now", MetEarlier(input.MetEarlier));
-
-        Section(text, "Scenario", Lines(
-            input.Scenario.Title,
-            input.Scenario.Premise,
+        Section(text, "Scenario", Lines(input.Scenario.Title, input.Scenario.Premise, Labelled("Goals", input.Scenario.Goals)));
+        Section(text, "Now", Lines(
             Labelled("Location", input.Scene.Location),
             Labelled("Time of day", input.Scene.TimeOfDay),
-            Labelled("Mood", input.Scene.Mood),
-            Labelled("Goals", input.Scenario.Goals)));
+            Labelled("Mood", input.Scene.Mood)));
 
         Section(text, "The story so far", LastSentences(input.Summary.Text, budget.SummaryTokens));
         Section(text, "Remembered from earlier", Memories(input.Memories, budget.MemoryTokens));
 
         text.AppendLine();
-        text.Append(Instruction(input));
+        text.Append(People(persona.Name));
         return text.ToString();
+    }
+
+    private static string Role(PromptInput input)
+    {
+        var setting = $"a roleplay set in {input.Chatbot.Name}. The user plays {input.Persona.Name}.";
+        return input.Present.Count switch
+        {
+            0 => $"You are the narrator of {setting}",
+            1 => $"You play {input.Present[0].Character.Name} in {setting}",
+            _ => $"You direct {setting} You narrate and voice the characters in the scene.",
+        };
+    }
+
+    private sealed record Field(string? Label, string? Text, bool Trimmable = false);
+
+    /// <summary>The fields on lines of their own; over <paramref name="tokens"/>, the trimmable ones keep only their first sentences, in order.</summary>
+    private static string? Sheet(int tokens, params Field[] fields)
+    {
+        static string? Line(string? label, string? text) => label is null ? TextFields.Clean(text) : Labelled(label, text);
+
+        tokens -= fields.Where(f => !f.Trimmable).Sum(f => TokenEstimate.Of(Line(f.Label, f.Text) ?? ""));
+        var lines = new List<string?>();
+        foreach (var field in fields)
+        {
+            if (!field.Trimmable)
+            {
+                lines.Add(Line(field.Label, field.Text));
+                continue;
+            }
+
+            var line = Line(field.Label, FirstSentences(TextFields.Clean(field.Text), tokens - TokenEstimate.Of($"{field.Label}: ")));
+            tokens -= TokenEstimate.Of(line ?? "");
+            lines.Add(line);
+        }
+
+        return Lines([.. lines]);
     }
 
     /// <summary>A hint naming someone not in the scene adds nothing; the scene is changed before the prompt is built.</summary>
@@ -213,8 +253,47 @@ public static partial class PromptBuilder
             return text;
         }
 
+        var kept = WholeSentences(SentenceBreak().Split(text.Trim()).Reverse(), tokens);
+        kept.Reverse();
+        return kept.Count == 0 ? null : string.Join(" ", kept);
+    }
+
+    /// <summary>
+    /// The start of <paramref name="text"/> in whole lines, then whole sentences of the line that runs over, since a sheet
+    /// leads with what matters most; a list without full stops still keeps its first items.
+    /// </summary>
+    private static string? FirstSentences(string? text, int tokens)
+    {
+        if (text is null || TokenEstimate.Of(text) <= tokens)
+        {
+            return text;
+        }
+
         var kept = new List<string>();
-        foreach (var sentence in SentenceBreak().Split(text.Trim()).Reverse())
+        foreach (var line in text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var cost = TokenEstimate.Of(line) + 1;
+            if (cost > tokens)
+            {
+                if (WholeSentences(SentenceBreak().Split(line), tokens) is { Count: > 0 } sentences)
+                {
+                    kept.Add(string.Join(" ", sentences));
+                }
+
+                break;
+            }
+
+            kept.Add(line);
+            tokens -= cost;
+        }
+
+        return kept.Count == 0 ? null : string.Join("\n", kept);
+    }
+
+    private static List<string> WholeSentences(IEnumerable<string> sentences, int tokens)
+    {
+        var kept = new List<string>();
+        foreach (var sentence in sentences)
         {
             tokens -= TokenEstimate.Of(sentence) + 1;
             if (tokens < 0)
@@ -225,8 +304,7 @@ public static partial class PromptBuilder
             kept.Add(sentence);
         }
 
-        kept.Reverse();
-        return kept.Count == 0 ? null : string.Join(" ", kept);
+        return kept;
     }
 
     private static string Instruction(PromptInput input)
@@ -234,13 +312,14 @@ public static partial class PromptBuilder
         var persona = input.Persona.Name;
         var turn = input.Present.Count switch
         {
-            0 => $"Narrate the scene around {persona}. Never write {persona}'s words or actions; the user does that.",
-            1 => $"Write as {input.Present[0].Character.Name}, staying in character. Put actions in *asterisks*. Never write {persona}'s words or actions; the user does that.",
-            _ => $"Direct the scene: narrate, and voice only the characters present ({string.Join(", ", input.Present.Select(p => p.Character.Name))}); no one else speaks. "
+            0 => $"Narrate the scene around {persona}.",
+            1 => $"Write as {input.Present[0].Character.Name}, staying in character. Put actions in *asterisks*.",
+            _ => $"Narrate, and voice only the characters present ({string.Join(", ", input.Present.Select(p => p.Character.Name))}); no one else speaks. "
                 + $"Start each character's lines on a new line with their name in bold, like **{input.Present[0].Character.Name}:**, "
-                + $"and write narration on lines of its own in *italics*. Never write {persona}'s words or actions; the user does that.",
+                + "and write narration on lines of its own in *italics*.",
         };
-        return $"{turn}\n{People(persona)}";
+        return $"{turn} Never write {persona}'s words or actions; the user does that. "
+            + $"Keep the reply to a few paragraphs: move the story on one step, then stop where {persona} can respond.";
     }
 
     private static string People(string persona) =>

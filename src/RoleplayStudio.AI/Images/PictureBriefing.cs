@@ -64,7 +64,7 @@ internal sealed class PictureBriefing(PictureReferences references)
         List<PicturedPerson> people = [.. states.Select(s => PicturedPerson.Of(s.Character, s, numbering.Number(s.Character)))];
         if (subject is null)
         {
-            people.Add(PicturedPerson.Of(session.Persona));
+            people.Add(PicturedPerson.Of(session.Persona, session.Scene.PersonaWears(session.Persona)));
         }
 
         var pictured = job.CharacterId is { } focusId ? [focusId] : session.Scene.PresentCharacterIds;

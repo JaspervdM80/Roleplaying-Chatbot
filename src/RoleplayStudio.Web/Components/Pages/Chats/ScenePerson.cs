@@ -30,7 +30,7 @@ public sealed record ScenePerson(
         state.Status,
         state.AppearanceChanges);
 
-    public static ScenePerson Of(Persona persona) => new(
+    public static ScenePerson Of(Persona persona, SceneState scene) => new(
         persona.Id,
         persona.Name,
         null,
@@ -39,7 +39,7 @@ public sealed record ScenePerson(
         persona.Description,
         persona.Personality,
         persona.Appearance,
-        persona.DefaultOutfit,
+        scene.PersonaWears(persona),
         null,
         null);
 }

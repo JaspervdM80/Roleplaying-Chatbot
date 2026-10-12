@@ -6,6 +6,7 @@ public class SceneSnapshot
     public string? Location { get; set; }
     public string? TimeOfDay { get; set; }
     public string? Mood { get; set; }
+    public string? PersonaOutfit { get; set; }
     public List<Guid> PresentCharacterIds { get; set; } = [];
     public List<CharacterSnapshot> Characters { get; set; } = [];
 
@@ -14,6 +15,7 @@ public class SceneSnapshot
         Location = scene.Location,
         TimeOfDay = scene.TimeOfDay,
         Mood = scene.Mood,
+        PersonaOutfit = scene.PersonaOutfit,
         PresentCharacterIds = [.. scene.PresentCharacterIds],
         Characters = states.Select(CharacterSnapshot.Of).ToList(),
     };
@@ -23,6 +25,7 @@ public class SceneSnapshot
         Location = Location,
         TimeOfDay = TimeOfDay,
         Mood = Mood,
+        PersonaOutfit = PersonaOutfit,
         PresentCharacterIds = [.. PresentCharacterIds],
         TrackedUpToSequence = trackedUpToSequence,
     };
@@ -32,6 +35,7 @@ public class SceneSnapshot
         Location = Location,
         TimeOfDay = TimeOfDay,
         Mood = Mood,
+        PersonaOutfit = PersonaOutfit,
         PresentCharacterIds = [.. PresentCharacterIds],
         Characters = Characters.Select(c => CharacterSnapshot.Of(c.ApplyTo(new CharacterState { CharacterId = c.CharacterId }))).ToList(),
     };

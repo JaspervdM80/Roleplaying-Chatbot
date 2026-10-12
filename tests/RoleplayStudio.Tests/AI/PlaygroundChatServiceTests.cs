@@ -38,7 +38,7 @@ public class PlaygroundChatServiceTests(PostgresFixture postgres)
         Assert.True(result.IsSuccess);
         Assert.Equal(["*waves* ", "Welcome to ", "the inn!"], received);
         Assert.Equal(ChatRole.System, client.LastMessages![0].Role);
-        Assert.Equal("Hello!", client.LastMessages[^1].Text);
+        Assert.StartsWith("Hello!", client.LastMessages[^1].Text);
     }
 
     [Fact]

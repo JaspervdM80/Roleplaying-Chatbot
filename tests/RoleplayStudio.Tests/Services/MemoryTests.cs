@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pgvector;
+using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Chats;
@@ -146,6 +147,61 @@ public class MemoryTests(PostgresFixture postgres)
     }
 
     [Fact]
+    public async Task Extraction_shows_the_model_an_old_memory_close_to_the_new_messages_among_many_newer_ones()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync();
+        await user.UtilityModelAsync();
+        await user.EmbeddingModelAsync();
+        await SeedAsync(user, session.Id, ("Sam takes their coffee black.", FakeEmbeddingGenerator.Axis(0), false));
+        user.Time.Advance(TimeSpan.FromDays(1));
+        await SeedAsync(user, session.Id, [.. Enumerable.Range(1, 50).Select(i => ($"Mira's cat knocked over vase {i}.", (float[]?)FakeEmbeddingGenerator.Axis(1), false))]);
+        await TalkAsync(user, session.Id, 2);
+        var stories = new List<string>();
+        var utility = new FakeModelClientFactory(
+            new ScriptedChatClient(prompt =>
+            {
+                stories.Add(prompt[1].Text);
+                return """{"memories":[]}""";
+            }),
+            ByTopic());
+
+        await user.Upkeep(utility).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+
+        var known = Assert.Single(stories).Split("New part of the story:")[0];
+        Assert.Contains("Sam takes their coffee black.", known);
+        Assert.InRange(known.Split('\n').Count(l => l.StartsWith("- Mira's cat")), 1, 49);
+    }
+
+    [Fact]
+    public async Task The_summary_is_asked_for_in_as_many_words_as_the_chat_models_context_window_allows()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync();
+        await user.UtilityModelAsync();
+        await using (var db = await postgres.DbFactory.CreateForOwnerAsync(user.User.UserId!))
+        {
+            var profile = await db.ModelProfiles.SingleAsync(p => p.Id == session.ChatModelProfileId);
+            profile.ContextWindow = 12_000;
+            await db.SaveChangesAsync();
+        }
+
+        await TalkAsync(user, session.Id, 10, new string('x', 1_500));
+        var instructions = new List<string>();
+        var utility = new FakeModelClientFactory(new ScriptedChatClient(prompt =>
+        {
+            instructions.Add(prompt[0].Text);
+            return prompt[0].Text.Contains("long-term memory") ? """{"memories":[]}""" : "Sam came in for coffee.";
+        }));
+
+        await user.Upkeep(utility).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+
+        var words = SessionSummarizing.WordsFor(new PromptBudget(12_000, PromptBudget.DefaultReplyTokens));
+        Assert.NotEqual(SessionSummarizing.WordsFor(new PromptBudget(PromptBudget.DefaultContextWindow, PromptBudget.DefaultReplyTokens)), words);
+        Assert.Contains(instructions, i => i.Contains($"at most {words} words"));
+    }
+
+    [Fact]
     public async Task A_long_chat_is_folded_into_the_summary_and_the_turn_stops_sending_what_it_covers()
     {
         var user = new StudioUser(postgres);
@@ -163,7 +219,7 @@ public class MemoryTests(PostgresFixture postgres)
         var chat = new FakeChatClient(["Hi."]);
         Assert.True((await user.Turns(new FakeModelClientFactory(chat)).StreamReplyAsync(session.Id, _ => { })).IsSuccess);
         Assert.Contains("Sam came in for coffee.", chat.LastMessages![0].Text);
-        Assert.Equal(21 - reloaded.Summary.CoveredUpToSequence, chat.LastMessages.Count - 1);
+        Assert.Equal(21 - reloaded.Summary.CoveredUpToSequence, chat.LastMessages.Count(m => !m.Text.StartsWith("(Out of character")) - 1);
     }
 
     [Fact]

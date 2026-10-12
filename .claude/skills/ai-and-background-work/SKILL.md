@@ -43,6 +43,16 @@ without a model. Each section (rules, world, persona, present characters + state
 retrieved memories, recent messages, director instruction) has a **token budget**; when over budget
 the oldest recent messages go first and the system sections never get truncated mid-sentence.
 
+- The system prompt opens with the role for who is present (narrator, one character, or directing a
+  group). Where and when the scene is now goes in a "Now" section of its own, apart from the scenario.
+- **The sheets share `PromptBudget.SheetTokens`.** Over its share, a sheet keeps the first whole
+  sentences of its long free text (description, personality, backstory); looks, clothes and
+  boundaries are always sent whole.
+- **How to write the reply goes after the history**: who to write as, the speaker-tag format, and
+  the length and pacing, in an out-of-character note on the user's last turn (see `DirectorHint` below).
+- A summary is asked for in words scaled to the chat model's context window
+  (`SessionSummarizing.WordsFor`), so it fits the summary's share of the chat prompt.
+
 ## Structured output is parsed defensively
 
 Memory extraction, state deltas and image prompts ask the utility model for JSON. Models break JSON:
@@ -77,10 +87,10 @@ Memory extraction, state deltas and image prompts ask the utility model for JSON
   Only a one-line turn in a chat with one character present goes back untagged, as that prompt asks.
 - **A group turn is several rows**, so a window counted in messages (recall's query, scene tracking,
   image prompts) now covers fewer turns in a group chat than in a one-character one.
-- **A `DirectorHint` steers one reply and is never stored.** It goes after the history, where a
-  model heeds it, as an out-of-character note on the user's last turn, or as a user turn of its own
-  after a reply: some chat templates refuse a system message after the first, or two user turns in a
-  row. A hint naming someone not present adds nothing. A hint that changes the scene
+- **A `DirectorHint` steers one reply and is never stored.** It joins the reply instruction after the
+  history, where a model heeds it, as an out-of-character note on the user's last turn, or as a user
+  turn of its own after a reply: some chat templates refuse a system message after the first, or two
+  user turns in a row. A hint naming someone not present adds nothing. A hint that changes the scene
   (bringing a cast member in, moving the place) is applied by `ChatTurnService.DirectAsync` *before*
   the reply streams, so the prompt, the speaker parser and the saved speakers all see the new scene.
   Only the chatbot's cast can be brought in. Skipping time is left to scene tracking to read back.
@@ -130,6 +140,9 @@ the same rules:
   in (`PictureJob.RenewsReference`). A name already in the cast or met in the chat (exactly, or by a
   first name only one character has) is that character, never a copy. The persona, and a name no
   newcomer entry describes, are never made into characters.
+- **The persona's clothes are tracked on the scene** (`SceneState.PersonaOutfit`, read through
+  `PersonaWears`), null until the story changes them from `Persona.DefaultOutfit`; the persona is never
+  a `CharacterState`.
 - **Leaving is not forgetting.** Who is present is replaced wholesale; a `CharacterState` stays for
   anyone who leaves, so they come back in the clothes they left in. The chat prompt names them under
   "Met earlier".
@@ -141,6 +154,9 @@ the same rules:
 - **Short-term memory is the messages after `Summary.CoveredUpToSequence`.** Upkeep folds the oldest
   of them into the summary once they outgrow a threshold (`SessionSummarizing`), a bounded piece per
   model call, until what is left fits; the prompt never sends a message the summary covers.
+- **Extraction shows the model what is already remembered** so it does not repeat it: every memory
+  while there are few, then the ones closest to the new messages by embedding, pinned ones included,
+  and the newest, which may have no vector yet. Each `MemoryType` is defined in the prompt.
 - **Extraction moves `ChatSession.MemoriesExtractedUpToSequence`.** A provider failure leaves it, so
   the next turn retries; unreadable JSON moves it past those messages, so a model that cannot write
   the JSON does not pay for them every turn.
@@ -206,8 +222,13 @@ Files go through `IImageStore`, never a path built in a page.
   utility model to write the prompt.
 - **`ImagePrompts` is pure**: the brief (`PictureBrief`), the utility-model prompt, the parse and
   `Compose`. Stable looks come from the `Character`, clothes and changes from the chat's
-  `CharacterState`; a portrait wears the default outfit. A picture is of the moment it was asked on:
-  the messages up to that one go in, not later ones.
+  `CharacterState`, the persona's from the scene; a portrait wears the default outfit. A picture is of
+  the moment it was asked on: the messages up to that one go in, not later ones.
+- **The prompt is written for the model that draws it.** A model that takes a negative prompt (the SD
+  family) gets comma-separated tags, any other plain sentences (`ImageModelTraits.WantsTags`), and the
+  negative prompt is the model's (`ImageModelTraits.NegativePrompt`). The word limit grows with the
+  people pictured. One person's `ImageTags` are appended to the prompt; in a group they go in the
+  brief beside that person, for the utility model to place.
 - **What a model takes comes from its schema, not from settings.** `RunwareModelCatalog` reads the
   schema Runware publishes per model and caches what it found; a model missing from the index (read
   again after an hour) is treated as the SD family: negative prompt and seed, no references.

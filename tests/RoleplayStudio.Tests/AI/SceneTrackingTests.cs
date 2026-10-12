@@ -1,4 +1,5 @@
 using RoleplayStudio.AI.Scene;
+using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using static RoleplayStudio.Tests.Support.Scenes;
 
@@ -39,7 +40,7 @@ public class SceneTrackingTests
     {
         var (session, cast) = MiraAlone();
 
-        var story = SceneTracking.Prompt(session, "Sam", cast, [new Message { Sequence = 1, SpeakerName = "Narrator", Content = "The door opens." }])[1].Text;
+        var story = SceneTracking.Prompt(session, new Persona { Name = "Sam" }, cast, [new Message { Sequence = 1, SpeakerName = "Narrator", Content = "The door opens." }])[1].Text;
 
         Assert.Contains("- Mira (in the scene). Wearing: An apron and clogs.", story);
         Assert.Contains("- Thorne Ashby (not met yet).", story);
@@ -51,8 +52,36 @@ public class SceneTrackingTests
     {
         var (session, cast, _) = WithStablehand();
 
-        var story = SceneTracking.Prompt(session, "Sam", cast, [new Message { Sequence = 1, SpeakerName = "Narrator", Content = "He grins." }])[1].Text;
+        var story = SceneTracking.Prompt(session, new Persona { Name = "Sam" }, cast, [new Message { Sequence = 1, SpeakerName = "Narrator", Content = "He grins." }])[1].Text;
 
         Assert.Contains("Introduced in this story. Age: 20. Gender: unknown. Looks: Lanky.", story);
+    }
+
+    [Fact]
+    public void The_persona_wears_their_default_outfit_until_the_story_changes_it()
+    {
+        var (session, cast) = MiraAlone();
+        var sam = new Persona { Name = "Sam", DefaultOutfit = "A grey hoodie" };
+        var said = new Message { Sequence = 1, SpeakerName = "Sam", Content = "I change into my swimsuit." };
+
+        var before = SceneTracking.Prompt(session, sam, cast, [said])[1].Text;
+        Parsed("""{"personaOutfit":"A red swimsuit"}""").ApplyTo(session, cast, sam.Name, Now);
+        var after = SceneTracking.Prompt(session, sam, cast, [said])[1].Text;
+
+        Assert.Contains("Sam is wearing: A grey hoodie", before);
+        Assert.Equal("A red swimsuit", session.Scene.PersonaWears(sam));
+        Assert.Contains("Sam is wearing: A red swimsuit", after);
+    }
+
+    [Fact]
+    public void The_answer_template_shows_a_change_with_only_what_changed()
+    {
+        var (session, cast) = MiraAlone();
+
+        var instructions = SceneTracking.Prompt(session, new Persona { Name = "Sam" }, cast, [])[0].Text;
+
+        Assert.Contains("""changes":[{"name":"Name","outfit":"..."}]""", instructions);
+        Assert.DoesNotContain("newName\":", instructions);
+        Assert.DoesNotContain("personaOutfit\":", instructions);
     }
 }

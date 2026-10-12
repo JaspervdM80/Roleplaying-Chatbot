@@ -10,19 +10,20 @@ public class PromptBuilderTests
 {
     private static readonly PromptBudget Roomy = new(32_000, 1_000);
 
-    private static PresentCharacter Present(string name, string? outfit = null) =>
-        new(new Character { Name = name }, new CharacterState { CurrentOutfit = outfit });
+    private static PresentCharacter Present(string name, string? outfit = null, string? status = null, string? backstory = null) =>
+        new(new Character { Name = name, Backstory = backstory }, new CharacterState { CurrentOutfit = outfit, Status = status });
 
     private static PromptInput Input(
         IReadOnlyList<PresentCharacter> present,
         IReadOnlyList<Message>? messages = null,
         SessionSummary? summary = null,
         IReadOnlyList<MemoryEntry>? memories = null,
-        IReadOnlyList<PresentCharacter>? metEarlier = null) => new(
+        IReadOnlyList<PresentCharacter>? metEarlier = null,
+        SceneState? scene = null) => new(
         new Chatbot { Name = "Seaside Café", WorldDescription = "A quiet harbour town." },
         new Scenario { Title = "Morning rush" },
-        new Persona { Name = "Sam" },
-        new SceneState { Location = "Behind the counter" },
+        new Persona { Name = "Sam", DefaultOutfit = "A grey hoodie" },
+        scene ?? new SceneState { Location = "Behind the counter" },
         present,
         metEarlier ?? [],
         summary ?? new SessionSummary(),
@@ -32,33 +33,105 @@ public class PromptBuilderTests
     private static Message Said(long sequence, string content, MessageRole role = MessageRole.Character) =>
         new() { Sequence = sequence, Role = role, Content = content };
 
+    private static string Section(string system, string heading) =>
+        system.ReplaceLineEndings("\n").Split($"## {heading}\n")[1].Split("\n\n")[0].Trim();
+
     [Fact]
-    public void The_system_prompt_describes_the_world_and_what_each_present_character_wears_now()
+    public void The_system_prompt_describes_the_world_and_what_each_present_character_wears_and_feels_now()
     {
-        var system = PromptBuilder.Build(Input([Present("Mira", outfit: "A yellow raincoat")]), Roomy)[0];
+        var system = PromptBuilder.Build(Input([Present("Mira", outfit: "A yellow raincoat", status: "Wary")]), Roomy)[0];
 
         Assert.Equal(ChatRole.System, system.Role);
         Assert.Contains("A quiet harbour town.", system.Text);
         Assert.Contains("Wearing now: A yellow raincoat", system.Text);
-        Assert.Contains("Behind the counter", system.Text);
+        Assert.Contains("Feeling: Wary", Section(system.Text, "Mira"));
+    }
+
+    [Fact]
+    public void Where_and_when_the_scene_is_now_has_a_section_of_its_own()
+    {
+        var system = PromptBuilder.Build(Input([Present("Mira")], scene: new SceneState { Location = "Behind the counter", TimeOfDay = "Dawn", Mood = "Hurried" }), Roomy)[0].Text;
+
+        Assert.Equal("Location: Behind the counter\nTime of day: Dawn\nMood: Hurried", Section(system, "Now"));
+        Assert.DoesNotContain("Behind the counter", Section(system, "Scenario"));
+    }
+
+    [Fact]
+    public void The_persona_wears_what_the_chat_tracked_and_their_default_outfit_until_then()
+    {
+        var tracked = PromptBuilder.Build(Input([Present("Mira")], scene: new SceneState { PersonaOutfit = "A wet swimsuit" }), Roomy)[0].Text;
+        var untracked = PromptBuilder.Build(Input([Present("Mira")]), Roomy)[0].Text;
+
+        Assert.Contains("Wearing now: A wet swimsuit", tracked);
+        Assert.DoesNotContain("hoodie", tracked);
+        Assert.Contains("Wearing now: A grey hoodie", untracked);
+    }
+
+    [Theory]
+    [InlineData(0, "You are the narrator of a roleplay set in Seaside Café.")]
+    [InlineData(1, "You play Mira in a roleplay set in Seaside Café.")]
+    [InlineData(2, "You direct a roleplay set in Seaside Café.")]
+    public void The_prompt_opens_with_the_role_for_who_is_present(int present, string opening)
+    {
+        var system = PromptBuilder.Build(Input([.. new[] { Present("Mira"), Present("Jun") }.Take(present)]), Roomy)[0].Text;
+
+        Assert.StartsWith(opening, system);
+    }
+
+    [Fact]
+    public void How_to_write_the_reply_comes_after_the_history_on_the_users_turn()
+    {
+        var messages = PromptBuilder.Build(Input([Present("Mira")], [Said(1, "Morning!"), Said(2, "A latte, please.", MessageRole.User)]), Roomy);
+
+        Assert.Equal([ChatRole.System, ChatRole.Assistant, ChatRole.User], messages.Select(m => m.Role));
+        Assert.StartsWith("A latte, please.\n\n(Out of character: Write as Mira", messages[^1].Text);
+        Assert.Contains("stop where Sam can respond", messages[^1].Text);
+        Assert.DoesNotContain("Write as Mira", messages[0].Text);
     }
 
     [Fact]
     public void Someone_met_earlier_is_named_for_the_story_but_not_voiced()
     {
-        var system = PromptBuilder.Build(Input([Present("Mira")], metEarlier: [Present("Thorne")]), Roomy)[0].Text;
+        var messages = PromptBuilder.Build(Input([Present("Mira")], metEarlier: [Present("Thorne")]), Roomy);
 
-        Assert.Contains("- Thorne", system);
-        Assert.Contains("Write as Mira", system);
+        Assert.Contains("- Thorne", messages[0].Text);
+        Assert.Contains("Write as Mira", messages[^1].Text);
     }
 
     [Fact]
     public void A_group_scene_asks_for_speaker_tags_naming_everyone_present()
     {
-        var system = PromptBuilder.Build(Input([Present("Mira"), Present("Jun")]), Roomy)[0].Text;
+        var instruction = PromptBuilder.Build(Input([Present("Mira"), Present("Jun")]), Roomy)[^1].Text;
 
-        Assert.Contains("**Mira:**", system);
-        Assert.Contains("Mira, Jun", system);
+        Assert.Contains("**Mira:**", instruction);
+        Assert.Contains("Mira, Jun", instruction);
+    }
+
+    [Fact]
+    public void A_long_backstory_keeps_its_first_whole_sentences_within_the_sheets_share()
+    {
+        var budget = new PromptBudget(2_000, 0);
+        var backstory = string.Join(" ", Enumerable.Range(1, 200).Select(i => $"Mira did thing {i} long ago."));
+
+        var sheet = Section(PromptBuilder.Build(Input([Present("Mira", outfit: "A yellow raincoat", backstory: backstory)]), budget)[0].Text, "Mira");
+
+        Assert.Contains("Backstory: Mira did thing 1 long ago.", sheet);
+        Assert.DoesNotContain("thing 200 ", sheet);
+        Assert.EndsWith("long ago.", sheet.Split('\n').Single(l => l.StartsWith("Backstory")));
+        Assert.Contains("Wearing now: A yellow raincoat", sheet);
+        Assert.True(sheet.Length / 4 <= budget.SheetTokens / 2);
+    }
+
+    [Fact]
+    public void A_long_backstory_written_as_a_list_keeps_its_first_items()
+    {
+        var budget = new PromptBudget(2_000, 0);
+        var backstory = string.Join("\n", Enumerable.Range(1, 200).Select(i => $"- grew up in harbour town {i}"));
+
+        var sheet = Section(PromptBuilder.Build(Input([Present("Mira", backstory: backstory)]), budget)[0].Text, "Mira");
+
+        Assert.Contains("Backstory: - grew up in harbour town 1\n- grew up in harbour town 2\n", sheet);
+        Assert.DoesNotContain("town 200", sheet);
     }
 
     [Fact]
@@ -67,8 +140,8 @@ public class PromptBuilderTests
         var jun = Present("Jun");
         var messages = PromptBuilder.Build(Input([Present("Mira"), jun]) with { Hint = new DirectorHint.LetRespond(jun.Character.Id) }, Roomy);
 
-        Assert.Contains("for this reply only: only Jun speaks", messages[^1].Text);
-        Assert.DoesNotContain(PromptBuilder.Build(Input([Present("Mira"), jun]), Roomy), m => m.Text.Contains("for this reply only"));
+        Assert.Contains("For this reply only: only Jun speaks", messages[^1].Text);
+        Assert.DoesNotContain(PromptBuilder.Build(Input([Present("Mira"), jun]), Roomy), m => m.Text.Contains("For this reply only"));
     }
 
     [Fact]
@@ -98,7 +171,7 @@ public class PromptBuilderTests
     {
         var messages = PromptBuilder.Build(Input([Present("Mira")], [Said(1, "Hello.", MessageRole.User)]) with { Hint = new DirectorHint.LetRespond(Guid.NewGuid()) }, Roomy);
 
-        Assert.Equal("Hello.", messages[^1].Text);
+        Assert.DoesNotContain("For this reply only", messages[^1].Text);
     }
 
     [Fact]
@@ -108,6 +181,7 @@ public class PromptBuilderTests
 
         Assert.Equal([ChatRole.System, ChatRole.Assistant, ChatRole.User], messages.Select(m => m.Role));
         Assert.Equal("Morning!", messages[1].Text);
+        Assert.StartsWith("A latte, please.", messages[2].Text);
     }
 
     [Fact]
@@ -124,7 +198,7 @@ public class PromptBuilderTests
                 ]),
             Roomy);
 
-        Assert.Equal([ChatRole.System, ChatRole.User, ChatRole.Assistant], messages.Select(m => m.Role));
+        Assert.Equal([ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User], messages.Select(m => m.Role));
         Assert.Equal("*The machine hisses.*\n\n**Mira:** \"Coming up.\"\n\n**Jun:** \"Make mine a double.\"", messages[2].Text);
     }
 
@@ -146,23 +220,25 @@ public class PromptBuilderTests
             Roomy);
 
         Assert.Contains("Sam ordered a latte.", messages[0].Text);
-        Assert.Equal(["Coming up."], messages.Skip(1).Select(m => m.Text));
+        Assert.Equal("Coming up.", Assert.Single(messages, m => m.Role == ChatRole.Assistant).Text);
+        Assert.DoesNotContain(messages, m => m.Text.Contains("Morning!") || m.Text.Contains("A latte, please."));
     }
 
     [Fact]
     public void Over_budget_the_oldest_messages_go_first_but_the_latest_is_always_sent()
     {
         var budget = new PromptBudget(1_000, 200);
-        var system = PromptBuilder.Build(Input([Present("Mira")]), budget)[0].Text;
-        var room = budget.PromptTokens - (system.Length + 3) / 4;
+        var empty = PromptBuilder.Build(Input([Present("Mira")]), budget);
+        var room = budget.PromptTokens - empty.Sum(m => (m.Text.Length + 3) / 4);
         var older = new string('a', room * 4);
         var latest = new string('b', room * 8);
 
         var fits = PromptBuilder.Build(Input([Present("Mira")], [Said(1, older, MessageRole.User), Said(2, "short")]), budget);
         var overflows = PromptBuilder.Build(Input([Present("Mira")], [Said(1, "short", MessageRole.User), Said(2, latest)]), budget);
 
-        Assert.Equal(["short"], fits.Skip(1).Select(m => m.Text));
-        Assert.Equal([latest], overflows.Skip(1).Select(m => m.Text));
+        Assert.Equal(["short"], fits.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text));
+        Assert.DoesNotContain(fits, m => m.Text.Contains(older));
+        Assert.Equal([latest], overflows.Where(m => m.Role == ChatRole.Assistant).Select(m => m.Text));
     }
 
     [Fact]
@@ -186,7 +262,7 @@ public class PromptBuilderTests
 
         var system = PromptBuilder.Build(Input([Present("Mira")], summary: summary), budget)[0].Text;
 
-        var section = system.ReplaceLineEndings("\n").Split("## The story so far")[1].Split("\n\n")[0].Trim();
+        var section = Section(system, "The story so far");
         Assert.EndsWith("Sam finally kissed Mira.", section);
         Assert.StartsWith("Early event ", section);
         Assert.DoesNotContain("Early event 1 happened.", section);

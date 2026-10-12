@@ -23,6 +23,12 @@ public static class MemoryExtraction
         instructions.AppendLine($"You keep the long-term memory of a roleplay between {personaName} (the user) and {Names(characters)}.");
         instructions.AppendLine("Read the new part of the story and list what is worth remembering later: events that happened, facts learned, how relationships changed, lasting changes in appearance, likes and dislikes, and facts about the world.");
         instructions.AppendLine("Each memory is one short, self-contained sentence in the third person that names who it is about. Skip small talk, anything already remembered, and anything only true for this moment.");
+        instructions.AppendLine("Give each memory the type that fits it best:");
+        foreach (var type in Enum.GetValues<MemoryType>())
+        {
+            instructions.AppendLine($"- {type}: {Definition(type)}");
+        }
+
         instructions.AppendLine($"Rate importance from {MemoryEntry.MinImportance} (trivia) to {MemoryEntry.MaxImportance} (changes the story).");
         instructions.AppendLine();
         instructions.AppendLine("Answer with JSON only, in this shape:");
@@ -100,6 +106,17 @@ public static class MemoryExtraction
             .Distinct()
             .ToList();
     }
+
+    private static string Definition(MemoryType type) => type switch
+    {
+        MemoryType.Event => "something that happened in the story.",
+        MemoryType.Fact => "something true about a person, like their work, their past or where they live.",
+        MemoryType.Relationship => "how two people stand with each other, or how that changed.",
+        MemoryType.Appearance => "a lasting change in how someone looks.",
+        MemoryType.Preference => "something someone likes, dislikes or wants.",
+        MemoryType.World => "a fact about the place, its people or its rules, not about one person.",
+        _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+    };
 
     private static string Names(IReadOnlyList<Character> characters) =>
         characters.Count == 0 ? "the narrator" : string.Join(", ", characters.Select(c => c.Name));
