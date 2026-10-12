@@ -78,7 +78,7 @@ public class SceneTests(PostgresFixture postgres)
         var theirs = await other.Sessions.GetSceneAsync(session.Id);
 
         Assert.True(mine.IsSuccess, mine.Error);
-        Assert.Equal("Mira", Assert.Single(mine.Value.PresentCharacters(mine.Value.CharacterStates)).Name);
+        Assert.Equal("Mira", Assert.Single(mine.Value.PresentCharacters()).Name);
         Assert.Empty(mine.Value.Messages);
         Assert.True(theirs.IsFailure);
         Assert.False(theirs.IsCancelled);

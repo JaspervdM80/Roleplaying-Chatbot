@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
+using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Memory;

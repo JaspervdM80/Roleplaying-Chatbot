@@ -43,8 +43,6 @@ public class CharacterSnapshot
     public Guid CharacterId { get; set; }
     public string? CurrentOutfit { get; set; }
     public string? AppearanceChanges { get; set; }
-    public string? RelationshipToPersona { get; set; }
-    public int Affinity { get; set; }
     public string? Status { get; set; }
 
     public static CharacterSnapshot Of(CharacterState state) => new()
@@ -52,8 +50,6 @@ public class CharacterSnapshot
         CharacterId = state.CharacterId,
         CurrentOutfit = state.CurrentOutfit,
         AppearanceChanges = state.AppearanceChanges,
-        RelationshipToPersona = state.RelationshipToPersona,
-        Affinity = state.Affinity,
         Status = state.Status,
     };
 
@@ -61,8 +57,6 @@ public class CharacterSnapshot
     {
         state.CurrentOutfit = CurrentOutfit;
         state.AppearanceChanges = AppearanceChanges;
-        state.RelationshipToPersona = RelationshipToPersona;
-        state.Affinity = Affinity;
         state.Status = Status;
         return state;
     }

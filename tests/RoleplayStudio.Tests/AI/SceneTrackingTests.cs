@@ -66,7 +66,7 @@ public class SceneTrackingTests
         SceneTracking.Apply(session, cast, Parsed("""{"present":[]}"""), "Sam", Now);
 
         Assert.Empty(session.Scene.PresentCharacterIds);
-        var mira = Assert.Single(session.AbsentStates(session.CharacterStates));
+        var mira = Assert.Single(session.AbsentStates());
         Assert.Equal(("Tired", "A wool cardigan over her apron"), (mira.Status, mira.CurrentOutfit));
     }
 

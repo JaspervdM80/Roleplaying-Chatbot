@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.Extensions.AI;
-using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.Domain;
 using RoleplayStudio.Domain.Authoring;

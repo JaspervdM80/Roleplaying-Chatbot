@@ -222,7 +222,7 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
                 return NotFound(id).To<IReadOnlyList<Message>>();
             }
 
-            var present = session.PresentCharacters(session.CharacterStates);
+            var present = session.PresentCharacters();
             var lines = split(present)
                 .Select(segment => (Speaker: present.FirstOrDefault(c => c.Id == segment.CharacterId), Content: TextFields.Clean(segment.Text)))
                 .Where(line => line.Content is not null)

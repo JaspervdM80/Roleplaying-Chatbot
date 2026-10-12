@@ -131,8 +131,8 @@ public sealed class ChatTurnService(
         session.Scenario,
         session.Persona,
         session.Scene,
-        session.PresentStates(session.CharacterStates).Select(s => new PresentCharacter(s.Character, s)).ToList(),
-        session.AbsentStates(session.CharacterStates).Select(s => new PresentCharacter(s.Character, s)).ToList(),
+        session.PresentStates().Select(s => new PresentCharacter(s.Character, s)).ToList(),
+        session.AbsentStates().Select(s => new PresentCharacter(s.Character, s)).ToList(),
         session.Summary,
         memories,
         session.Messages);

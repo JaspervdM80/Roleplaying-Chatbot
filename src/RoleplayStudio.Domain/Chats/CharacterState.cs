@@ -10,8 +10,6 @@ public class CharacterState : Entity
     public Character Character { get; set; } = null!;
     public string? CurrentOutfit { get; set; }
     public string? AppearanceChanges { get; set; }
-    public string? RelationshipToPersona { get; set; }
-    public int Affinity { get; set; }
     public string? Status { get; set; }
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

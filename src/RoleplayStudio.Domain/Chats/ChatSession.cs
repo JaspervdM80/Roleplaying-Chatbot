@@ -92,18 +92,18 @@ public class ChatSession : OwnedEntity
     }
 
     /// <summary>Characters met earlier in this chat who are not in the scene now.</summary>
-    public IReadOnlyList<CharacterState> AbsentStates(IReadOnlyList<CharacterState> states) =>
-        states.Where(s => !Scene.PresentCharacterIds.Contains(s.CharacterId)).OrderBy(s => s.Character.Name).ToList();
+    public IReadOnlyList<CharacterState> AbsentStates() =>
+        CharacterStates.Where(s => !Scene.PresentCharacterIds.Contains(s.CharacterId)).OrderBy(s => s.Character.Name).ToList();
 
     /// <summary>The states of the characters in the scene now, in the order they appear in it.</summary>
-    public IReadOnlyList<CharacterState> PresentStates(IReadOnlyList<CharacterState> states) =>
+    public IReadOnlyList<CharacterState> PresentStates() =>
         Scene.PresentCharacterIds
-            .Select(id => states.FirstOrDefault(s => s.CharacterId == id))
+            .Select(id => CharacterStates.FirstOrDefault(s => s.CharacterId == id))
             .OfType<CharacterState>()
             .ToList();
 
-    public IReadOnlyList<Character> PresentCharacters(IReadOnlyList<CharacterState> states) =>
-        PresentStates(states).Select(s => s.Character).ToList();
+    public IReadOnlyList<Character> PresentCharacters() =>
+        PresentStates().Select(s => s.Character).ToList();
 
     public SceneSnapshot Snapshot() => SceneSnapshot.Of(Scene, CharacterStates);
 

@@ -1,4 +1,4 @@
-namespace RoleplayStudio.AI.Memory;
+namespace RoleplayStudio.AI.Prompts;
 
 public static class TokenEstimate
 {

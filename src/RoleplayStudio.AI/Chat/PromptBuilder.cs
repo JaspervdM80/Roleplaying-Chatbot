@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
-using RoleplayStudio.AI.Memory;
 using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.Domain;
 using RoleplayStudio.Domain.Authoring;

@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.Extensions.AI;
+using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.Domain.Chats;
 
 namespace RoleplayStudio.AI.Memory;

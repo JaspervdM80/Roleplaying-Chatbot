@@ -400,9 +400,6 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Affinity")
-                        .HasColumnType("integer");
-
                     b.Property<string>("AppearanceChanges")
                         .HasColumnType("text");
 
@@ -410,9 +407,6 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("CurrentOutfit")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RelationshipToPersona")
                         .HasColumnType("text");
 
                     b.Property<Guid>("SessionId")
@@ -1061,15 +1055,11 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                                     b2.Property<int>("__synthesizedOrdinal")
                                         .ValueGeneratedOnAdd();
 
-                                    b2.Property<int>("Affinity");
-
                                     b2.Property<string>("AppearanceChanges");
 
                                     b2.Property<Guid>("CharacterId");
 
                                     b2.Property<string>("CurrentOutfit");
-
-                                    b2.Property<string>("RelationshipToPersona");
 
                                     b2.Property<string>("Status");
 

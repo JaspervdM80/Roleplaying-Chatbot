@@ -1,7 +1,7 @@
 using System.Text;
 using RoleplayStudio.Domain.Chats;
 
-namespace RoleplayStudio.AI.Memory;
+namespace RoleplayStudio.AI.Prompts;
 
 public static class Transcript
 {

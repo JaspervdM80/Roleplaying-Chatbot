@@ -119,8 +119,8 @@
 
     protected override void OnParametersSet()
     {
-        _present = Session.PresentStates(Session.CharacterStates);
-        _metEarlier = Session.AbsentStates(Session.CharacterStates);
+        _present = Session.PresentStates();
+        _metEarlier = Session.AbsentStates();
     }
 
     private RenderFragment Person(ScenePerson person) => __builder =>

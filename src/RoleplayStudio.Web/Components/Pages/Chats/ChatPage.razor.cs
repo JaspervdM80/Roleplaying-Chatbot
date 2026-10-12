@@ -254,7 +254,7 @@ public partial class ChatPage
 
     private async Task StreamAndSaveReplyAsync(DirectorHint? hint)
     {
-        var parser = new SpeakerTagParser(_session!.PresentCharacters(_session.CharacterStates));
+        var parser = new SpeakerTagParser(_session!.PresentCharacters());
         var streamed = new StringBuilder();
         var live = new List<ChatTurnView>();
         _stop = CancellationTokenSource.CreateLinkedTokenSource(Cancellation);
@@ -377,7 +377,7 @@ public partial class ChatPage
 
     private void ShowCast(ChatSession session)
     {
-        _subjects = session.PresentCharacters(session.CharacterStates).Select(c => (c.Id, c.Name)).ToList();
+        _subjects = session.PresentCharacters().Select(c => (c.Id, c.Name)).ToList();
         _portraits = session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.ReferenceImageId);
     }
 

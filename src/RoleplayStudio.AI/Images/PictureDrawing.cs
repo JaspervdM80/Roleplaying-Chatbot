@@ -203,7 +203,7 @@ public sealed class PictureDrawing(
         }
         else
         {
-            states = session.PresentStates(session.CharacterStates);
+            states = session.PresentStates();
         }
 
         var numbering = new ReferenceNumbering(await LoadReferencesAsync(db, states.Select(s => s.Character.ReferenceImageId).OfType<Guid>().ToList(), cancellationToken), maxReferences);

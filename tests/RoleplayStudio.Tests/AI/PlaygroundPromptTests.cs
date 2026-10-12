@@ -1,19 +1,23 @@
 using Microsoft.Extensions.AI;
+using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Playground;
 
 namespace RoleplayStudio.Tests.AI;
 
 public class PlaygroundPromptTests
 {
+    private static readonly PromptBudget Budget = new(PromptBudget.DefaultContextWindow, PromptBudget.DefaultReplyTokens);
+
     [Fact]
-    public void The_system_prompt_names_the_character_as_an_adult()
+    public void The_system_prompt_is_the_chat_prompt_for_one_adult_character()
     {
-        var messages = PlaygroundPrompt.Build(new PlaygroundCharacter("  Mira ", "A cheerful innkeeper."), []);
+        var messages = PlaygroundPrompt.Build(new PlaygroundCharacter("  Mira ", "A cheerful innkeeper."), [], Budget);
 
         var system = Assert.Single(messages);
         Assert.Equal(ChatRole.System, system.Role);
-        Assert.Contains("You are Mira, an adult character", system.Text);
+        Assert.Contains("Write as Mira, staying in character", system.Text);
         Assert.Contains("A cheerful innkeeper.", system.Text);
+        Assert.Contains("Everyone in the story is an adult.", system.Text);
     }
 
     [Fact]
@@ -21,10 +25,12 @@ public class PlaygroundPromptTests
     {
         var messages = PlaygroundPrompt.Build(
             new PlaygroundCharacter("Mira", null),
-            [new(true, "Hi"), new(false, "Hello there"), new(false, "  "), new(true, "How are you?")]);
+            [new(true, "Hi"), new(false, "Hello there"), new(false, "  "), new(true, "How are you?")],
+            Budget);
 
         Assert.Equal(
             [ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User],
             messages.Select(m => m.Role));
+        Assert.Equal("Hello there", messages[2].Text);
     }
 }
