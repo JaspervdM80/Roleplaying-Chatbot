@@ -82,3 +82,11 @@ reference images go in `inputs.referenceImages`, not at the top level.
 **Rule:** `RunwareModelCatalog` reads the model's schema from `https://runware.ai/docs/models/index.json`,
 and `RunwareImageGenerator` sends only what it declares, at the nearest allowed size. Never add a
 parameter to the request without the schema saying the model takes it.
+
+## A menu with its own activator never opens
+
+**Symptom:** clicking "Let someone answer" or "Bring someone in" does nothing; no popover opens and
+nothing is logged.
+**Cause:** in MudBlazor 9 only the default activator is wired to the menu. Content in
+`ActivatorContent` receives a `MenuContext` and must open the menu itself.
+**Rule:** an `ActivatorContent` element calls `@onclick="context.ToggleAsync"`.

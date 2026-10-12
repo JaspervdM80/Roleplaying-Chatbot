@@ -11,7 +11,7 @@ namespace RoleplayStudio.AI.Memory;
 /// <summary>After a turn: mines new messages for memories, then folds old ones into the summary, with the owner's utility model.</summary>
 public sealed class MemoryUpkeep(
     IDbContextFactory<ApplicationDbContext> dbFactory,
-    IChatClientFactory clients,
+    IModelClientFactory clients,
     MemoryEmbeddings embeddings,
     MemoryNotifier notifier,
     TimeProvider time,

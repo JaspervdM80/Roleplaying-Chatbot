@@ -4,6 +4,7 @@ using RoleplayStudio.AI.Images;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Authoring;
+using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Infrastructure.Data;
 
 namespace RoleplayStudio.AI.Scene;
@@ -15,7 +16,7 @@ namespace RoleplayStudio.AI.Scene;
 /// </summary>
 public sealed class SceneUpkeep(
     IDbContextFactory<ApplicationDbContext> dbFactory,
-    IChatClientFactory clients,
+    IModelClientFactory clients,
     SceneNotifier notifier,
     PictureQueue pictures,
     TimeProvider time,
@@ -82,7 +83,7 @@ public sealed class SceneUpkeep(
         else
         {
             var before = session.CharacterStates.ToList();
-            outcome = SceneTracking.Apply(session, known, update, session.Persona.Name, time.GetUtcNow());
+            outcome = update.ApplyTo(session, known, session.Persona.Name, time.GetUtcNow());
 
             // Found only through the collection, a state with a client-made id would be taken for an existing row and updated.
             db.CharacterStates.AddRange(session.CharacterStates.Except(before));

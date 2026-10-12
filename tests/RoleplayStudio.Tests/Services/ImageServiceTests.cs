@@ -103,7 +103,7 @@ public sealed class ImageServiceTests(PostgresFixture postgres) : IDisposable
         var profile = (await user.Profiles.CreateAsync(new ModelProfile { Name = "Runware", Role = ModelRole.Image, Provider = ProviderKind.Runware, ModelId = "runware:101@1" })).Value;
         var generator = new FakeImageGenerator();
         var connections = new ModelConnectionService(
-            user.Profiles, new FakeChatClientFactory(new FakeChatClient([]), images: generator), ServiceFor(user.User), NullLogger<ModelConnectionService>.Instance);
+            user.Profiles, new FakeModelClientFactory(new FakeChatClient([]), images: generator), ServiceFor(user.User), NullLogger<ModelConnectionService>.Instance);
 
         var check = await connections.TestAsync(profile.Id);
 

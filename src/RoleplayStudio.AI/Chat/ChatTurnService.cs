@@ -12,7 +12,7 @@ public sealed class ChatTurnService(
     ChatSessionService sessions,
     ChatHistoryService history,
     ModelProfileService profiles,
-    IChatClientFactory clients,
+    IModelClientFactory clients,
     MemoryRecall recall,
     UpkeepQueue upkeepQueue,
     ICurrentUser currentUser,
@@ -53,7 +53,7 @@ public sealed class ChatTurnService(
             }
 
             var profile = profileResult.Value;
-            var created = clients.Create(profile);
+            var created = clients.CreateChatClient(profile);
             if (created.IsFailure)
             {
                 logger.LogWarning("Model profile {ProfileId} cannot be turned into a client", profile.Id);
@@ -74,7 +74,7 @@ public sealed class ChatTurnService(
             return await ProviderErrors.TranslateAsync(profile, logger, async () =>
             {
                 var characters = 0;
-                await foreach (var update in client.GetStreamingResponseAsync(messages, ChatClientFactory.OptionsFor(profile), cancellationToken))
+                await foreach (var update in client.GetStreamingResponseAsync(messages, profile.ToChatOptions(), cancellationToken))
                 {
                     if (update.Text is { Length: > 0 } text)
                     {

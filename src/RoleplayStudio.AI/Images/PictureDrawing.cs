@@ -3,9 +3,7 @@ using Microsoft.Extensions.Logging;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.AI.Upkeep;
 using RoleplayStudio.Domain.Authoring;
-using RoleplayStudio.Domain.Chats;
 using RoleplayStudio.Domain.Media;
-using RoleplayStudio.Domain.Memory;
 using RoleplayStudio.Domain.Models;
 using RoleplayStudio.Infrastructure.Data;
 using RoleplayStudio.Infrastructure.Services;
@@ -16,7 +14,7 @@ namespace RoleplayStudio.AI.Images;
 /// <summary>Draws one queued picture: the utility model writes the prompt from the chat, the image model draws it, and it is stored for its owner.</summary>
 public sealed class PictureDrawing(
     IDbContextFactory<ApplicationDbContext> dbFactory,
-    IChatClientFactory clients,
+    IModelClientFactory clients,
     IImageStore store,
     PictureQueue queue,
     PictureNotifier notifier,
@@ -42,7 +40,8 @@ public sealed class PictureDrawing(
         IReadOnlyList<Guid> ReferenceImageIds,
         IReadOnlyList<ReferenceImage> References);
 
-    private sealed record Briefing(PictureBrief Brief, Character? Subject, IReadOnlyList<Guid> MemoryIds, IReadOnlyList<Guid> ReferenceImageIds, IReadOnlyList<ReferenceImage> References);
+    private readonly PictureReferences _references = new(store, logger);
+    private readonly PictureBriefing _briefing = new(new PictureReferences(store, logger));
 
     public async Task<Result<Guid>> DrawAsync(PictureJob job, CancellationToken cancellationToken)
     {
@@ -131,9 +130,7 @@ public sealed class PictureDrawing(
 
     private async Task<Result<Plan>> PlanAsync(ApplicationDbContext db, PictureJob job, int maxReferences, CancellationToken cancellationToken)
     {
-        var briefed = job.SessionId is { } sessionId
-            ? await ChatBriefAsync(db, sessionId, job, maxReferences, cancellationToken)
-            : await PortraitBriefAsync(db, job, maxReferences, cancellationToken);
+        var briefed = await _briefing.BriefAsync(db, job, maxReferences, cancellationToken);
         if (briefed.IsFailure)
         {
             return briefed.To<Plan>();
@@ -164,96 +161,6 @@ public sealed class PictureDrawing(
         return new Plan(prompt, negative, written.Caption, width, height, seed, memoryIds, subject, referenceImageIds, references);
     }
 
-    private async Task<Result<Briefing>> ChatBriefAsync(ApplicationDbContext db, Guid sessionId, PictureJob job, int maxReferences, CancellationToken cancellationToken)
-    {
-        var session = await db.ChatSessions
-            .WithScenarioAndPersona()
-            .AsNoTracking()
-            .AsSplitQuery()
-            .SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
-        if (session is null)
-        {
-            return Result.Failure<Briefing>("That chat no longer exists");
-        }
-
-        var upTo = job.MessageId is { } messageId
-            ? await db.Messages.Where(m => m.SessionId == sessionId && m.Id == messageId).Select(m => (long?)m.Sequence).SingleOrDefaultAsync(cancellationToken)
-            : long.MaxValue;
-        if (upTo is null)
-        {
-            return Result.Failure<Briefing>("That message no longer exists");
-        }
-
-        var moment = await db.Messages
-            .Where(m => m.SessionId == sessionId && m.Sequence <= upTo)
-            .OrderByDescending(m => m.Sequence)
-            .Take(ImagePrompts.MaxMessages)
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
-
-        IReadOnlyList<CharacterState> states;
-        if (job.CharacterId is { } characterId)
-        {
-            if (session.CharacterStates.FirstOrDefault(s => s.CharacterId == characterId) is not { } state)
-            {
-                return Result.Failure<Briefing>("That character has not been met in this chat");
-            }
-
-            states = [state];
-        }
-        else
-        {
-            states = session.PresentStates();
-        }
-
-        var numbering = new ReferenceNumbering(await LoadReferencesAsync(db, states.Select(s => s.Character.ReferenceImageId).OfType<Guid>().ToList(), cancellationToken), maxReferences);
-        var subject = job.CharacterId is null ? null : states[0].Character;
-        List<PicturedPerson> people = [.. states.Select(s => PicturedPerson.Of(s.Character, s, numbering.Number(s.Character)))];
-        if (subject is null)
-        {
-            people.Add(PicturedPerson.Of(session.Persona));
-        }
-
-        var pictured = job.CharacterId is { } focusId ? [focusId] : session.Scene.PresentCharacterIds;
-        var memories = await db.Memories
-            .Where(m => m.SessionId == sessionId && m.RelatedCharacterIds.Any(id => pictured.Contains(id)))
-            .OrderByDescending(m => m.Type == MemoryType.Appearance)
-            .ThenByDescending(m => m.IsPinned)
-            .ThenByDescending(m => m.Importance)
-            .Take(ImagePrompts.MaxMemories)
-            .Select(m => new { m.Id, m.Text })
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
-
-        var brief = new PictureBrief(
-            people,
-            subject?.Name,
-            IsPortrait: false,
-            session.Scene.Location,
-            session.Scene.TimeOfDay,
-            session.Scene.Mood,
-            session.Scenario.Chatbot.WorldDescription,
-            session.Scenario.Chatbot.ImageStylePreset,
-            ImagePrompts.Moment(moment),
-            memories.Select(m => m.Text).ToList());
-        return new Briefing(brief, subject, memories.Select(m => m.Id).ToList(), numbering.Ids, numbering.Images);
-    }
-
-    private async Task<Result<Briefing>> PortraitBriefAsync(ApplicationDbContext db, PictureJob job, int maxReferences, CancellationToken cancellationToken)
-    {
-        var character = await db.Characters.AsNoTracking().SingleOrDefaultAsync(c => c.Id == job.CharacterId, cancellationToken);
-        if (character is null)
-        {
-            return Result.Failure<Briefing>("That character no longer exists");
-        }
-
-        // A renewed portrait is drawn from the looks just learned, not after the old picture it replaces.
-        List<Guid> candidates = job.RenewsReference || character.ReferenceImageId is not { } referenceId ? [] : [referenceId];
-        var numbering = new ReferenceNumbering(await LoadReferencesAsync(db, candidates, cancellationToken), maxReferences);
-        var brief = new PictureBrief([PicturedPerson.Of(character, null, numbering.Number(character))], character.Name, IsPortrait: true);
-        return new Briefing(brief, character, [], numbering.Ids, numbering.Images);
-    }
-
     private async Task<Result<Plan>> RedrawPlanAsync(ApplicationDbContext db, Guid imageId, int maxReferences, CancellationToken cancellationToken)
     {
         var image = await db.Images.AsNoTracking().SingleOrDefaultAsync(i => i.Id == imageId, cancellationToken);
@@ -263,7 +170,7 @@ public sealed class PictureDrawing(
         }
 
         // The stored prompt names people by their reference image's number, so every reference has to go along, in order.
-        var loaded = await LoadReferencesAsync(db, image.ReferenceImageIds, cancellationToken);
+        var loaded = await _references.LoadAsync(db, image.ReferenceImageIds, cancellationToken);
         if (loaded.Count < image.ReferenceImageIds.Distinct().Count())
         {
             return Result.Failure<Plan>("A portrait this picture was drawn after is gone; picture the moment again instead");
@@ -288,64 +195,5 @@ public sealed class PictureDrawing(
             subject,
             image.ReferenceImageIds,
             [.. image.ReferenceImageIds.Select(id => loaded[id])]);
-    }
-
-    /// <summary>The reference images that can still be read, by image id; one that cannot is logged and left out.</summary>
-    private async Task<IReadOnlyDictionary<Guid, ReferenceImage>> LoadReferencesAsync(ApplicationDbContext db, IReadOnlyList<Guid> imageIds, CancellationToken cancellationToken)
-    {
-        var loaded = new Dictionary<Guid, ReferenceImage>();
-        if (imageIds.Count == 0)
-        {
-            return loaded;
-        }
-
-        var stored = await db.Images.AsNoTracking().Where(i => imageIds.Contains(i.Id)).Select(i => new { i.Id, i.StoragePath, i.ContentType }).ToListAsync(cancellationToken);
-        foreach (var imageId in imageIds.Distinct())
-        {
-            if (stored.FirstOrDefault(i => i.Id == imageId) is not { } reference || store.OpenRead(reference.StoragePath) is not { } content)
-            {
-                logger.LogWarning("Reference image {ImageId} is gone; drawing without it", imageId);
-                continue;
-            }
-
-            await using (content)
-            {
-                using var copy = new MemoryStream();
-                await content.CopyToAsync(copy, cancellationToken);
-                loaded[imageId] = new ReferenceImage(copy.ToArray(), reference.ContentType);
-            }
-        }
-
-        return loaded;
-    }
-
-    /// <summary>Numbers, from 1, the people whose reference portrait loaded, while the model takes more.</summary>
-    private sealed class ReferenceNumbering(IReadOnlyDictionary<Guid, ReferenceImage> loaded, int max)
-    {
-        private readonly List<Guid> _ids = [];
-
-        public IReadOnlyList<Guid> Ids => _ids;
-
-        public IReadOnlyList<ReferenceImage> Images => [.. _ids.Select(id => loaded[id])];
-
-        public int? Number(Character character)
-        {
-            if (character.ReferenceImageId is not { } id || !loaded.ContainsKey(id))
-            {
-                return null;
-            }
-
-            if (!_ids.Contains(id))
-            {
-                if (_ids.Count >= max)
-                {
-                    return null;
-                }
-
-                _ids.Add(id);
-            }
-
-            return _ids.IndexOf(id) + 1;
-        }
     }
 }

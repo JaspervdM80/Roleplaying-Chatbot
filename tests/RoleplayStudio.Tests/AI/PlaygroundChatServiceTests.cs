@@ -22,7 +22,7 @@ public class PlaygroundChatServiceTests(PostgresFixture postgres)
         var profile = await profiles.CreateAsync(new ModelProfile { Name = "Local", Provider = ProviderKind.Ollama, ModelId = "mistral-nemo" });
 
         var callerProfiles = caller is null ? profiles : new ModelProfileService(postgres.DbFactory, caller, NullLogger<ModelProfileService>.Instance);
-        var chat = new PlaygroundChatService(callerProfiles, new FakeChatClientFactory(client), NullLogger<PlaygroundChatService>.Instance);
+        var chat = new PlaygroundChatService(callerProfiles, new FakeModelClientFactory(client), NullLogger<PlaygroundChatService>.Instance);
         return (chat, profile.Value.Id);
     }
 

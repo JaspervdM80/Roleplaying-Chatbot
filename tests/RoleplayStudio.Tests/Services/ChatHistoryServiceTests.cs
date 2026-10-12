@@ -13,7 +13,7 @@ public class ChatHistoryServiceTests(PostgresFixture postgres)
     private const string MemoriesJson = """{"memories":[{"type":"Event","text":"Sam ordered a coffee.","importance":6,"characters":["Mira"]}]}""";
     private const string ToTheHarbour = """{"location":"The harbour","present":["Mira"],"changes":[{"name":"Mira","outfit":"A raincoat"}]}""";
 
-    private static FakeChatClientFactory Utility(string reply) => new(new FakeChatClient([reply]));
+    private static FakeModelClientFactory Utility(string reply) => new(new FakeChatClient([reply]));
 
     private static async Task TalkAsync(StudioUser user, Guid sessionId, int exchanges)
     {
@@ -174,7 +174,7 @@ public class ChatHistoryServiceTests(PostgresFixture postgres)
         await TalkAsync(user, session.Id, 1);
         var history = user.History;
         // The rewind lands while the utility model is still answering, as a user can press "write again" mid-upkeep.
-        var utility = new FakeChatClientFactory(new ScriptedChatClient(_ =>
+        var utility = new FakeModelClientFactory(new ScriptedChatClient(_ =>
         {
             Assert.True(history.TakeBackReplyAsync(session.Id).GetAwaiter().GetResult().IsSuccess);
             return ToTheHarbour;

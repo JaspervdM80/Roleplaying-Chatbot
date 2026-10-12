@@ -16,7 +16,7 @@ public class MemoryTests(PostgresFixture postgres)
 
     private static FakeEmbeddingGenerator ByTopic() => new(text => FakeEmbeddingGenerator.Axis(text.Contains("coffee", StringComparison.OrdinalIgnoreCase) ? 0 : 1));
 
-    private static FakeChatClientFactory Utility(string extraction, string summary = "Sam came in for coffee.", FakeEmbeddingGenerator? embeddings = null) =>
+    private static FakeModelClientFactory Utility(string extraction, string summary = "Sam came in for coffee.", FakeEmbeddingGenerator? embeddings = null) =>
         new(new ScriptedChatClient(prompt => prompt[0].Text.Contains("long-term memory") ? extraction : summary), embeddings);
 
     private static async Task TalkAsync(StudioUser user, Guid sessionId, int exchanges, string line = "Coffee, black.")
@@ -125,7 +125,7 @@ public class MemoryTests(PostgresFixture postgres)
         await user.EmbeddingModelAsync();
         await SeedAsync(user, session.Id, ("Sam takes their coffee black.", FakeEmbeddingGenerator.Axis(0), false), ("Mira is saving for a boat.", null, false));
 
-        var recalled = await user.Recall(new FakeChatClientFactory(new FakeChatClient([]), ByTopic()))
+        var recalled = await user.Recall(new FakeModelClientFactory(new FakeChatClient([]), ByTopic()))
             .RecallAsync(session.Id, [new Message { Sequence = 1, SpeakerName = "Sam", Content = "Coffee, please." }]);
 
         Assert.Equal(["Sam takes their coffee black.", "Mira is saving for a boat."], recalled.Value.Select(m => m.Text));
@@ -161,7 +161,7 @@ public class MemoryTests(PostgresFixture postgres)
         Assert.InRange(reloaded.Summary.CoveredUpToSequence, 2, 20);
 
         var chat = new FakeChatClient(["Hi."]);
-        Assert.True((await user.Turns(new FakeChatClientFactory(chat)).StreamReplyAsync(session.Id, _ => { })).IsSuccess);
+        Assert.True((await user.Turns(new FakeModelClientFactory(chat)).StreamReplyAsync(session.Id, _ => { })).IsSuccess);
         Assert.Contains("Sam came in for coffee.", chat.LastMessages![0].Text);
         Assert.Equal(21 - reloaded.Summary.CoveredUpToSequence, chat.LastMessages.Count - 1);
     }
@@ -183,7 +183,7 @@ public class MemoryTests(PostgresFixture postgres)
         nearAxis[1] = 0.5f;
         await SeedAsync(user, session.Id, ("Sam takes their coffee black.", nearAxis, false), ("Mira's cat is called Pebble.", FakeEmbeddingGenerator.Axis(1), false));
 
-        var recalled = await user.Recall(new FakeChatClientFactory(new FakeChatClient([]), ByTopic()))
+        var recalled = await user.Recall(new FakeModelClientFactory(new FakeChatClient([]), ByTopic()))
             .RecallAsync(session.Id, [new Message { Sequence = 1, SpeakerName = "Sam", Content = "Coffee, please." }]);
 
         Assert.True(recalled.IsSuccess, recalled.Error);
@@ -198,7 +198,7 @@ public class MemoryTests(PostgresFixture postgres)
         var session = await owner.ChatAsync();
         await SeedAsync(owner, session.Id, ("Sam takes their coffee black.", null, true));
 
-        var recalled = await other.Recall(new FakeChatClientFactory(new FakeChatClient([]))).RecallAsync(session.Id, []);
+        var recalled = await other.Recall(new FakeModelClientFactory(new FakeChatClient([]))).RecallAsync(session.Id, []);
 
         Assert.True(recalled.IsFailure);
     }
@@ -211,7 +211,7 @@ public class MemoryTests(PostgresFixture postgres)
         await user.EmbeddingModelAsync();
         await SeedAsync(user, session.Id, ("Sam takes their coffee black.", FakeEmbeddingGenerator.Axis(0), false), ("Sam and Mira are engaged.", FakeEmbeddingGenerator.Axis(1), true));
 
-        var recalled = await user.Recall(new FakeChatClientFactory(new FakeChatClient([]), ByTopic()))
+        var recalled = await user.Recall(new FakeModelClientFactory(new FakeChatClient([]), ByTopic()))
             .RecallAsync(session.Id, [new Message { Sequence = 1, SpeakerName = "Sam", Content = "Coffee, please." }]);
 
         Assert.Equal(["Sam and Mira are engaged.", "Sam takes their coffee black."], recalled.Value.Select(m => m.Text));
@@ -224,7 +224,7 @@ public class MemoryTests(PostgresFixture postgres)
         var session = await user.ChatAsync();
         await SeedAsync(user, session.Id, ("Sam takes their coffee black.", null, false));
         var chat = new FakeChatClient(["Black, as always."]);
-        var turns = user.Turns(new FakeChatClientFactory(chat));
+        var turns = user.Turns(new FakeModelClientFactory(chat));
 
         Assert.True((await turns.StreamReplyAsync(session.Id, _ => { })).IsSuccess);
         Assert.True((await turns.SaveReplyAsync(session.Id, "Black, as always.")).IsSuccess);

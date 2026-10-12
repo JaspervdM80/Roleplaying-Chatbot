@@ -5,7 +5,7 @@ using RoleplayStudio.Infrastructure.Services;
 
 namespace RoleplayStudio.AI.Playground;
 
-public sealed class PlaygroundChatService(ModelProfileService profiles, IChatClientFactory clients, ILogger<PlaygroundChatService> logger)
+public sealed class PlaygroundChatService(ModelProfileService profiles, IModelClientFactory clients, ILogger<PlaygroundChatService> logger)
 {
     /// <summary>Streams the character's reply into <paramref name="onText"/>; on cancellation the text already delivered is all there is.</summary>
     public Task<Result> StreamReplyAsync(
@@ -28,7 +28,7 @@ public sealed class PlaygroundChatService(ModelProfileService profiles, IChatCli
             }
 
             var profile = loaded.Value;
-            var created = clients.Create(profile);
+            var created = clients.CreateChatClient(profile);
             if (created.IsFailure)
             {
                 logger.LogWarning("Model profile {ProfileId} cannot be turned into a client", profile.Id);
@@ -41,7 +41,7 @@ public sealed class PlaygroundChatService(ModelProfileService profiles, IChatCli
             return await ProviderErrors.TranslateAsync(profile, logger, async () =>
             {
                 var characters = 0;
-                await foreach (var update in client.GetStreamingResponseAsync(messages, ChatClientFactory.OptionsFor(profile), cancellationToken))
+                await foreach (var update in client.GetStreamingResponseAsync(messages, profile.ToChatOptions(), cancellationToken))
                 {
                     if (update.Text is { Length: > 0 } text)
                     {

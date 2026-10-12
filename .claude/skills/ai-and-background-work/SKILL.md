@@ -13,7 +13,11 @@ description: Working in RoleplayStudio.AI — model providers behind IChatClient
   factory. OpenRouter, Featherless and OpenAI are all `OpenAICompatible` with a different base URL —
   not separate code paths.
 - Nothing outside the factory knows which provider it talks to. A provider-specific quirk is handled
-  in the factory or a small decorating client, not at the call site.
+  in that provider's `IModelProvider` or a small decorating client, not at the call site.
+- **A provider is one `IModelProvider` class**, listed once in `ModelClientFactory.Providers`. It
+  overrides the clients it offers; the interface refuses the rest. Never a `switch` on `ProviderKind`
+  in the factory.
+- A chat call's options come from `profile.ToChatOptions()`.
 - **The API key is read from configuration by its setting name at call time.** It never enters the
   database, a log line, an exception message or the page. The setting must sit under `Providers:`
   (`ModelProfile.ApiKeySettingPrefix`) — otherwise a profile pointed at a URL of the user's choosing
@@ -21,13 +25,13 @@ description: Working in RoleplayStudio.AI — model providers behind IChatClient
   And because every user's profiles share the configured keys, a key only travels to the scheme and
   host in the `BaseUrl` setting beside it (`Providers:OpenRouter:ApiKey` → `Providers:OpenRouter:BaseUrl`,
   in `appsettings.json`); otherwise any signed-in friend could point a profile at their own server.
-- `IChatClientFactory` is the seam tests fake; `ChatClientFactory` builds the real clients.
-- **Every chat client is traced** (`ChatClientFactory.TelemetrySource`). Only in Development does the
+- `IModelClientFactory` is the seam tests fake; `ModelClientFactory` builds the real clients.
+- **Every chat client is traced** (`ModelClientFactory.TelemetrySource`). Only in Development does the
   trace carry the prompt and reply text, for reading in the Aspire dashboard's Traces; anywhere else
   it holds timings and token counts, never text.
 - **Provider HTTP never goes through `IHttpClientFactory`.** The service defaults put the standard
   resilience handler on every factory client, with a 10-second attempt timeout that kills any
-  generation. The factory shares one `SocketsHttpHandler` instead.
+  generation. Every provider client comes from `ProviderHttp.Client`, which shares one `SocketsHttpHandler`.
 - Provider failures a user can fix (401, 404, unreachable, out of credit) are translated by
   `ProviderErrors.TranslateAsync` into readable failures; anything else still reaches
   `ServiceOperation`.
@@ -112,7 +116,8 @@ the same rules:
 
 - **The scene follows the story.** `SceneUpkeep` asks the utility model, after each turn, for the
   place, time and mood, who is present, and what changed about anyone's clothes, looks or feelings.
-  `SceneTracking` holds the prompt, the parse and `Apply`, all pure. It moves
+  `SceneTracking` holds the prompt and the parse; the rules for applying what it read (renames,
+  newcomers, who is present, restyling) are the domain's `SceneUpdate.ApplyTo`. All pure. Upkeep moves
   `SceneState.TrackedUpToSequence` like extraction moves its marker, and announces the change through
   `SceneNotifier`.
 - **A newcomer becomes a real `Character`**, owned by the chat's owner and added to the chatbot's
@@ -192,7 +197,8 @@ Files go through `IImageStore`, never a path built in a page.
   node, the placeholders, `referenceN` slots) are in `docs/comfyui.md`. A local server gets
   `PictureDrawing.LocalTimeout`, since the first picture loads the models; a picture nobody waits for
   is taken off ComfyUI's queue.
-- **Pages ask through `PictureService`; `PictureDrawing` does the work** in the background. A job
+- **Pages ask through `PictureService`; `PictureDrawing` does the work** in the background, with
+  `PictureBriefing` gathering what a new picture shows and `PictureReferences` loading portraits. A job
   carries its owner like an upkeep job and saves with `ImageService.StoreAsync` in a context scoped to
   that owner. `PictureQueue` also holds what is waiting or being drawn, so a page shows placeholders
   (with the caption once the prompt is written) and can cancel; `PictureNotifier` announces the caption

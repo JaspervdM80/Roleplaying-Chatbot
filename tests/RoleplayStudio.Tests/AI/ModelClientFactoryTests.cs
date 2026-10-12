@@ -1,15 +1,16 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using RoleplayStudio.AI.Images.ComfyUI;
 using RoleplayStudio.AI.Providers;
 using RoleplayStudio.Domain.Models;
 
 namespace RoleplayStudio.Tests.AI;
 
-public class ChatClientFactoryTests
+public class ModelClientFactoryTests
 {
     private const string Secret = "sk-test-secret";
 
-    private static ChatClientFactory Factory() => new(new ConfigurationBuilder()
+    private static ModelClientFactory Factory() => new(new ConfigurationBuilder()
         .AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Providers:OpenRouter:ApiKey"] = Secret,
@@ -33,7 +34,7 @@ public class ChatClientFactoryTests
     [Fact]
     public void An_openai_compatible_profile_talks_to_its_base_url()
     {
-        var result = Factory().Create(OpenRouter("Providers:OpenRouter:ApiKey"));
+        var result = Factory().CreateChatClient(OpenRouter("Providers:OpenRouter:ApiKey"));
 
         Assert.True(result.IsSuccess);
         var metadata = result.Value.GetService<ChatClientMetadata>();
@@ -44,7 +45,7 @@ public class ChatClientFactoryTests
     [Fact]
     public void An_ollama_profile_defaults_to_the_local_server()
     {
-        var result = Factory().Create(new ModelProfile { Name = "Local", Provider = ProviderKind.Ollama, ModelId = "mistral-nemo" });
+        var result = Factory().CreateChatClient(new ModelProfile { Name = "Local", Provider = ProviderKind.Ollama, ModelId = "mistral-nemo" });
 
         Assert.True(result.IsSuccess);
         Assert.Equal(new Uri(ModelProfile.DefaultOllamaUrl), result.Value.GetService<ChatClientMetadata>()?.ProviderUri);
@@ -59,7 +60,7 @@ public class ChatClientFactoryTests
         var profile = OpenRouter("Providers:OpenRouter:ApiKey");
         profile.BaseUrl = baseUrl;
 
-        var result = Factory().Create(profile);
+        var result = Factory().CreateChatClient(profile);
 
         Assert.True(result.IsFailure);
         Assert.Contains("Providers:OpenRouter:BaseUrl", result.Error);
@@ -68,7 +69,7 @@ public class ChatClientFactoryTests
     [Fact]
     public void A_missing_key_names_the_setting_but_never_a_value()
     {
-        var result = Factory().Create(OpenRouter("Providers:Featherless:ApiKey"));
+        var result = Factory().CreateChatClient(OpenRouter("Providers:Featherless:ApiKey"));
 
         Assert.True(result.IsFailure);
         Assert.Contains("Providers:Featherless:ApiKey", result.Error);
@@ -78,7 +79,7 @@ public class ChatClientFactoryTests
     [Fact]
     public void A_setting_outside_the_providers_section_is_never_read()
     {
-        var result = Factory().Create(OpenRouter("Registration:InviteCode"));
+        var result = Factory().CreateChatClient(OpenRouter("Registration:InviteCode"));
 
         Assert.True(result.IsFailure);
         Assert.DoesNotContain("invite", result.Error, StringComparison.Ordinal);
@@ -87,7 +88,7 @@ public class ChatClientFactoryTests
     [Fact]
     public void An_image_provider_cannot_chat()
     {
-        var result = Factory().Create(new ModelProfile { Name = "Images", Role = ModelRole.Image, Provider = ProviderKind.Runware, ModelId = "flux" });
+        var result = Factory().CreateChatClient(new ModelProfile { Name = "Images", Role = ModelRole.Image, Provider = ProviderKind.Runware, ModelId = "flux" });
 
         Assert.True(result.IsFailure);
     }
@@ -135,5 +136,37 @@ public class ChatClientFactoryTests
         var result = Factory().CreateImageGenerator(OpenRouter("Providers:OpenRouter:ApiKey"));
 
         Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public void An_openai_compatible_profile_can_embed_text()
+    {
+        var profile = OpenRouter("Providers:OpenRouter:ApiKey");
+        profile.Role = ModelRole.Embedding;
+
+        var result = Factory().CreateEmbeddingGenerator(profile);
+
+        Assert.True(result.IsSuccess, result.Error);
+        Assert.Equal("mistralai/mistral-nemo", result.Value.GetService<EmbeddingGeneratorMetadata>()?.DefaultModelId);
+    }
+
+    [Fact]
+    public void An_ollama_profile_can_embed_text()
+    {
+        var result = Factory().CreateEmbeddingGenerator(new ModelProfile { Name = "Local", Role = ModelRole.Embedding, Provider = ProviderKind.Ollama, ModelId = "nomic-embed-text" });
+
+        Assert.True(result.IsSuccess, result.Error);
+        Assert.Equal(new Uri(ModelProfile.DefaultOllamaUrl), result.Value.GetService<EmbeddingGeneratorMetadata>()?.ProviderUri);
+    }
+
+    [Fact]
+    public void A_comfyui_profile_draws_with_the_workflow_set_it_names()
+    {
+        var workflows = ComfyUIWorkflows.Names.First();
+
+        var result = Factory().CreateImageGenerator(new ModelProfile { Name = "Local images", Role = ModelRole.Image, Provider = ProviderKind.ComfyUI, ModelId = workflows });
+
+        Assert.True(result.IsSuccess, result.Error);
+        Assert.Equal(workflows, result.Value.ModelId);
     }
 }

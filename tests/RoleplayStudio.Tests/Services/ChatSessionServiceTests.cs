@@ -184,7 +184,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var session = await user.ChatAsync();
         await user.Sessions.AddUserMessageAsync(session.Id, "A latte, please.");
         var client = new FakeChatClient(["Coming ", "up."]);
-        var turns = user.Turns(new FakeChatClientFactory(client));
+        var turns = user.Turns(new FakeModelClientFactory(client));
         var streamed = "";
 
         var result = await turns.StreamReplyAsync(session.Id, text => streamed += text);
@@ -206,7 +206,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var scenario = await user.ScenarioAsync(chatbot, starting: mira);
         var session = (await user.Sessions.StartAsync(chatbot.Id, scenario.Id, (await user.PersonaAsync()).Id)).Value;
         var client = new FakeChatClient(["*The door bangs open.*\n\n**Jun:** Anyone got a towel?"]);
-        var turns = user.Turns(new FakeChatClientFactory(client));
+        var turns = user.Turns(new FakeModelClientFactory(client));
         var hint = new DirectorHint.BringIn(jun.Id);
         var streamed = "";
 
@@ -260,7 +260,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var user = new StudioUser(postgres);
         var session = await user.ChatAsync();
         var client = new FakeChatClient(["*They step out onto the pier.*"]);
-        var turns = user.Turns(new FakeChatClientFactory(client));
+        var turns = user.Turns(new FakeModelClientFactory(client));
         var hint = new DirectorHint.MoveTo("  The harbour  ");
 
         Assert.True((await turns.DirectAsync(session.Id, hint)).IsSuccess);
@@ -276,7 +276,7 @@ public class ChatSessionServiceTests(PostgresFixture postgres)
         var user = new StudioUser(postgres);
         var session = await user.ChatAsync();
         await user.Sessions.SetModelAsync(session.Id, null);
-        var turns = user.Turns(new FakeChatClientFactory(new FakeChatClient(["Hi"])));
+        var turns = user.Turns(new FakeModelClientFactory(new FakeChatClient(["Hi"])));
 
         var result = await turns.StreamReplyAsync(session.Id, _ => { });
 

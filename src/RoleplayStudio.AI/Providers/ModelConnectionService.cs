@@ -11,7 +11,7 @@ namespace RoleplayStudio.AI.Providers;
 /// <summary>An image model's test sets <see cref="ImageId"/>; <see cref="Reply"/> is then the prompt it drew.</summary>
 public sealed record ConnectionCheck(TimeSpan Latency, string Reply, Guid? ImageId = null);
 
-public sealed class ModelConnectionService(ModelProfileService profiles, IChatClientFactory clients, ImageService images, ILogger<ModelConnectionService> logger)
+public sealed class ModelConnectionService(ModelProfileService profiles, IModelClientFactory clients, ImageService images, ILogger<ModelConnectionService> logger)
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan ImageTimeout = TimeSpan.FromSeconds(90);
@@ -33,7 +33,7 @@ public sealed class ModelConnectionService(ModelProfileService profiles, IChatCl
                 return await DrawTestPictureAsync(profile, cancellationToken);
             }
 
-            var created = clients.Create(profile);
+            var created = clients.CreateChatClient(profile);
             if (created.IsFailure)
             {
                 logger.LogWarning("Model profile {ProfileId} cannot be turned into a client", profile.Id);
