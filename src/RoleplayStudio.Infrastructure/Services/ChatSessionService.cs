@@ -277,7 +277,7 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
         return messages;
     }
 
-    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, "chat", id);
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That chat no longer exists");
 
     private sealed record NewLine(MessageRole Role, Guid? SpeakerId, string SpeakerName, string Content);
 }

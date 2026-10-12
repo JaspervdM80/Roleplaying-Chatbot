@@ -47,7 +47,7 @@ public sealed class PictureDrawing(
     public async Task<Result<Guid>> DrawAsync(PictureJob job, CancellationToken cancellationToken)
     {
         await using var db = await dbFactory.CreateForOwnerAsync(job.OwnerId, cancellationToken);
-        var opened = await PreferredModel.OpenAsync(db, ModelRole.Image, clients.CreateImageGenerator, logger, cancellationToken, PictureService.NoImageModel);
+        var opened = await PreferredModel.OpenAsync(db, ModelRole.Image, clients.CreateImageGenerator, PictureService.NoImageModel, logger, cancellationToken);
         if (opened.IsFailure)
         {
             return opened.To<Guid>();

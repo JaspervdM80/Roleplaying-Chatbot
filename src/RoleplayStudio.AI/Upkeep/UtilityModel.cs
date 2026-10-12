@@ -13,7 +13,7 @@ public sealed class UtilityModel(ModelProfile profile, IChatClient client, ILogg
     /// <summary>Null when the owner has no utility model or it cannot be turned into a client; the job is then skipped.</summary>
     public static async Task<UtilityModel?> OpenAsync(ApplicationDbContext db, IChatClientFactory clients, ILogger logger, CancellationToken cancellationToken)
     {
-        var opened = await PreferredModel.OpenAsync(db, ModelRole.Utility, clients.Create, logger, cancellationToken);
+        var opened = await PreferredModel.OpenAsync(db, ModelRole.Utility, clients.Create, "Add a utility model on the models page", logger, cancellationToken);
         return opened.IsSuccess ? new UtilityModel(opened.Value.Profile, opened.Value.Client, logger) : null;
     }
 

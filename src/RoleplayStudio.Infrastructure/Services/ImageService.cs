@@ -186,7 +186,7 @@ public sealed class ImageService(IDbContextFactory<ApplicationDbContext> dbFacto
         return null;
     }
 
-    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, "image", id);
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That image no longer exists");
 
     public static string ExtensionFor(string contentType) => contentType switch
     {

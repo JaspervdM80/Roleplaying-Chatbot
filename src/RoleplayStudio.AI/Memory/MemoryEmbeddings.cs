@@ -23,7 +23,7 @@ public sealed class MemoryEmbeddings(IChatClientFactory clients, ILogger<MemoryE
             return none;
         }
 
-        var opened = await PreferredModel.OpenAsync(db, ModelRole.Embedding, clients.CreateEmbeddingGenerator, logger, cancellationToken);
+        var opened = await PreferredModel.OpenAsync(db, ModelRole.Embedding, clients.CreateEmbeddingGenerator, "Add an embedding model on the models page", logger, cancellationToken);
         if (opened.IsFailure)
         {
             return none;

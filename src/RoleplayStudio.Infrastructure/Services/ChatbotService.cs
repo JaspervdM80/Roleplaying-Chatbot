@@ -227,7 +227,7 @@ public sealed class ChatbotService(IDbContextFactory<ApplicationDbContext> dbFac
         return null;
     }
 
-    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, "chatbot", id);
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That chatbot no longer exists");
 
-    private Result ScenarioNotFound(Guid id) => ServiceOperation.NotFound(logger, "scenario", id);
+    private Result ScenarioNotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That scenario no longer exists");
 }

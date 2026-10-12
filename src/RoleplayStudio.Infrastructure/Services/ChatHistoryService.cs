@@ -139,5 +139,5 @@ public sealed class ChatHistoryService(IDbContextFactory<ApplicationDbContext> d
         await db.SaveChangesAsync();
     }
 
-    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, "chat", id);
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That chat no longer exists");
 }

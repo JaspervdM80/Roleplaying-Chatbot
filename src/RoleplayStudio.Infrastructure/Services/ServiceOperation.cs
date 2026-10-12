@@ -19,10 +19,10 @@ public static class ServiceOperation
             await currentUser.GetUserIdAsync() is { Length: > 0 } ownerId ? await body(ownerId) : NotSignedIn(logger, operation).To<T>());
 
     /// <summary>A row that is gone, or another user's: the two are reported alike, so an id gives nothing away.</summary>
-    public static Result NotFound(ILogger logger, string noun, Guid id)
+    public static Result NotFound(ILogger logger, Guid id, string message)
     {
-        logger.LogWarning("The {Entity} {EntityId} was not found", noun, id);
-        return Result.Failure("That {0} no longer exists", noun);
+        logger.LogWarning("{Problem}: {EntityId}", message, id);
+        return Result.Failure(message);
     }
 
     private static Result NotSignedIn(ILogger logger, string operation)

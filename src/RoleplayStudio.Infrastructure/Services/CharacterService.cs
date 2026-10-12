@@ -98,5 +98,5 @@ public sealed class CharacterService(IDbContextFactory<ApplicationDbContext> dbF
             return Result.Success();
         });
 
-    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, "character", id);
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That character no longer exists");
 }

@@ -79,5 +79,5 @@ public sealed class PersonaService(IDbContextFactory<ApplicationDbContext> dbFac
             return Result.Success();
         });
 
-    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, "persona", id);
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That persona no longer exists");
 }

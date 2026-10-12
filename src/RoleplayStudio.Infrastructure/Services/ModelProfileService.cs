@@ -120,5 +120,5 @@ public sealed class ModelProfileService(IDbContextFactory<ApplicationDbContext> 
         });
     }
 
-    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, "model profile", id);
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, id, "That model profile no longer exists");
 }

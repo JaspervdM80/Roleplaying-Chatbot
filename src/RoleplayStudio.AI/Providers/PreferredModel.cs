@@ -15,15 +15,15 @@ public static class PreferredModel
         ApplicationDbContext db,
         ModelRole role,
         Func<ModelProfile, Result<T>> create,
+        string missing,
         ILogger logger,
-        CancellationToken cancellationToken,
-        string missing = "There is no {0} model")
+        CancellationToken cancellationToken)
     {
         var profile = await db.ModelProfiles.PreferredFor(role).AsNoTracking().FirstOrDefaultAsync(cancellationToken);
         if (profile is null)
         {
             logger.LogDebug("No {Role} model", role);
-            return Result.Failure<OpenedModel<T>>(missing, role);
+            return Result.Failure<OpenedModel<T>>(missing);
         }
 
         var created = create(profile);

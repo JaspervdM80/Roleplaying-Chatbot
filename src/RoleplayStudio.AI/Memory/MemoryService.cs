@@ -201,7 +201,7 @@ public sealed class MemoryService(
         return Result.Failure<MemoryEntry>(problem.Message);
     }
 
-    private Result ChatNotFound(Guid sessionId) => ServiceOperation.NotFound(logger, "chat", sessionId);
+    private Result ChatNotFound(Guid sessionId) => ServiceOperation.NotFound(logger, sessionId, "That chat no longer exists");
 
-    private Result MemoryNotFound(Guid memoryId) => ServiceOperation.NotFound(logger, "memory", memoryId);
+    private Result MemoryNotFound(Guid memoryId) => ServiceOperation.NotFound(logger, memoryId, "That memory no longer exists");
 }
