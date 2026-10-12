@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.Extensions.AI;
 using RoleplayStudio.AI.Memory;
+using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.Domain;
 using RoleplayStudio.Domain.Authoring;
 using RoleplayStudio.Domain.Chats;
@@ -77,7 +78,7 @@ public static class ImagePrompts
             story.AppendLine($"Place: {brief.Location ?? "unknown"}");
             story.AppendLine($"Time of day: {brief.TimeOfDay ?? "unknown"}");
             story.AppendLine($"Mood: {brief.Mood ?? "unknown"}");
-            AppendSection(story, "The world", brief.World);
+            PromptText.Section(story, "The world:", brief.World);
         }
 
         if (brief.Memories is { Count: > 0 } memories)
@@ -90,7 +91,7 @@ public static class ImagePrompts
             }
         }
 
-        AppendSection(story, "The moment to picture", brief.Moment);
+        PromptText.Section(story, "The moment to picture:", brief.Moment);
 
         return [new ChatMessage(ChatRole.System, instructions.ToString()), new ChatMessage(ChatRole.User, story.ToString())];
     }
@@ -120,42 +121,12 @@ public static class ImagePrompts
 
     public static string Moment(IEnumerable<Message> messages) => Transcript.Of(messages);
 
-    private static string Describe(PicturedPerson person)
-    {
-        var parts = new List<string>();
-        if (string.Join(' ', new[] { AgeFor(person.Age), TextFields.Clean(person.Gender) }.OfType<string>()) is { Length: > 0 } who)
-        {
-            parts.Add(who);
-        }
-
-        if (person.Reference is { } reference)
-        {
-            parts.Add($"Shown in reference image {reference}");
-        }
-
-        AddPart(parts, "Looks", person.Appearance);
-        AddPart(parts, "Changed since", person.AppearanceChanges);
-        AddPart(parts, "Wearing", person.Outfit);
-        return string.Join(". ", parts) + ".";
-    }
-
-    private static void AddPart(List<string> parts, string label, string? text)
-    {
-        if (TextFields.Clean(text) is { } clean)
-        {
-            parts.Add($"{label}: {clean.ReplaceLineEndings(" ").TrimEnd('.')}");
-        }
-    }
-
-    private static void AppendSection(StringBuilder story, string title, string? text)
-    {
-        if (TextFields.Clean(text) is { } clean)
-        {
-            story.AppendLine();
-            story.AppendLine($"{title}:");
-            story.AppendLine(clean);
-        }
-    }
+    private static string Describe(PicturedPerson person) => PromptText.Sentences(
+        string.Join(' ', new[] { AgeFor(person.Age), TextFields.Clean(person.Gender) }.OfType<string>()),
+        person.Reference is { } reference ? $"Shown in reference image {reference}" : null,
+        PromptText.Labelled("Looks", PromptText.OneLine(person.Appearance, " ")),
+        PromptText.Labelled("Changed since", PromptText.OneLine(person.AppearanceChanges, " ")),
+        PromptText.Labelled("Wearing", PromptText.OneLine(person.Outfit, " ")));
 
     private static string Cut(string text, int length) => text.Length > length ? text[..length] : text;
 }

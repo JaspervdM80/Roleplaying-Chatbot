@@ -91,7 +91,7 @@ public sealed partial class SpeakerTagParser
         {
             StartSegment(null);
         }
-        else if (Find(name) is { } character)
+        else if (CharacterNames.Find(_present, name) is { } character)
         {
             StartSegment(character.Id);
         }
@@ -100,17 +100,6 @@ public sealed partial class SpeakerTagParser
             StartSegment(null);
             Write(tag.Value);
         }
-    }
-
-    private Character? Find(string name)
-    {
-        if (_present.FirstOrDefault(c => string.Equals(c.Name.Trim(), name, StringComparison.OrdinalIgnoreCase)) is { } exact)
-        {
-            return exact;
-        }
-
-        var byFirstName = _present.Where(c => string.Equals(c.Name.Trim().Split(' ')[0], name, StringComparison.OrdinalIgnoreCase)).Take(2).ToList();
-        return byFirstName.Count == 1 ? byFirstName[0] : null;
     }
 
     private void StartSegment(Guid? characterId)

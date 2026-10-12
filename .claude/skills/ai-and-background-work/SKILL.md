@@ -50,6 +50,10 @@ Memory extraction, state deltas and image prompts ask the utility model for JSON
   can name someone who is not there.
 - **Read a string field through `StructuredOutput.Text`.** A weak model copies the answer template
   back, and its `"..."` would otherwise become a newcomer named "...", or a memory.
+- **A name a model wrote is matched through `CharacterNames`** (full name, or a first name only one
+  character has): speaker tags, scene tracking and memory extraction all go through it.
+- **A job opens its model through `PreferredModel.OpenAsync`**: the owner's preferred profile for the
+  role, made into a client, with a missing profile or a profile that cannot be built as a failure.
 
 ## The director turn
 

@@ -105,14 +105,7 @@ public class ChatSession : OwnedEntity
     public IReadOnlyList<Character> PresentCharacters(IReadOnlyList<CharacterState> states) =>
         PresentStates(states).Select(s => s.Character).ToList();
 
-    public SceneSnapshot Snapshot() => new()
-    {
-        Location = Scene.Location,
-        TimeOfDay = Scene.TimeOfDay,
-        Mood = Scene.Mood,
-        PresentCharacterIds = [.. Scene.PresentCharacterIds],
-        Characters = CharacterStates.Select(CharacterSnapshot.Of).ToList(),
-    };
+    public SceneSnapshot Snapshot() => SceneSnapshot.Of(Scene, CharacterStates);
 
     /// <summary>
     /// Undoes what the messages from <paramref name="fromSequence"/> on left in the scene, the summary and memory, so
@@ -147,14 +140,7 @@ public class ChatSession : OwnedEntity
             return [];
         }
 
-        Scene = new SceneState
-        {
-            Location = snapshot.Location,
-            TimeOfDay = snapshot.TimeOfDay,
-            Mood = snapshot.Mood,
-            PresentCharacterIds = [.. snapshot.PresentCharacterIds],
-            TrackedUpToSequence = checkpoint.Sequence - 1,
-        };
+        Scene = snapshot.ToScene(trackedUpToSequence: checkpoint.Sequence - 1);
 
         var dropped = new List<CharacterState>();
         foreach (var state in CharacterStates.ToList())
@@ -186,14 +172,7 @@ public class ChatSession : OwnedEntity
             PersonaId = PersonaId,
             ChatModelProfileId = ChatModelProfileId,
             LastActivityAt = now,
-            Scene = new SceneState
-            {
-                Location = Scene.Location,
-                TimeOfDay = Scene.TimeOfDay,
-                Mood = Scene.Mood,
-                PresentCharacterIds = [.. Scene.PresentCharacterIds],
-                TrackedUpToSequence = Scene.TrackedUpToSequence,
-            },
+            Scene = Scene.Copy(),
             Summary = new SessionSummary { Text = Summary.Text, CoveredUpToSequence = Summary.CoveredUpToSequence },
             MemoriesExtractedUpToSequence = MemoriesExtractedUpToSequence,
         };
@@ -251,6 +230,15 @@ public class SceneState
 
     /// <summary>The last message scene tracking has read; later messages may have moved people, clothes or the place.</summary>
     public long TrackedUpToSequence { get; set; }
+
+    public SceneState Copy() => new()
+    {
+        Location = Location,
+        TimeOfDay = TimeOfDay,
+        Mood = Mood,
+        PresentCharacterIds = [.. PresentCharacterIds],
+        TrackedUpToSequence = TrackedUpToSequence,
+    };
 }
 
 /// <summary>Rolling summary of the messages that no longer fit in the short-term window.</summary>

@@ -93,7 +93,7 @@ public static class MemoryExtraction
 
         return names.EnumerateArray()
             .Where(n => n.ValueKind == JsonValueKind.String)
-            .Select(n => characters.FirstOrDefault(c => string.Equals(c.Name, n.GetString()?.Trim(), StringComparison.OrdinalIgnoreCase)))
+            .Select(n => CharacterNames.Find(characters, n.GetString()!))
             .OfType<Character>()
             .Select(c => c.Id)
             .Distinct()

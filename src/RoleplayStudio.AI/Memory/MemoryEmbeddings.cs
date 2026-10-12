@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Pgvector;
@@ -24,21 +23,14 @@ public sealed class MemoryEmbeddings(IChatClientFactory clients, ILogger<MemoryE
             return none;
         }
 
-        var profile = await db.ModelProfiles.PreferredFor(ModelRole.Embedding).AsNoTracking().FirstOrDefaultAsync(cancellationToken);
-        if (profile is null)
+        var opened = await PreferredModel.OpenAsync(db, ModelRole.Embedding, clients.CreateEmbeddingGenerator, logger, cancellationToken);
+        if (opened.IsFailure)
         {
-            logger.LogDebug("No embedding model; memories are kept without vectors");
             return none;
         }
 
-        var created = clients.CreateEmbeddingGenerator(profile);
-        if (created.IsFailure)
-        {
-            logger.LogWarning("Embedding model profile {ProfileId} cannot be turned into a generator", profile.Id);
-            return none;
-        }
-
-        using var generator = created.Value;
+        var (profile, client) = opened.Value;
+        using var generator = client;
         var generated = await ProviderErrors.TranslateAsync(profile, logger, async () =>
             Result.Success(await generator.GenerateAsync(texts, cancellationToken: cancellationToken)));
         if (generated.IsFailure)

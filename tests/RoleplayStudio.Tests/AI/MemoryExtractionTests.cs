@@ -37,6 +37,27 @@ public class MemoryExtractionTests
     }
 
     [Fact]
+    public void A_first_name_only_one_character_has_links_the_memory_to_them()
+    {
+        var thorne = new Character { Name = "Thorne Ashby" };
+        var reply = """{"memories":[{"text":"Thorne fixed the gate.","characters":["Thorne"]}]}""";
+
+        var memory = Assert.Single(MemoryExtraction.Parse(reply, [Mira, thorne])!);
+
+        Assert.Equal([thorne.Id], memory.CharacterIds);
+    }
+
+    [Fact]
+    public void A_first_name_two_characters_share_links_neither()
+    {
+        var reply = """{"memories":[{"text":"Ash left early.","characters":["Ash"]}]}""";
+
+        var memory = Assert.Single(MemoryExtraction.Parse(reply, [new Character { Name = "Ash Vale" }, new Character { Name = "Ash Moor" }])!);
+
+        Assert.Empty(memory.CharacterIds);
+    }
+
+    [Fact]
     public void An_empty_list_means_nothing_to_remember_rather_than_a_bad_reply()
     {
         Assert.Empty(MemoryExtraction.Parse("""{"memories":[]}""", [Mira])!);

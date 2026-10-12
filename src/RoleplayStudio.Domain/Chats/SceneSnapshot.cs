@@ -9,6 +9,24 @@ public class SceneSnapshot
     public List<Guid> PresentCharacterIds { get; set; } = [];
     public List<CharacterSnapshot> Characters { get; set; } = [];
 
+    public static SceneSnapshot Of(SceneState scene, IEnumerable<CharacterState> states) => new()
+    {
+        Location = scene.Location,
+        TimeOfDay = scene.TimeOfDay,
+        Mood = scene.Mood,
+        PresentCharacterIds = [.. scene.PresentCharacterIds],
+        Characters = states.Select(CharacterSnapshot.Of).ToList(),
+    };
+
+    public SceneState ToScene(long trackedUpToSequence) => new()
+    {
+        Location = Location,
+        TimeOfDay = TimeOfDay,
+        Mood = Mood,
+        PresentCharacterIds = [.. PresentCharacterIds],
+        TrackedUpToSequence = trackedUpToSequence,
+    };
+
     public SceneSnapshot Copy() => new()
     {
         Location = Location,

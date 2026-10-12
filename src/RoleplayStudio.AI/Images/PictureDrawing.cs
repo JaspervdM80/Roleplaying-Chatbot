@@ -47,21 +47,13 @@ public sealed class PictureDrawing(
     public async Task<Result<Guid>> DrawAsync(PictureJob job, CancellationToken cancellationToken)
     {
         await using var db = await dbFactory.CreateForOwnerAsync(job.OwnerId, cancellationToken);
-        var profile = await db.ModelProfiles.PreferredFor(ModelRole.Image).AsNoTracking().FirstOrDefaultAsync(cancellationToken);
-        if (profile is null)
+        var opened = await PreferredModel.OpenAsync(db, ModelRole.Image, clients.CreateImageGenerator, logger, cancellationToken, PictureService.NoImageModel);
+        if (opened.IsFailure)
         {
-            logger.LogWarning("No image model; skipped a picture for owner {OwnerId}", job.OwnerId);
-            return Result.Failure<Guid>(PictureService.NoImageModel);
+            return opened.To<Guid>();
         }
 
-        var created = clients.CreateImageGenerator(profile);
-        if (created.IsFailure)
-        {
-            logger.LogWarning("Model profile {ProfileId} cannot be turned into an image generator", profile.Id);
-            return created.To<Guid>();
-        }
-
-        var generator = created.Value;
+        var (profile, generator) = opened.Value;
         var traits = await generator.TraitsAsync(cancellationToken);
         var planned = job.RedrawOf is { } redrawOf
             ? await RedrawPlanAsync(db, redrawOf, traits.MaxReferenceImages, cancellationToken)

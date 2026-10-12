@@ -98,9 +98,5 @@ public sealed class CharacterService(IDbContextFactory<ApplicationDbContext> dbF
             return Result.Success();
         });
 
-    private Result NotFound(Guid id)
-    {
-        logger.LogWarning("Character {CharacterId} was not found", id);
-        return Result.Failure("That character no longer exists");
-    }
+    private Result NotFound(Guid id) => ServiceOperation.NotFound(logger, "character", id);
 }
