@@ -16,7 +16,7 @@ public class SceneTests(PostgresFixture postgres)
          "newcomers":[{"name":"Old Bess","role":"cook","age":61,"outfit":"Kitchen whites"}]}
         """;
 
-    private static FakeChatClientFactory Utility(string reply) => new(new FakeChatClient([reply]));
+    private static FakeModelClientFactory Utility(string reply) => new(new FakeChatClient([reply]));
 
     private async Task<ChatSession> ReloadAsync(StudioUser user, Guid sessionId)
     {

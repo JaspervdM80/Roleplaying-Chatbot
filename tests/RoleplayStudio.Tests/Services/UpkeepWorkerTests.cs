@@ -13,12 +13,12 @@ namespace RoleplayStudio.Tests.Services;
 [Collection(PostgresCollection.Name)]
 public class UpkeepWorkerTests(PostgresFixture postgres)
 {
-    private sealed class ThrowsFirstFactory(IChatClientFactory inner) : IChatClientFactory
+    private sealed class ThrowsFirstFactory(IModelClientFactory inner) : IModelClientFactory
     {
         private int _calls;
 
-        public Result<IChatClient> Create(ModelProfile profile) =>
-            Interlocked.Increment(ref _calls) == 1 ? throw new InvalidOperationException("Provider exploded") : inner.Create(profile);
+        public Result<IChatClient> CreateChatClient(ModelProfile profile) =>
+            Interlocked.Increment(ref _calls) == 1 ? throw new InvalidOperationException("Provider exploded") : inner.CreateChatClient(profile);
 
         public Result<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGenerator(ModelProfile profile) => inner.CreateEmbeddingGenerator(profile);
 
@@ -47,7 +47,7 @@ public class UpkeepWorkerTests(PostgresFixture postgres)
             }
         }
 
-        var clients = new ThrowsFirstFactory(new FakeChatClientFactory(new ScriptedChatClient(_ => "Sam came in for coffee.")));
+        var clients = new ThrowsFirstFactory(new FakeModelClientFactory(new ScriptedChatClient(_ => "Sam came in for coffee.")));
         using var worker = new UpkeepWorker(user.UpkeepQueue, user.SceneUpkeep(clients), user.Upkeep(clients), NullLogger<UpkeepWorker>.Instance);
         await worker.StartAsync(default);
         user.UpkeepQueue.Enqueue(new UpkeepJob(user.User.UserId!, first.Id));

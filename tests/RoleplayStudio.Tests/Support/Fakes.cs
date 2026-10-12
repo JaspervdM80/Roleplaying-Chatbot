@@ -111,9 +111,9 @@ public sealed class FakeImageGenerator(ImageModelTraits? traits = null) : IImage
     }
 }
 
-public sealed class FakeChatClientFactory(IChatClient client, IEmbeddingGenerator<string, Embedding<float>>? embeddings = null, IImageGenerator? images = null) : IChatClientFactory
+public sealed class FakeModelClientFactory(IChatClient client, IEmbeddingGenerator<string, Embedding<float>>? embeddings = null, IImageGenerator? images = null) : IModelClientFactory
 {
-    public Result<IChatClient> Create(ModelProfile profile) => Result.Success(client);
+    public Result<IChatClient> CreateChatClient(ModelProfile profile) => Result.Success(client);
 
     public Result<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGenerator(ModelProfile profile) =>
         embeddings is null ? Result.Failure<IEmbeddingGenerator<string, Embedding<float>>>("No embeddings in this test") : Result.Success(embeddings);

@@ -21,7 +21,7 @@ public sealed class OllamaModelCatalog(ILogger<OllamaModelCatalog> logger)
                 return Result.Failure<IReadOnlyList<OllamaModel>>("The base URL must be an http or https address");
             }
 
-            using var http = new HttpClient(ChatClientFactory.Handler, disposeHandler: false) { BaseAddress = uri, Timeout = Timeout };
+            using var http = ProviderHttp.Client(Timeout, uri);
             TagsResponse? tags;
             try
             {

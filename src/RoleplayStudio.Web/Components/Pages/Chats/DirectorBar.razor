@@ -1,0 +1,33 @@
+@using RoleplayStudio.AI.Chat
+
+<div role="group" aria-label="Director" class="chat-director">
+    <MudMenu Disabled="Disabled || Present.Count == 0" AnchorOrigin="Origin.TopLeft" TransformOrigin="Origin.BottomLeft">
+        <ActivatorContent>
+            <button type="button" class="chat-director-chip" disabled="@(Disabled || Present.Count == 0)" @onclick="context.ToggleAsync">
+                Let someone answer <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" />
+            </button>
+        </ActivatorContent>
+        <ChildContent>
+            @foreach (var (id, name) in Present)
+            {
+                <MudMenuItem OnClick="() => FromMenu(new DirectorHint.LetRespond(id))">@name</MudMenuItem>
+            }
+        </ChildContent>
+    </MudMenu>
+    <MudMenu Disabled="Disabled || Offstage.Count == 0" AnchorOrigin="Origin.TopLeft" TransformOrigin="Origin.BottomLeft">
+        <ActivatorContent>
+            <button type="button" class="chat-director-chip" disabled="@(Disabled || Offstage.Count == 0)" @onclick="context.ToggleAsync">
+                Bring someone in <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" />
+            </button>
+        </ActivatorContent>
+        <ChildContent>
+            @foreach (var character in Offstage)
+            {
+                <MudMenuItem OnClick="() => FromMenu(new DirectorHint.BringIn(character.Id))">@character.Name</MudMenuItem>
+            }
+        </ChildContent>
+    </MudMenu>
+    <button type="button" class="chat-director-chip" disabled="@Disabled" @onclick="() => OnDirect.InvokeAsync(new DirectorHint.SkipAhead())">Skip ahead</button>
+    <button type="button" class="chat-director-chip" disabled="@Disabled" @onclick="MoveSceneAsync">Move the scene</button>
+    <button type="button" class="chat-director-chip" disabled="@Disabled" @onclick="() => OnDirect.InvokeAsync(new DirectorHint.NarrationOnly())">Narration only</button>
+</div>

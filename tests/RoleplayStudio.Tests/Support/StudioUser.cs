@@ -29,19 +29,19 @@ public sealed class StudioUser(PostgresFixture postgres)
     public UpkeepQueue UpkeepQueue { get; } = new(NullLogger<UpkeepQueue>.Instance);
     public PictureQueue PictureQueue { get; } = new(NullLogger<PictureQueue>.Instance);
 
-    public MemoryRecall Recall(IChatClientFactory clients) =>
+    public MemoryRecall Recall(IModelClientFactory clients) =>
         new(postgres.DbFactory, User, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), Time, NullLogger<MemoryRecall>.Instance);
 
-    public MemoryUpkeep Upkeep(IChatClientFactory clients, MemoryNotifier? notifier = null) =>
+    public MemoryUpkeep Upkeep(IModelClientFactory clients, MemoryNotifier? notifier = null) =>
         new(postgres.DbFactory, clients, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), notifier ?? new MemoryNotifier(), Time, NullLogger<MemoryUpkeep>.Instance);
 
-    public MemoryService Memories(IChatClientFactory clients) =>
+    public MemoryService Memories(IModelClientFactory clients) =>
         new(postgres.DbFactory, User, new MemoryEmbeddings(clients, NullLogger<MemoryEmbeddings>.Instance), UpkeepQueue, Time, NullLogger<MemoryService>.Instance);
 
-    public SceneUpkeep SceneUpkeep(IChatClientFactory clients, SceneNotifier? notifier = null) =>
+    public SceneUpkeep SceneUpkeep(IModelClientFactory clients, SceneNotifier? notifier = null) =>
         new(postgres.DbFactory, clients, notifier ?? new SceneNotifier(), PictureQueue, Time, NullLogger<SceneUpkeep>.Instance);
 
-    public ChatTurnService Turns(IChatClientFactory clients) =>
+    public ChatTurnService Turns(IModelClientFactory clients) =>
         new(Sessions, History, Profiles, clients, Recall(clients), UpkeepQueue, User, NullLogger<ChatTurnService>.Instance);
 
     public async Task<Persona> PersonaAsync(string name = "Sam") => (await Personas.CreateAsync(new Persona { Name = name })).Value;

@@ -28,7 +28,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
 
     private ImageService Images(StudioUser user) => new(postgres.DbFactory, Store, user.User, NullLogger<ImageService>.Instance);
 
-    private PictureWorker Worker(IChatClientFactory clients, PictureNotifier? notifier = null)
+    private PictureWorker Worker(IModelClientFactory clients, PictureNotifier? notifier = null)
     {
         notifier ??= new PictureNotifier();
         var drawing = new PictureDrawing(postgres.DbFactory, clients, Store, _queue, notifier, TimeProvider.System, NullLogger<PictureDrawing>.Instance);
@@ -36,7 +36,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     }
 
     /// <summary>Takes the job the page queued off the queue and draws it, as the background worker would.</summary>
-    private async Task<Result<Guid>> DrawQueuedAsync(IChatClientFactory clients, PictureNotifier? notifier = null)
+    private async Task<Result<Guid>> DrawQueuedAsync(IModelClientFactory clients, PictureNotifier? notifier = null)
     {
         Assert.True(_queue.Reader.TryRead(out var job));
         var drawn = await Worker(clients, notifier).RunAsync(job, default);
@@ -68,7 +68,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         var writer = new FakeChatClient([Written]);
 
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
-        Assert.True((await DrawQueuedAsync(new FakeChatClientFactory(writer, images: new FakeImageGenerator()))).IsSuccess);
+        Assert.True((await DrawQueuedAsync(new FakeModelClientFactory(writer, images: new FakeImageGenerator()))).IsSuccess);
 
         var asked = writer.LastMessages![1].Text;
         Assert.Contains(opening.Content, asked);
@@ -81,9 +81,9 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         var (user, _, _, miraId) = await ReadyChatAsync();
 
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var first = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var first = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var second = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var second = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
 
         var mira = (await user.Characters.ListAsync()).Value.Single(c => c.Id == miraId);
         Assert.Equal(first.Value, mira.ReferenceImageId);
@@ -96,11 +96,11 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, session, opening, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var portrait = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         var drawer = new FakeImageGenerator(Referencing);
 
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, miraId)).IsSuccess);
-        Assert.True((await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer))).IsSuccess);
+        Assert.True((await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: drawer))).IsSuccess);
 
         Assert.Equal(FakeImageGenerator.Png, Assert.Single(drawer.LastRequest!.References!).Data);
         Assert.Equal((await ImageAsync(user, portrait.Value)).Seed, drawer.LastRequest.Seed);
@@ -111,11 +111,11 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, session, opening, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         var drawer = new FakeImageGenerator();
 
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, miraId)).IsSuccess);
-        await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer));
+        await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: drawer));
 
         Assert.Empty(drawer.LastRequest!.References!);
     }
@@ -125,11 +125,11 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, session, opening, _) = await ReadyChatAsync();
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
-        var first = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var first = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         var original = await ImageAsync(user, first.Value);
 
         Assert.True((await Pictures(user).RedrawAsync(original.Id)).IsSuccess);
-        var again = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient(["not asked"]), images: new FakeImageGenerator()));
+        var again = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient(["not asked"]), images: new FakeImageGenerator()));
 
         var redrawn = await ImageAsync(user, again.Value);
         Assert.Equal((original.Prompt, original.SessionId, original.MessageId, original.Caption), (redrawn.Prompt, redrawn.SessionId, redrawn.MessageId, redrawn.Caption));
@@ -176,7 +176,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
 
         await Pictures(user).CancelAsync(queued.Value);
         Assert.Empty((await Pictures(user).PendingAsync()).Value);
-        var drawn = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer));
+        var drawn = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: drawer));
 
         Assert.True(drawn.IsCancelled);
         Assert.Null(drawer.LastRequest);
@@ -192,7 +192,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         notifier.Changed += changes.Add;
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
         Assert.True(_queue.Reader.TryRead(out var job));
-        var drawing = new PictureDrawing(postgres.DbFactory, new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()), Store, _queue, notifier, TimeProvider.System, NullLogger<PictureDrawing>.Instance);
+        var drawing = new PictureDrawing(postgres.DbFactory, new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()), Store, _queue, notifier, TimeProvider.System, NullLogger<PictureDrawing>.Instance);
 
         var drawn = await drawing.DrawAsync(job, default);
 
@@ -206,9 +206,9 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, session, opening, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
-        var scene = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var scene = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var portrait = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         var other = new StudioUser(postgres);
 
         Assert.Equal([scene.Value], (await Images(user).ListForChatAsync(session.Id)).Value.Select(i => i.Id));
@@ -225,7 +225,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, _, _, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var portrait = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
 
         Assert.True((await Images(user).DeleteAsync(portrait.Value)).IsSuccess);
 
@@ -239,9 +239,9 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, session, opening, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, miraId)).IsSuccess);
-        var picture = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var picture = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
-        var scene = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var scene = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
 
         Assert.True((await Images(user).SetReferenceAsync(picture.Value)).IsSuccess);
         Assert.True((await Images(user).SetReferenceAsync(scene.Value)).IsFailure);
@@ -264,12 +264,12 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, session, opening, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var portrait = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         var writer = new FakeChatClient([Written]);
         var drawer = new FakeImageGenerator(Referencing);
 
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
-        var scene = await DrawQueuedAsync(new FakeChatClientFactory(writer, images: drawer));
+        var scene = await DrawQueuedAsync(new FakeModelClientFactory(writer, images: drawer));
 
         Assert.Single(drawer.LastRequest!.References!);
         Assert.Contains("Shown in reference image 1", writer.LastMessages![1].Text);
@@ -283,7 +283,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         var drawer = new FakeImageGenerator(ImageModelTraits.Unknown with { TakesNegativePrompt = false });
 
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
-        var drawn = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer));
+        var drawn = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: drawer));
 
         Assert.Null(drawer.LastRequest!.NegativePrompt);
         Assert.Null((await ImageAsync(user, drawn.Value)).NegativePrompt);
@@ -294,11 +294,11 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, _, _, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         var drawer = new FakeImageGenerator(Referencing);
 
         Assert.True(_queue.Enqueue(new PictureJob(user.User.UserId!, null, null, miraId, RenewsReference: true)));
-        var renewed = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: drawer));
+        var renewed = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: drawer));
 
         Assert.Empty(drawer.LastRequest!.References!);
         Assert.Equal(renewed.Value, (await user.Characters.ListAsync()).Value.Single(c => c.Id == miraId).ReferenceImageId);
@@ -308,9 +308,9 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, session, opening, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var portrait = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
-        var scene = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator(Referencing)));
+        var scene = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator(Referencing)));
         return (user, portrait.Value, scene.Value);
     }
 
@@ -321,7 +321,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         var drawer = new FakeImageGenerator(Referencing);
 
         Assert.True((await Pictures(user).RedrawAsync(sceneId)).IsSuccess);
-        var again = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient(["not asked"]), images: drawer));
+        var again = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient(["not asked"]), images: drawer));
 
         Assert.Equal(FakeImageGenerator.Png, Assert.Single(drawer.LastRequest!.References!).Data);
         Assert.Equal([portraitId], (await ImageAsync(user, again.Value)).ReferenceImageIds);
@@ -335,7 +335,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         var drawer = new FakeImageGenerator(Referencing);
 
         Assert.True((await Pictures(user).RedrawAsync(sceneId)).IsSuccess);
-        var again = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient(["not asked"]), images: drawer));
+        var again = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient(["not asked"]), images: drawer));
 
         Assert.True(again.IsFailure);
         Assert.Contains("gone", again.Error);
@@ -348,7 +348,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         var (user, _, sceneId) = await SceneAfterPortraitAsync();
 
         Assert.True((await Pictures(user).RedrawAsync(sceneId)).IsSuccess);
-        var again = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient(["not asked"]), images: new FakeImageGenerator()));
+        var again = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient(["not asked"]), images: new FakeImageGenerator()));
 
         Assert.True(again.IsFailure);
         Assert.Contains("fewer reference portraits", again.Error);
@@ -359,13 +359,13 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
     {
         var (user, session, opening, miraId) = await ReadyChatAsync();
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var portrait = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         Store.Delete((await ImageAsync(user, portrait.Value)).StoragePath);
         var writer = new FakeChatClient([Written]);
         var drawer = new FakeImageGenerator(Referencing);
 
         Assert.True((await Pictures(user).PictureMessageAsync(session.Id, opening.Id, null)).IsSuccess);
-        Assert.True((await DrawQueuedAsync(new FakeChatClientFactory(writer, images: drawer))).IsSuccess);
+        Assert.True((await DrawQueuedAsync(new FakeModelClientFactory(writer, images: drawer))).IsSuccess);
 
         Assert.Empty(drawer.LastRequest!.References!);
         Assert.DoesNotContain("reference image", writer.LastMessages![1].Text);
@@ -382,7 +382,7 @@ public sealed class PictureTests(PostgresFixture postgres) : IDisposable
         }
 
         Assert.True((await Pictures(user).DrawPortraitAsync(miraId)).IsSuccess);
-        var portrait = await DrawQueuedAsync(new FakeChatClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
+        var portrait = await DrawQueuedAsync(new FakeModelClientFactory(new FakeChatClient([Written]), images: new FakeImageGenerator()));
         Assert.True((await Images(user).SetReferenceAsync(portrait.Value)).IsSuccess);
 
         Assert.Null((await user.Characters.ListAsync()).Value.Single(c => c.Id == miraId).IntroducedInSessionId);

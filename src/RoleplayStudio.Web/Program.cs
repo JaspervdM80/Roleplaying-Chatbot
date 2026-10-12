@@ -70,11 +70,11 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 builder.Services.AddScoped<ICurrentUser, AuthenticationStateCurrentUser>();
 builder.Services.AddScoped<ModelProfileService>();
 builder.Services.AddSingleton(services => RunwareModelCatalog.Create(services.GetRequiredService<TimeProvider>(), services.GetRequiredService<ILogger<RunwareModelCatalog>>()));
-builder.Services.AddSingleton<IChatClientFactory>(services => new ChatClientFactory(
+builder.Services.AddSingleton<IModelClientFactory>(services => new ModelClientFactory(
     services.GetRequiredService<IConfiguration>(),
     services.GetRequiredService<RunwareModelCatalog>(),
     recordPromptText: builder.Environment.IsDevelopment()));
-builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddSource(ChatClientFactory.TelemetrySource));
+builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddSource(ModelClientFactory.TelemetrySource));
 builder.Services.AddScoped<ModelConnectionService>();
 builder.Services.AddScoped<OllamaModelCatalog>();
 builder.Services.AddScoped<PlaygroundChatService>();

@@ -33,43 +33,13 @@
 
         <ChatTranscript @ref="_transcript" Turns="_turns" Streaming="_streaming" Portraits="_portraits">
             <TurnFooter Context="entry">
-                <TurnPictures Turn="entry.Turn" Pictures="PicturesOf(entry.Turn)" Pending="PendingOf(entry.Turn)" Subjects="_subjects" Disabled="_streaming"
+                <TurnPictures Turn="entry.Turn" Pictures="_pictures.Of(entry.Turn)" Pending="_pictures.PendingOf(entry.Turn)" Subjects="_subjects" Disabled="_streaming"
                               Actions="entry.EndsTurn" OnPicture="subject => PictureAsync(entry.Turn, subject)" OnOpen="OpenAsync" OnCancel="CancelPictureAsync"
                               MoreActions="@(entry.Turn.FromUser || entry.EndsTurn ? TurnMenu(entry.Turn) : null)" />
             </TurnFooter>
         </ChatTranscript>
 
-        <div role="group" aria-label="Director" class="chat-director">
-            <MudMenu Disabled="!CanDirect || _subjects.Count == 0" AnchorOrigin="Origin.TopLeft" TransformOrigin="Origin.BottomLeft">
-                <ActivatorContent>
-                    <button type="button" class="chat-director-chip" disabled="@(!CanDirect || _subjects.Count == 0)">
-                        Let someone answer <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" />
-                    </button>
-                </ActivatorContent>
-                <ChildContent>
-                    @foreach (var (id, name) in _subjects)
-                    {
-                        <MudMenuItem OnClick="() => DirectFromMenu(new DirectorHint.LetRespond(id))">@name</MudMenuItem>
-                    }
-                </ChildContent>
-            </MudMenu>
-            <MudMenu Disabled="!CanDirect || Offstage.Count == 0" AnchorOrigin="Origin.TopLeft" TransformOrigin="Origin.BottomLeft">
-                <ActivatorContent>
-                    <button type="button" class="chat-director-chip" disabled="@(!CanDirect || Offstage.Count == 0)">
-                        Bring someone in <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" />
-                    </button>
-                </ActivatorContent>
-                <ChildContent>
-                    @foreach (var character in Offstage)
-                    {
-                        <MudMenuItem OnClick="() => DirectFromMenu(new DirectorHint.BringIn(character.Id))">@character.Name</MudMenuItem>
-                    }
-                </ChildContent>
-            </MudMenu>
-            <button type="button" class="chat-director-chip" disabled="@(!CanDirect)" @onclick="() => DirectAsync(new DirectorHint.SkipAhead())">Skip ahead</button>
-            <button type="button" class="chat-director-chip" disabled="@(!CanDirect)" @onclick="MoveSceneAsync">Move the scene</button>
-            <button type="button" class="chat-director-chip" disabled="@(!CanDirect)" @onclick="() => DirectAsync(new DirectorHint.NarrationOnly())">Narration only</button>
-        </div>
+        <DirectorBar Present="_subjects" Offstage="Offstage" Disabled="!CanDirect" OnDirect="DirectAsync" />
 
         <div class="chat-input">
             <MudTextField @bind-Value="_draft" Placeholder="Say something…" Lines="1" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
@@ -90,7 +60,7 @@
 
     @if (_session is not null)
     {
-        <ScenePanel Session="_session" Toggled="_sceneToggled" OnClose="ToggleScene" Pictures="_pictures" Pending="_pending" OnOpen="OpenAsync" />
+        <ScenePanel Session="_session" Toggled="_sceneToggled" OnClose="ToggleScene" Pictures="_pictures.Drawn" Pending="_pictures.Pending" OnOpen="OpenAsync" />
     }
 </div>
 

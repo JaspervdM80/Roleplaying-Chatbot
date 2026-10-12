@@ -9,7 +9,7 @@ using RoleplayStudio.Infrastructure.Services;
 
 namespace RoleplayStudio.AI.Memory;
 
-public sealed class MemoryEmbeddings(IChatClientFactory clients, ILogger<MemoryEmbeddings> logger)
+public sealed class MemoryEmbeddings(IModelClientFactory clients, ILogger<MemoryEmbeddings> logger)
 {
     /// <summary>
     /// One vector per text with the owner's embedding model, in order. A text gets null when there is no usable

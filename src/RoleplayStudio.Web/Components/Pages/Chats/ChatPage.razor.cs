@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
@@ -27,8 +26,7 @@ public partial class ChatPage
     private bool _sceneToggled;
     private CancellationTokenSource? _stop;
     private ChatTranscript? _transcript;
-    private IReadOnlyList<GeneratedImage> _pictures = [];
-    private IReadOnlyList<PendingPicture> _pending = [];
+    private ChatPictures _pictures = null!;
     private IReadOnlyList<(Guid Id, string Name)> _subjects = [];
     private IReadOnlyDictionary<Guid, Guid?> _portraits = new Dictionary<Guid, Guid?>();
 
@@ -75,6 +73,7 @@ public partial class ChatPage
 
     protected override void OnInitialized()
     {
+        _pictures = new ChatPictures(Images, Pictures);
         SceneNotifier.Changed += OnSceneChanged;
         PictureNotifier.Changed += OnPictureChanged;
     }
@@ -114,7 +113,7 @@ public partial class ChatPage
         _transcript?.RequestScrollToEnd();
         ShowCast(_session);
         await LoadCastAsync();
-        await LoadPicturesAsync();
+        await _pictures.LoadAsync(Id, Cancellation);
         return result;
     }
 
@@ -177,8 +176,6 @@ public partial class ChatPage
         await StreamReplyAsync(hint);
     }
 
-    private void DirectFromMenu(DirectorHint hint) => FromMenu(() => DirectAsync(hint));
-
     // A menu item awaits its handler before the menu closes, which would keep it open for the whole reply.
     private void FromMenu(Func<Task> action) => _ = InvokeAsync(action);
 
@@ -227,20 +224,6 @@ public partial class ChatPage
         }
     }
 
-    private async Task MoveSceneAsync()
-    {
-        if (!CanDirect)
-        {
-            return;
-        }
-
-        var dialog = await Dialogs.ShowAsync<MoveSceneDialog>("Move the scene", DialogServiceExtensions.Options with { MaxWidth = MaxWidth.ExtraSmall });
-        if (await dialog.Result is { Canceled: false, Data: string place })
-        {
-            await DirectAsync(new DirectorHint.MoveTo(place));
-        }
-    }
-
     private async Task ContinueAsync()
     {
         if (_session is not null && !_streaming)
@@ -254,9 +237,7 @@ public partial class ChatPage
 
     private async Task StreamAndSaveReplyAsync(DirectorHint? hint)
     {
-        var parser = new SpeakerTagParser(_session!.PresentCharacters());
-        var streamed = new StringBuilder();
-        var live = new List<ChatTurnView>();
+        var reply = new LiveReply(_session!.PresentCharacters(), [.. _session.CharacterStates.Select(s => s.Character)], _turns);
         _stop = CancellationTokenSource.CreateLinkedTokenSource(Cancellation);
         var sinceRender = Stopwatch.StartNew();
 
@@ -264,12 +245,11 @@ public partial class ChatPage
             Id,
             text =>
             {
-                streamed.Append(text);
-                parser.Append(text);
+                reply.Append(text);
                 if (sinceRender.Elapsed >= RenderThrottle)
                 {
                     sinceRender.Restart();
-                    ShowSegments(parser.Segments, live);
+                    reply.Show();
                     StateHasChanged();
                 }
             },
@@ -278,12 +258,11 @@ public partial class ChatPage
 
         _stop.Dispose();
         _stop = null;
-        ShowSegments(parser.Complete(), live);
-        _turns.RemoveAll(live.Contains);
-        if (streamed.ToString().Trim().Length > 0)
+        reply.Remove();
+        if (reply.Text.Trim().Length > 0)
         {
             // Saved even when stopped or the user left: what was streamed is what they saw.
-            var saved = await Turns.SaveReplyAsync(Id, streamed.ToString());
+            var saved = await Turns.SaveReplyAsync(Id, reply.Text);
             if (Snackbar.Report(saved))
             {
                 _turns.AddRange(saved.Value.Select(ChatTurnView.Of));
@@ -310,24 +289,6 @@ public partial class ChatPage
         finally
         {
             _streaming = false;
-        }
-    }
-
-    /// <summary>Shows the reply so far as one turn per speaker; a segment only ever grows, so each keeps its place.</summary>
-    private void ShowSegments(IReadOnlyList<ReplySegment> segments, List<ChatTurnView> live)
-    {
-        for (var i = 0; i < segments.Count; i++)
-        {
-            if (i == live.Count)
-            {
-                var speaker = _session!.CharacterStates.Select(s => s.Character).FirstOrDefault(c => c.Id == segments[i].CharacterId);
-                live.Add(speaker is null
-                    ? new ChatTurnView(TurnVoice.Narration, ChatSession.NarratorName, "")
-                    : new ChatTurnView(TurnVoice.Character, speaker.Name, "", speakerId: speaker.Id));
-                _turns.Add(live[i]);
-            }
-
-            live[i].Replace(segments[i].Text);
         }
     }
 
@@ -381,39 +342,15 @@ public partial class ChatPage
         _portraits = session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.ReferenceImageId);
     }
 
-    private IReadOnlyList<GeneratedImage> PicturesOf(ChatTurnView turn) =>
-        _pictures.Where(p => p.MessageId == turn.MessageId).OrderBy(p => p.CreatedAt).ToList();
-
-    private IReadOnlyList<PendingPicture> PendingOf(ChatTurnView turn) => _pending.Where(p => p.MessageId == turn.MessageId).ToList();
-
-    private async Task LoadPicturesAsync()
-    {
-        var pictures = await Images.ListForChatAsync(Id, Cancellation);
-        if (pictures.IsSuccess)
-        {
-            _pictures = pictures.Value;
-        }
-
-        var pending = await Pictures.PendingAsync();
-        if (pending.IsSuccess)
-        {
-            _pending = pending.Value.Where(p => p.SessionId == Id).ToList();
-        }
-    }
-
     private async Task PictureAsync(ChatTurnView turn, Guid? characterId)
     {
-        if (turn.MessageId is { } messageId && Snackbar.Report(await Pictures.PictureMessageAsync(Id, messageId, characterId)))
+        if (turn.MessageId is { } messageId)
         {
-            await LoadPicturesAsync();
+            Snackbar.Report(await _pictures.PictureAsync(Id, messageId, characterId, Cancellation));
         }
     }
 
-    private async Task CancelPictureAsync(PendingPicture pending)
-    {
-        Snackbar.Report(await Pictures.CancelAsync(pending.Id));
-        await LoadPicturesAsync();
-    }
+    private async Task CancelPictureAsync(PendingPicture pending) => Snackbar.Report(await _pictures.CancelAsync(Id, pending, Cancellation));
 
     private async Task OpenAsync(GeneratedImage picture)
     {
@@ -424,9 +361,9 @@ public partial class ChatPage
 
         var names = _session.CharacterStates.ToDictionary(s => s.CharacterId, s => s.Character.Name);
         var references = _session.CharacterStates.Select(s => s.Character.ReferenceImageId).OfType<Guid>().ToHashSet();
-        var pictures = _pictures.OrderBy(p => p.CreatedAt).ToList();
+        var pictures = _pictures.Drawn.OrderBy(p => p.CreatedAt).ToList();
         await Dialogs.ShowPicturesAsync(pictures, pictures.IndexOf(picture), names, references);
-        await LoadPicturesAsync();
+        await _pictures.LoadAsync(Id, Cancellation);
         await ReloadSceneAsync();
     }
 
@@ -436,7 +373,7 @@ public partial class ChatPage
         {
             _ = InvokeAsync(async () =>
             {
-                await LoadPicturesAsync();
+                await _pictures.LoadAsync(Id, Cancellation);
                 if (change.Outcome is { } outcome)
                 {
                     Snackbar.Report(outcome);

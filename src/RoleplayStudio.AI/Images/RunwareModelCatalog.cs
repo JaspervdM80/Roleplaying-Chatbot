@@ -21,7 +21,7 @@ public sealed class RunwareModelCatalog(HttpClient http, TimeProvider time, ILog
     private (IReadOnlyDictionary<string, Uri> Schemas, DateTimeOffset ReadAt)? _index;
 
     public static RunwareModelCatalog Create(TimeProvider time, ILogger<RunwareModelCatalog> logger) =>
-        new(new HttpClient(ChatClientFactory.Handler, disposeHandler: false) { Timeout = TimeSpan.FromSeconds(20) }, time, logger);
+        new(ProviderHttp.Client(TimeSpan.FromSeconds(20)), time, logger);
 
     internal static RunwareModelCatalog Default { get; } = Create(TimeProvider.System, NullLogger<RunwareModelCatalog>.Instance);
 

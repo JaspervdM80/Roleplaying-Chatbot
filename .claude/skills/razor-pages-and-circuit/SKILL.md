@@ -61,7 +61,7 @@ A chat reply arrives token by token from `IChatClient.GetStreamingResponseAsync`
 - A "Stop" button cancels its own `CancellationTokenSource` linked to `Cancellation`; the partial
   reply is saved as it stands.
 - Disable the send box while a reply streams, or two turns interleave in one session.
-- **A chat reply streams through `SpeakerTagParser`** as one live turn per segment, swapped for the
+- **A chat reply streams through `SpeakerTagParser`** (held by `LiveReply`) as one live turn per segment, swapped for the
   saved messages at the end. Turn actions show once per run of model turns between user messages,
   under its last part (`TurnFooterContext.EndsTurn`).
 - **Message text is prose, not markup**: `ProseRun` reads `*italics*` and `**bold**` within a line;

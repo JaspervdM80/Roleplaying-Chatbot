@@ -11,15 +11,15 @@ namespace RoleplayStudio.AI.Upkeep;
 public sealed class UtilityModel(ModelProfile profile, IChatClient client, ILogger logger) : IDisposable
 {
     /// <summary>Null when the owner has no utility model or it cannot be turned into a client; the job is then skipped.</summary>
-    public static async Task<UtilityModel?> OpenAsync(ApplicationDbContext db, IChatClientFactory clients, ILogger logger, CancellationToken cancellationToken)
+    public static async Task<UtilityModel?> OpenAsync(ApplicationDbContext db, IModelClientFactory clients, ILogger logger, CancellationToken cancellationToken)
     {
-        var opened = await PreferredModel.OpenAsync(db, ModelRole.Utility, clients.Create, "Add a utility model on the models page", logger, cancellationToken);
+        var opened = await PreferredModel.OpenAsync(db, ModelRole.Utility, clients.CreateChatClient, "Add a utility model on the models page", logger, cancellationToken);
         return opened.IsSuccess ? new UtilityModel(opened.Value.Profile, opened.Value.Client, logger) : null;
     }
 
     public Task<Result<string>> AskAsync(IReadOnlyList<ChatMessage> prompt, CancellationToken cancellationToken) =>
         ProviderErrors.TranslateAsync(profile, logger, async () =>
-            Result.Success((await client.GetResponseAsync(prompt, ChatClientFactory.OptionsFor(profile), cancellationToken)).Text));
+            Result.Success((await client.GetResponseAsync(prompt, profile.ToChatOptions(), cancellationToken)).Text));
 
     public void Dispose() => client.Dispose();
 }

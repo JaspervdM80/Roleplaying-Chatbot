@@ -13,7 +13,7 @@ public class MemoryServiceTests(PostgresFixture postgres)
 {
     private static FakeEmbeddingGenerator ByTopic() => new(text => FakeEmbeddingGenerator.Axis(text.Contains("coffee", StringComparison.OrdinalIgnoreCase) ? 0 : 1));
 
-    private static FakeChatClientFactory Clients(FakeEmbeddingGenerator? embeddings = null) => new(new FakeChatClient([]), embeddings);
+    private static FakeModelClientFactory Clients(FakeEmbeddingGenerator? embeddings = null) => new(new FakeChatClient([]), embeddings);
 
     private static async Task TalkAsync(StudioUser user, Guid sessionId, int exchanges, string line)
     {
@@ -139,7 +139,7 @@ public class MemoryServiceTests(PostgresFixture postgres)
         var session = await user.ChatAsync();
         await user.UtilityModelAsync();
         await TalkAsync(user, session.Id, 10, new string('x', 1_500));
-        await user.Upkeep(new FakeChatClientFactory(new ScriptedChatClient(_ => "Sam came in for coffee."))).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+        await user.Upkeep(new FakeModelClientFactory(new ScriptedChatClient(_ => "Sam came in for coffee."))).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
         var covered = (await SessionAsync(user, session.Id)).Summary.CoveredUpToSequence;
 
         var saved = await user.Memories(Clients()).SaveSummaryAsync(session.Id, "  Sam came in for coffee and stayed.  ", covered);
@@ -176,7 +176,7 @@ public class MemoryServiceTests(PostgresFixture postgres)
         await TalkAsync(user, session.Id, 20, line);
         await user.Memories(Clients()).SaveSummaryAsync(session.Id, "Notes the user wrote.", 0);
         var stories = new List<string>();
-        var utility = new FakeChatClientFactory(new ScriptedChatClient(prompt =>
+        var utility = new FakeModelClientFactory(new ScriptedChatClient(prompt =>
         {
             if (prompt[0].Text.Contains("long-term memory"))
             {
@@ -211,7 +211,7 @@ public class MemoryServiceTests(PostgresFixture postgres)
         await TalkAsync(user, session.Id, 10, new string('x', 1_500));
         var editedFrom = (await SessionAsync(user, session.Id)).Summary.CoveredUpToSequence;
 
-        await user.Upkeep(new FakeChatClientFactory(new ScriptedChatClient(_ => "Sam came in for coffee."))).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+        await user.Upkeep(new FakeModelClientFactory(new ScriptedChatClient(_ => "Sam came in for coffee."))).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
         var saved = await user.Memories(Clients()).SaveSummaryAsync(session.Id, "A draft about the first few messages.", editedFrom);
 
         Assert.True(saved.IsFailure);
@@ -226,7 +226,7 @@ public class MemoryServiceTests(PostgresFixture postgres)
         await user.UtilityModelAsync();
         await TalkAsync(user, session.Id, 10, new string('x', 1_500));
         var memories = user.Memories(Clients());
-        var utility = new FakeChatClientFactory(new ScriptedChatClient(prompt =>
+        var utility = new FakeModelClientFactory(new ScriptedChatClient(prompt =>
         {
             if (prompt[0].Text.Contains("long-term memory"))
             {

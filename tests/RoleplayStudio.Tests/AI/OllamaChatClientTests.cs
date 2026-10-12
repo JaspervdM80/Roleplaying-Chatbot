@@ -27,8 +27,8 @@ public sealed class OllamaChatClientTests : IDisposable
 
     private IChatClient Client()
     {
-        var factory = new ChatClientFactory(new ConfigurationBuilder().Build());
-        return factory.Create(new ModelProfile { Name = "Local", Provider = ProviderKind.Ollama, BaseUrl = _baseUrl, ModelId = "qwen3:8b" }).Value;
+        var factory = new ModelClientFactory(new ConfigurationBuilder().Build());
+        return factory.CreateChatClient(new ModelProfile { Name = "Local", Provider = ProviderKind.Ollama, BaseUrl = _baseUrl, ModelId = "qwen3:8b" }).Value;
     }
 
     [Fact]

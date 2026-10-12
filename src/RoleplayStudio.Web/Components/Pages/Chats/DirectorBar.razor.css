@@ -1,0 +1,54 @@
+.chat-director {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chat-director-chip {
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: none;
+    color: var(--ink-muted);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.chat-director-chip:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+@media (hover: hover) {
+    .chat-director-chip:not(:disabled):hover {
+        background: var(--hover);
+        color: var(--ink);
+    }
+}
+
+@media (max-width: 599.98px), (max-height: 559.98px) {
+    .chat-director {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .chat-director ::deep .mud-menu {
+        flex-shrink: 0;
+    }
+
+    .chat-director-chip {
+        flex-shrink: 0;
+        height: 44px;
+        padding: 0 14px;
+        font-size: 0.875rem;
+    }
+}
