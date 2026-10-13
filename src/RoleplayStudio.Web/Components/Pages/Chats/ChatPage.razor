@@ -60,7 +60,7 @@
 
     @if (_session is not null)
     {
-        <ScenePanel Session="_session" Toggled="_sceneToggled" OnClose="ToggleScene" Pictures="_pictures.Drawn" Pending="_pictures.Pending" OnOpen="OpenAsync" />
+        <ScenePanel Session="_session" Toggled="_sceneToggled" OnClose="ToggleScene" Pictures="_pictures.Drawn" Pending="_pictures.Pending" OnOpen="OpenAsync" OnChanged="ReloadSceneAsync" />
     }
 </div>
 

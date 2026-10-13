@@ -1,4 +1,8 @@
 @using RoleplayStudio.AI.Images
+@using RoleplayStudio.Domain.Chats
+@using RoleplayStudio.Infrastructure.Services
+@inject ChatSessionService Sessions
+@inject ISnackbar Snackbar
 
 <MudDialog Class="person-dialog">
     <TitleContent>
@@ -14,32 +18,96 @@
         </div>
     </TitleContent>
     <DialogContent>
-        @if (Person.PortraitId is { } portraitId)
+        @if (_editing)
         {
-            <img src="@ImageEndpoints.Url(portraitId)" alt="Portrait of @Person.Name" class="person-portrait" />
+            <div class="person-fields">
+                <MudTextField @bind-Value="_wearing" Label="Wearing" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined" AutoFocus="true"
+                              HelperText="@(Person.IsPersona ? "Leave it empty to go back to your usual outfit." : "Everything they wear now.")" />
+                @if (!Person.IsPersona)
+                {
+                    <MudTextField @bind-Value="_status" Label="Feeling" Variant="Variant.Outlined" HelperText="A word or two, like Warm or Wary." />
+                    <MudTextField @bind-Value="_relationship" Label="@($"With {PersonaName}")" Variant="Variant.Outlined" HelperText="How they stand with you, in a few words." />
+                    <MudTextField @bind-Value="_changes" Label="Changes since the start" Lines="2" Sizing="InputSizing.Auto" MaxLines="6" Variant="Variant.Outlined"
+                                  HelperText="Lasting changes to how they look, like a new scar or cut hair." />
+                }
+            </div>
         }
+        else
+        {
+            @if (Person.PortraitId is { } portraitId)
+            {
+                <img src="@ImageEndpoints.Url(portraitId)" alt="Portrait of @Person.Name" class="person-portrait" />
+            }
 
-        <dl class="person-facts">
-            @Fact("Age", Person.Age?.ToString())
-            @Fact("Gender", Person.Gender)
-            @Fact("About", Person.Description)
-            @Fact("Personality", Person.Personality)
-            @Fact("Looks", Person.Looks)
-            @Fact("Wearing", Person.Wearing)
-            @Fact("Changes", Person.Changes)
-        </dl>
+            <dl class="person-facts">
+                @Fact("Age", Person.Age?.ToString())
+                @Fact("Gender", Person.Gender)
+                @Fact("About", Person.Description)
+                @Fact("Personality", Person.Personality)
+                @Fact("Looks", Person.Looks)
+                @Fact("Wearing", Person.Wearing)
+                @Fact("Changes", Person.Changes)
+                @Fact($"With {PersonaName}", Person.Relationship)
+            </dl>
+        }
     </DialogContent>
     <DialogActions>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => Dialog.Close()">Close</MudButton>
+        @if (_editing)
+        {
+            <MudButton OnClick="() => _editing = false" Disabled="_saving">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving">Save</MudButton>
+        }
+        else
+        {
+            <MudButton StartIcon="@Icons.Material.Outlined.Edit" OnClick="Edit">Edit</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => Dialog.Close()">Close</MudButton>
+        }
     </DialogActions>
 </MudDialog>
 
 @code {
+    private bool _editing;
+    private CharacterSnapshot _opened = new();
+    private bool _saving;
+    private string? _wearing;
+    private string? _status;
+    private string? _relationship;
+    private string? _changes;
+
     [CascadingParameter]
     private IMudDialogInstance Dialog { get; set; } = null!;
 
     [Parameter, EditorRequired]
     public ScenePerson Person { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public Guid SessionId { get; set; }
+
+    [Parameter, EditorRequired]
+    public string PersonaName { get; set; } = "";
+
+    private void Edit()
+    {
+        _opened = Snapshot(Person.Wearing, Person.Status, Person.Relationship, Person.Changes);
+        (_wearing, _status, _relationship, _changes) = (Person.Wearing, Person.Status, Person.Relationship, Person.Changes);
+        _editing = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = Person.IsPersona
+            ? await Sessions.CorrectPersonaOutfitAsync(SessionId, _opened.CurrentOutfit, _wearing)
+            : await Sessions.CorrectCharacterAsync(SessionId, _opened, Snapshot(_wearing, _status, _relationship, _changes));
+        _saving = false;
+        if (Snackbar.Report(result))
+        {
+            Dialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private CharacterSnapshot Snapshot(string? wearing, string? status, string? relationship, string? changes) =>
+        new() { CharacterId = Person.Id, CurrentOutfit = wearing, Status = status, Relationship = relationship, AppearanceChanges = changes };
 
     private static RenderFragment Fact(string label, string? value) => __builder =>
     {

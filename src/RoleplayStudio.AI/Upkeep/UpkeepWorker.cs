@@ -36,8 +36,8 @@ public sealed class UpkeepWorker(UpkeepQueue queue, SceneUpkeep scene, MemoryUpk
         }
         catch (DbUpdateConcurrencyException exception) when (exception.Entries.Any(e => e.Entity is ChatSession))
         {
-            // The rewind queued its own job, which reads the chat as it is now.
-            logger.LogInformation("{Step} for chat {SessionId} was dropped: the chat was rewound while it ran", step, job.SessionId);
+            // A rewind queued its own job; after a correction by hand, the next turn's job reads on from it.
+            logger.LogInformation("{Step} for chat {SessionId} was dropped: the chat was rewound or corrected while it ran", step, job.SessionId);
             return true;
         }
         catch (Exception exception)

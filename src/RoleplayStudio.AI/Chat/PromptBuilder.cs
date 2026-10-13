@@ -149,7 +149,8 @@ public static partial class PromptBuilder
                 new Field("Looks", character.Appearance),
                 new Field("Wearing now", state.CurrentOutfit),
                 new Field("Changes since the start", state.AppearanceChanges),
-                new Field("Feeling", state.Status)));
+                new Field("Feeling", state.Status),
+                new Field($"With {persona.Name}", state.Relationship)));
         }
 
         Section(text, "Met earlier, not here now", MetEarlier(input.MetEarlier));

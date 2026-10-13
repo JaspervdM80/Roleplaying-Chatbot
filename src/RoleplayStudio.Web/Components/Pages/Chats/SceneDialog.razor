@@ -1,0 +1,52 @@
+@using RoleplayStudio.Domain.Chats
+@using RoleplayStudio.Infrastructure.Services
+@inject ChatSessionService Sessions
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <div class="scene-fields">
+            <MudTextField @bind-Value="_location" Label="Where" Placeholder="The Lantern Inn, common room" Variant="Variant.Outlined" AutoFocus="true" />
+            <MudTextField @bind-Value="_timeOfDay" Label="When" Placeholder="Late evening, snowing hard" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="_mood" Label="Mood" Placeholder="Crowded, warm, a little tense" Variant="Variant.Outlined" />
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()" Disabled="_saving">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="_saving">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string? _location;
+    private string? _timeOfDay;
+    private string? _mood;
+    private bool _saving;
+    private SceneFacts _opened = null!;
+
+    [CascadingParameter]
+    private IMudDialogInstance Dialog { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public Guid SessionId { get; set; }
+
+    [Parameter, EditorRequired]
+    public SceneState Scene { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        _opened = SceneFacts.Of(Scene);
+        (_location, _timeOfDay, _mood) = _opened;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = await Sessions.CorrectSceneAsync(SessionId, _opened, new SceneFacts(_location, _timeOfDay, _mood));
+        _saving = false;
+        if (Snackbar.Report(result))
+        {
+            Dialog.Close(DialogResult.Ok(true));
+        }
+    }
+}

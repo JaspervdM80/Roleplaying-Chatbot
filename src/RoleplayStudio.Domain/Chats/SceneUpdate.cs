@@ -14,7 +14,8 @@ public sealed record CharacterChange(
     string? NewName = null,
     int? Age = null,
     string? Gender = null,
-    string? Appearance = null);
+    string? Appearance = null,
+    string? Relationship = null);
 
 public sealed record Newcomer(string Name, string? Role, int? Age, string? Gender, string? Description, string? Personality, string? SpeechStyle, string? Appearance, string? Outfit);
 
@@ -104,6 +105,7 @@ public sealed record SceneUpdate(
             state.Status = change.Status ?? state.Status;
             state.AppearanceChanges = change.AppearanceChanges ?? state.AppearanceChanges;
             state.CurrentOutfit = change.Outfit ?? state.CurrentOutfit;
+            state.Relationship = change.Relationship ?? state.Relationship;
             state.UpdatedAt = now;
 
             if (character.IntroducedInSessionId != session.Id)

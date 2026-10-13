@@ -80,6 +80,7 @@
 
 .scene-person {
     display: flex;
+    justify-content: flex-start;
     gap: 12px;
     width: 100%;
     min-height: 44px;
