@@ -409,6 +409,9 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                     b.Property<string>("CurrentOutfit")
                         .HasColumnType("text");
 
+                    b.Property<string>("Relationship")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("SessionId")
                         .HasColumnType("uuid");
 
@@ -965,6 +968,8 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
 
                             b1.Property<string>("Mood");
 
+                            b1.Property<string>("PersonaOutfit");
+
                             b1.PrimitiveCollection<string>("PresentCharacterIds")
                                 .IsRequired();
 
@@ -1032,6 +1037,8 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
 
                             b1.Property<string>("Mood");
 
+                            b1.Property<string>("PersonaOutfit");
+
                             b1.PrimitiveCollection<string>("PresentCharacterIds")
                                 .IsRequired();
 
@@ -1060,6 +1067,8 @@ namespace RoleplayStudio.Infrastructure.Data.Migrations
                                     b2.Property<Guid>("CharacterId");
 
                                     b2.Property<string>("CurrentOutfit");
+
+                                    b2.Property<string>("Relationship");
 
                                     b2.Property<string>("Status");
 

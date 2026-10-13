@@ -55,6 +55,10 @@ no characters" — and the director prompt silently loses its cast.
   `HistoryVersion`, a concurrency token, on.
 - **`MemoryEntry.Embedding` has a fixed dimension** (`EmbeddingDimensions`). See the `migrations`
   skill before changing the embedding model.
+- **A correction by hand goes through `ChatSession.CorrectScene`, `CorrectPersonaOutfit` and
+  `CorrectCharacter`**. Each takes what the dialog opened with and applies only the fields the user
+  changed from it (`TextFields.Edited`), then moves `HistoryVersion` on. `CharacterSnapshot` is the
+  one list of the fields a chat changes on a `CharacterState`; a new one goes there.
 - **Who is present is `Scene.PresentCharacterIds`**, set only through `ChatSession.SetPresent` and read
   through `ChatSession.PresentStates`. A `CharacterState` exists for everyone met in the chat, present
   or not (`AbsentStates`); scene tracking keeps both up to date. The

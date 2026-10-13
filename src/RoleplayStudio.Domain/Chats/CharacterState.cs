@@ -11,5 +11,8 @@ public class CharacterState : Entity
     public string? CurrentOutfit { get; set; }
     public string? AppearanceChanges { get; set; }
     public string? Status { get; set; }
+
+    /// <summary>How they stand with the user's persona, in a few words.</summary>
+    public string? Relationship { get; set; }
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

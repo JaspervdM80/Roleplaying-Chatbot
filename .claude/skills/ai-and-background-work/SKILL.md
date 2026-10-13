@@ -121,6 +121,10 @@ the same rules:
   row locked from its reads to its save. A job that read the chat before a rewind fails its save on
   `ChatSession.HistoryVersion`; the worker logs that conflict, and only that one, at Information and
   drops the job, since the rewind's own job reads the chat as it now is.
+- **So does a correction by hand.** Every `ChatSession.Correct*` moves `HistoryVersion` on too, so a
+  tracking pass that read the old scene cannot write it back. Memory upkeep in flight is dropped with
+  it; the next turn's job redoes both from the corrected state. A correction applies only the fields
+  the user changed from what their dialog opened with, so a pass that saved first keeps the rest.
 
 ## Scene tracking
 
@@ -148,6 +152,11 @@ the same rules:
   "Met earlier".
 - An update without a `present` list leaves who is present alone; a field the model left out keeps
   its value. An outfit comes back whole, as everything worn now, and replaces the last one.
+- **How each character stands with the persona is `CharacterState.Relationship`**, a few words of
+  prose tracked like the status and sent on their sheet; there is no numeric affinity.
+- **The user corrects the scene from the scene panel** (`ChatSessionService.Correct*`): where, when
+  and the mood, anyone's outfit, changes, feeling and relationship, and the persona's outfit. The next
+  prompt reads the corrected state, and tracking reads on from it.
 
 ## Memory
 

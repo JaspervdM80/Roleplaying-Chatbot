@@ -181,4 +181,88 @@ public class SceneTests(PostgresFixture postgres)
 
         Assert.Null((await user.Characters.ListAsync()).Value.Single(c => c.Id == bess.Id).IntroducedInSessionId);
     }
+
+    [Fact]
+    public async Task What_the_user_corrects_in_the_scene_is_in_the_next_reply_prompt()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        var opened = CharacterSnapshot.Of(session.CharacterStates.Single());
+
+        Assert.True((await user.Sessions.CorrectSceneAsync(session.Id, SceneFacts.Of(session.Scene), new SceneFacts("The cellar", "Midnight", "Hushed"))).IsSuccess);
+        Assert.True((await user.Sessions.CorrectPersonaOutfitAsync(session.Id, null, "A borrowed raincoat")).IsSuccess);
+        var corrected = await user.Sessions.CorrectCharacterAsync(session.Id, opened, new CharacterSnapshot { CharacterId = opened.CharacterId, CurrentOutfit = "A green wool dress", Relationship = "Old friends" });
+        Assert.True(corrected.IsSuccess, corrected.Error);
+        await user.Sessions.AddUserMessageAsync(session.Id, "Down here?");
+        var client = new FakeChatClient(["Down here."]);
+
+        Assert.True((await user.Turns(new FakeModelClientFactory(client)).StreamReplyAsync(session.Id, _ => { })).IsSuccess);
+
+        var system = client.LastMessages![0].Text;
+        Assert.Contains("Wearing now: A green wool dress", system);
+        Assert.Contains("With Sam: Old friends", system);
+        Assert.Contains("Wearing now: A borrowed raincoat", system);
+        Assert.Contains("Location: The cellar", system);
+        Assert.DoesNotContain("An apron", system);
+    }
+
+    [Fact]
+    public async Task Only_the_owner_can_correct_a_chat_and_only_someone_met_in_it()
+    {
+        var owner = new StudioUser(postgres);
+        var other = new StudioUser(postgres);
+        var session = await owner.ChatAsync("Mira");
+        var mira = session.CharacterStates.Single().CharacterId;
+        var stranger = await owner.CharacterAsync("Thorne");
+
+        var opened = SceneFacts.Of(session.Scene);
+
+        Assert.True((await other.Sessions.CorrectSceneAsync(session.Id, opened, opened with { Location = "Their place" })).IsFailure);
+        Assert.True((await other.Sessions.CorrectPersonaOutfitAsync(session.Id, null, "Nothing")).IsFailure);
+        Assert.True((await other.Sessions.CorrectCharacterAsync(session.Id, new CharacterSnapshot(), new CharacterSnapshot { CharacterId = mira, CurrentOutfit = "Nothing" })).IsFailure);
+        Assert.True((await owner.Sessions.CorrectCharacterAsync(session.Id, new CharacterSnapshot(), new CharacterSnapshot { CharacterId = stranger.Id, CurrentOutfit = "A coat" })).IsFailure);
+
+        var reloaded = await ReloadAsync(owner, session.Id);
+        Assert.Equal(("Behind the counter", null, "An apron"), (reloaded.Scene.Location, reloaded.Scene.PersonaOutfit, reloaded.CharacterStates.Single().CurrentOutfit));
+    }
+
+    [Fact]
+    public async Task Scene_tracking_that_read_the_chat_before_a_correction_cannot_save_over_it()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        await user.UtilityModelAsync();
+        var sessions = user.Sessions;
+        // The user saves a correction while the utility model is still reading the chat as it was.
+        var utility = new FakeModelClientFactory(new ScriptedChatClient(_ =>
+        {
+            var opened = SceneFacts.Of(session.Scene);
+            Assert.True(sessions.CorrectSceneAsync(session.Id, opened, opened with { Location = "The cellar" }).GetAwaiter().GetResult().IsSuccess);
+            return BessWalksIn;
+        }));
+
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => user.SceneUpkeep(utility).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default));
+
+        var reloaded = await ReloadAsync(user, session.Id);
+        Assert.Equal(("The cellar", 0L), (reloaded.Scene.Location, reloaded.Scene.TrackedUpToSequence));
+    }
+
+    [Fact]
+    public async Task A_correction_saved_after_tracking_keeps_what_tracking_changed_in_the_fields_the_user_left_alone()
+    {
+        var user = new StudioUser(postgres);
+        var session = await user.ChatAsync("Mira");
+        await user.UtilityModelAsync();
+        var opened = CharacterSnapshot.Of(session.CharacterStates.Single());
+        var sceneOpened = SceneFacts.Of(session.Scene);
+        await user.SceneUpkeep(Utility(BessWalksIn)).RunAsync(new UpkeepJob(user.User.UserId!, session.Id), default);
+
+        Assert.True((await user.Sessions.CorrectCharacterAsync(session.Id, opened, new CharacterSnapshot { CharacterId = opened.CharacterId, CurrentOutfit = "A shawl" })).IsSuccess);
+        Assert.True((await user.Sessions.CorrectSceneAsync(session.Id, sceneOpened, sceneOpened with { Mood = "Hushed" })).IsSuccess);
+
+        var reloaded = await ReloadAsync(user, session.Id);
+        var mira = reloaded.CharacterStates.Single(s => s.CharacterId == opened.CharacterId);
+        Assert.Equal(("A shawl", "Warm"), (mira.CurrentOutfit, mira.Status));
+        Assert.Equal(("The common room", "Late evening", "Hushed"), (reloaded.Scene.Location, reloaded.Scene.TimeOfDay, reloaded.Scene.Mood));
+    }
 }

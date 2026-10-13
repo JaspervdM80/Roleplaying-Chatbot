@@ -90,3 +90,11 @@ nothing is logged.
 **Cause:** in MudBlazor 9 only the default activator is wired to the menu. Content in
 `ActivatorContent` receives a `MenuContext` and must open the menu itself.
 **Rule:** an `ActivatorContent` element calls `@onclick="context.ToggleAsync"`.
+
+## A row drawn as a `<button>` centres itself when its text is short
+
+**Symptom:** in the scene panel, a person whose name and outfit were short sat in the middle of the
+row while longer rows lined up on the left.
+**Cause:** Chromium centres the content of a `<button>`, and `text-align: left` only moves the text
+inside it; a `display: flex` button keeps its items centred until they fill the width.
+**Rule:** a button laid out as a row sets `justify-content: flex-start` as well as `text-align: left`.

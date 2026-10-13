@@ -22,7 +22,7 @@ public static class SceneTracking
         instructions.AppendLine("Read the latest part of the story and report the scene as it stands at the end of it:");
         instructions.AppendLine("- where it is, the time of day, and the mood, each in a few words;");
         instructions.AppendLine($"- who is in the scene with {personaName} now: everyone who arrived stays until the story says they left;");
-        instructions.AppendLine("- for anyone whose clothes, looks or feelings changed: their outfit as it is now, lasting changes to how they look, and a one- or two-word status (how they feel, like \"Warm\" or \"Wary\");");
+        instructions.AppendLine($"- for anyone whose clothes, looks, feelings or bond with {personaName} changed: their outfit as it is now, lasting changes to how they look, a one- or two-word status (how they feel, like \"Warm\" or \"Wary\"), and how they stand with {personaName} in a few words (like \"Old friends, a little jealous\");");
         instructions.AppendLine($"- {personaName}'s outfit as it is now, when {personaName}'s clothes changed;");
         instructions.AppendLine("- newcomers: named people who speak or act and are not one of the known characters. A newcomer is one person, never a group: give each member of a group their own entry. Describe them from the story, inventing only what is needed to picture them, and always give an age, estimated from the story if it is not said. Someone unnamed who speaks can be named by what they are, like \"The stablehand\".");
         instructions.AppendLine("- for a known character marked \"introduced in this story\": when the story now gives their real name, their new name; when it tells more about how they look, their lasting looks as a whole, old details kept; and their age or gender once the story makes it clear.");
@@ -33,7 +33,7 @@ public static class SceneTracking
         instructions.AppendLine("Answer with JSON only, in this shape:");
         instructions.AppendLine($$"""{"location":"...","timeOfDay":"...","mood":"...","present":["Name"],"changes":[{"name":"Name","outfit":"..."}],"newcomers":[{"name":"...","role":"...","age":30,"gender":"...","description":"...","personality":"...","speechStyle":"...","appearance":"...","outfit":"..."}]}""");
         instructions.AppendLine("Leave out a field that did not change, and \"changes\" or \"newcomers\" when there are none.");
-        instructions.AppendLine("A change names the character and holds only what changed about them, from: \"status\", \"appearanceChanges\", \"outfit\", and for someone introduced in this story \"newName\", \"age\", \"gender\" and \"appearance\".");
+        instructions.AppendLine("A change names the character and holds only what changed about them, from: \"status\", \"appearanceChanges\", \"outfit\", \"relationship\", and for someone introduced in this story \"newName\", \"age\", \"gender\" and \"appearance\".");
         instructions.AppendLine($"Add \"personaOutfit\" only when {personaName}'s clothes changed.");
         instructions.AppendLine("An outfit is everything they wear now, in a sentence or two, not only what changed.");
 
@@ -56,7 +56,7 @@ public static class SceneTracking
                     Labelled("Gender", TextFields.Clean(character.Gender) ?? "unknown"),
                     Labelled("Looks", OneLine(character.Appearance) ?? "unknown"))
                 : null;
-            story.AppendLine($"- {Sentences($"{character.Name} ({where})", Labelled("Wearing", OneLine(state.CurrentOutfit) ?? "unknown"), Labelled("Status", state.Status), introduced)}");
+            story.AppendLine($"- {Sentences($"{character.Name} ({where})", Labelled("Wearing", OneLine(state.CurrentOutfit) ?? "unknown"), Labelled("Status", state.Status), Labelled($"With {personaName}", OneLine(state.Relationship)), introduced)}");
         }
 
         foreach (var character in cast.Cast.Where(c => cast.Met.All(s => s.CharacterId != c.Id)))
@@ -95,7 +95,7 @@ public static class SceneTracking
 
     private static CharacterChange? ChangeOf(JsonElement item) =>
         Text(item, "name") is { } name
-            ? new CharacterChange(name, Text(item, "status"), Text(item, "appearanceChanges"), Text(item, "outfit"), Text(item, "newName"), AgeOf(item), Text(item, "gender"), Text(item, "appearance"))
+            ? new CharacterChange(name, Text(item, "status"), Text(item, "appearanceChanges"), Text(item, "outfit"), Text(item, "newName"), AgeOf(item), Text(item, "gender"), Text(item, "appearance"), Text(item, "relationship"))
             : null;
 
     private static Newcomer? NewcomerOf(JsonElement item)
