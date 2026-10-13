@@ -47,7 +47,7 @@ public sealed class MemoryRecall(
 
             var query = Transcript.Of(messages.OrderByDescending(m => m.Sequence).Take(QueryMessages));
             var vector = query.Length == 0 ? null : (await embeddings.EmbedAsync(db, [query], cancellationToken))[0];
-            List<MemoryHit> hits = vector is null ? [] : await NearestAsync(db, memories, vector, cancellationToken);
+            List<MemoryHit> hits = vector is null ? [] : await NearestAsync(db, memories.Where(m => !m.IsPinned), vector, Candidates, cancellationToken);
 
             // Memories saved while embedding failed have no vector, so they compete on importance alone.
             hits.AddRange(await memories
@@ -67,7 +67,7 @@ public sealed class MemoryRecall(
             return Result.Success<IReadOnlyList<MemoryEntry>>(recalled);
         });
 
-    private static Task<List<MemoryHit>> NearestAsync(ApplicationDbContext db, IQueryable<MemoryEntry> memories, Vector vector, CancellationToken cancellationToken) =>
+    internal static Task<List<MemoryHit>> NearestAsync(ApplicationDbContext db, IQueryable<MemoryEntry> memories, Vector vector, int take, CancellationToken cancellationToken) =>
         // The app's retrying execution strategy refuses a transaction opened outside it.
         db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
@@ -75,9 +75,9 @@ public sealed class MemoryRecall(
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
             await db.Database.ExecuteSqlRawAsync("SET LOCAL hnsw.iterative_scan = relaxed_order", cancellationToken);
             var hits = await memories
-                .Where(m => !m.IsPinned && m.Embedding != null)
+                .Where(m => m.Embedding != null)
                 .OrderBy(m => m.Embedding!.CosineDistance(vector))
-                .Take(Candidates)
+                .Take(take)
                 .Select(m => new MemoryHit(m, m.Embedding!.CosineDistance(vector)))
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);

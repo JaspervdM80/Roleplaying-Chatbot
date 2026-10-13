@@ -226,7 +226,13 @@ public class SceneState
     public string? Location { get; set; }
     public string? TimeOfDay { get; set; }
     public string? Mood { get; set; }
+
+    /// <summary>What the user's persona wears now; null until the story changes it from <see cref="Persona.DefaultOutfit"/>.</summary>
+    public string? PersonaOutfit { get; set; }
+
     public List<Guid> PresentCharacterIds { get; set; } = [];
+
+    public string? PersonaWears(Persona persona) => PersonaOutfit ?? persona.DefaultOutfit;
 
     /// <summary>The last message scene tracking has read; later messages may have moved people, clothes or the place.</summary>
     public long TrackedUpToSequence { get; set; }
@@ -236,6 +242,7 @@ public class SceneState
         Location = Location,
         TimeOfDay = TimeOfDay,
         Mood = Mood,
+        PersonaOutfit = PersonaOutfit,
         PresentCharacterIds = [.. PresentCharacterIds],
         TrackedUpToSequence = TrackedUpToSequence,
     };

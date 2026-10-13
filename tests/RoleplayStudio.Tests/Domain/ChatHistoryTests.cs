@@ -89,6 +89,7 @@ public class ChatHistoryTests
         var session = Session(5);
         session.Messages[3].SceneBefore = session.Snapshot();
         session.Scene.Location = "The harbour";
+        session.Scene.PersonaOutfit = "A wet towel";
         session.SetPresent([Mira, Jun], Now);
         session.CharacterStates[0].CurrentOutfit = "A wet apron";
         session.Scene.TrackedUpToSequence = 5;
@@ -96,6 +97,7 @@ public class ChatHistoryTests
         var rewound = session.Rewind(5, session.Messages, []);
 
         Assert.Equal(("The counter", 3L), (session.Scene.Location, session.Scene.TrackedUpToSequence));
+        Assert.Null(session.Scene.PersonaOutfit);
         Assert.Equal([Mira.Id], session.Scene.PresentCharacterIds);
         Assert.Equal("An apron", Assert.Single(session.CharacterStates).CurrentOutfit);
         Assert.Equal(Jun.Id, Assert.Single(rewound.DroppedStates).CharacterId);

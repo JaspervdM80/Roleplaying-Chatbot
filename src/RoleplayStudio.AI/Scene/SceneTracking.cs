@@ -14,14 +14,16 @@ public static class SceneTracking
     public const int MaxMessages = 12;
     public const int MaxTextLength = 400;
 
-    public static IReadOnlyList<ChatMessage> Prompt(ChatSession session, string personaName, SceneCast cast, IReadOnlyList<Message> messages)
+    public static IReadOnlyList<ChatMessage> Prompt(ChatSession session, Persona persona, SceneCast cast, IReadOnlyList<Message> messages)
     {
+        var personaName = persona.Name;
         var instructions = new StringBuilder();
         instructions.AppendLine($"You keep track of the scene in a roleplay. The user plays {personaName}; never list {personaName} as a character.");
         instructions.AppendLine("Read the latest part of the story and report the scene as it stands at the end of it:");
         instructions.AppendLine("- where it is, the time of day, and the mood, each in a few words;");
         instructions.AppendLine($"- who is in the scene with {personaName} now: everyone who arrived stays until the story says they left;");
         instructions.AppendLine("- for anyone whose clothes, looks or feelings changed: their outfit as it is now, lasting changes to how they look, and a one- or two-word status (how they feel, like \"Warm\" or \"Wary\");");
+        instructions.AppendLine($"- {personaName}'s outfit as it is now, when {personaName}'s clothes changed;");
         instructions.AppendLine("- newcomers: named people who speak or act and are not one of the known characters. A newcomer is one person, never a group: give each member of a group their own entry. Describe them from the story, inventing only what is needed to picture them, and always give an age, estimated from the story if it is not said. Someone unnamed who speaks can be named by what they are, like \"The stablehand\".");
         instructions.AppendLine("- for a known character marked \"introduced in this story\": when the story now gives their real name, their new name; when it tells more about how they look, their lasting looks as a whole, old details kept; and their age or gender once the story makes it clear.");
         instructions.AppendLine("A known character still called by what they are, like \"The stablehand\", is not a newcomer once the story names them: when \"Tom\" turns out to be the stablehand, report a change for \"The stablehand\" with newName \"Tom\", and no newcomer called Tom.");
@@ -29,14 +31,18 @@ public static class SceneTracking
         instructions.AppendLine("Use the known characters' names exactly as written below, also for someone who was just renamed.");
         instructions.AppendLine();
         instructions.AppendLine("Answer with JSON only, in this shape:");
-        instructions.AppendLine($$"""{"location":"...","timeOfDay":"...","mood":"...","present":["Name"],"changes":[{"name":"Name","status":"...","appearanceChanges":"...","outfit":"...","newName":"...","age":30,"gender":"...","appearance":"..."}],"newcomers":[{"name":"...","role":"...","age":30,"gender":"...","description":"...","personality":"...","speechStyle":"...","appearance":"...","outfit":"..."}]}""");
-        instructions.AppendLine("Leave out a field that did not change. An outfit is everything they wear now, in a sentence or two, not only what changed.");
+        instructions.AppendLine($$"""{"location":"...","timeOfDay":"...","mood":"...","present":["Name"],"changes":[{"name":"Name","outfit":"..."}],"newcomers":[{"name":"...","role":"...","age":30,"gender":"...","description":"...","personality":"...","speechStyle":"...","appearance":"...","outfit":"..."}]}""");
+        instructions.AppendLine("Leave out a field that did not change, and \"changes\" or \"newcomers\" when there are none.");
+        instructions.AppendLine("A change names the character and holds only what changed about them, from: \"status\", \"appearanceChanges\", \"outfit\", and for someone introduced in this story \"newName\", \"age\", \"gender\" and \"appearance\".");
+        instructions.AppendLine($"Add \"personaOutfit\" only when {personaName}'s clothes changed.");
+        instructions.AppendLine("An outfit is everything they wear now, in a sentence or two, not only what changed.");
 
         var story = new StringBuilder();
         story.AppendLine("The scene before this part:");
         story.AppendLine($"Location: {session.Scene.Location ?? "unknown"}");
         story.AppendLine($"Time of day: {session.Scene.TimeOfDay ?? "unknown"}");
         story.AppendLine($"Mood: {session.Scene.Mood ?? "unknown"}");
+        story.AppendLine($"{personaName} is wearing: {OneLine(session.Scene.PersonaWears(persona)) ?? "unknown"}");
         story.AppendLine();
         story.AppendLine("Known characters:");
         foreach (var state in cast.Met)
@@ -83,7 +89,8 @@ public static class SceneTracking
                 ? present.EnumerateArray().Select(n => n.ValueKind == JsonValueKind.String ? StructuredOutput.Text(n.GetString()) : null).OfType<string>().ToList()
                 : null,
             Objects(root, "changes").Select(ChangeOf).OfType<CharacterChange>().ToList(),
-            Objects(root, "newcomers").Select(NewcomerOf).OfType<Newcomer>().ToList());
+            Objects(root, "newcomers").Select(NewcomerOf).OfType<Newcomer>().ToList(),
+            Text(root, "personaOutfit"));
     }
 
     private static CharacterChange? ChangeOf(JsonElement item) =>

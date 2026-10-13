@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.Extensions.AI;
+using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Prompts;
 using RoleplayStudio.Domain.Chats;
 
@@ -10,7 +11,11 @@ public static class SessionSummarizing
     public const int SummarizeAboveTokens = 3000;
     public const int KeepRecentTokens = 1500;
     public const int MaxFoldTokens = 6000;
-    public const int SummaryWords = 300;
+    public const int MinSummaryWords = 150;
+    public const int MaxSummaryWords = 1000;
+
+    /// <summary>About two thirds of the summary's share of the chat prompt, so a full summary is sent whole.</summary>
+    public static int WordsFor(PromptBudget budget) => Math.Clamp(budget.SummaryTokens / 2, MinSummaryWords, MaxSummaryWords);
 
     /// <summary>
     /// The oldest unsummarized messages to fold into the summary once the unsummarized part outgrows <see cref="SummarizeAboveTokens"/>:
@@ -43,12 +48,12 @@ public static class SessionSummarizing
         return fold;
     }
 
-    public static IReadOnlyList<ChatMessage> Prompt(string previousSummary, IReadOnlyList<Message> fold, string personaName)
+    public static IReadOnlyList<ChatMessage> Prompt(string previousSummary, IReadOnlyList<Message> fold, string personaName, int words)
     {
         var instructions = $"""
             You keep the running summary of a roleplay in which the user plays {personaName}.
             Rewrite the summary so it also covers the new part of the story. Keep what still matters: who is who, what happened, how relationships stand, promises and open threads.
-            Write plain past-tense prose in the third person, at most {SummaryWords} words, and answer with the summary only.
+            Write plain past-tense prose in the third person, at most {words} words, and answer with the summary only.
             """;
 
         var story = new StringBuilder();

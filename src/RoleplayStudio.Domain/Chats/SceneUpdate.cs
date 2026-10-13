@@ -25,7 +25,8 @@ public sealed record SceneUpdate(
     string? Mood,
     IReadOnlyList<string>? Present,
     IReadOnlyList<CharacterChange> Changes,
-    IReadOnlyList<Newcomer> Newcomers)
+    IReadOnlyList<Newcomer> Newcomers,
+    string? PersonaOutfit = null)
 {
     public const double RestyleGrowth = 1.2;
 
@@ -35,6 +36,7 @@ public sealed record SceneUpdate(
         session.Scene.Location = Location ?? session.Scene.Location;
         session.Scene.TimeOfDay = TimeOfDay ?? session.Scene.TimeOfDay;
         session.Scene.Mood = Mood ?? session.Scene.Mood;
+        session.Scene.PersonaOutfit = PersonaOutfit ?? session.Scene.PersonaOutfit;
 
         var known = cast.Met.Select(s => s.Character).Concat(cast.Cast).DistinctBy(c => c.Id).ToList();
 

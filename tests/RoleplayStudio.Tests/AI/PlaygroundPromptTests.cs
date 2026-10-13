@@ -13,10 +13,11 @@ public class PlaygroundPromptTests
     {
         var messages = PlaygroundPrompt.Build(new PlaygroundCharacter("  Mira ", "A cheerful innkeeper."), [], Budget);
 
-        var system = Assert.Single(messages);
+        var system = messages[0];
         Assert.Equal(ChatRole.System, system.Role);
-        Assert.Contains("Write as Mira, staying in character", system.Text);
+        Assert.StartsWith("You play Mira", system.Text);
         Assert.Contains("A cheerful innkeeper.", system.Text);
+        Assert.Contains("Write as Mira, staying in character", messages[^1].Text);
         Assert.Contains("Everyone in the story is an adult.", system.Text);
     }
 
@@ -32,5 +33,6 @@ public class PlaygroundPromptTests
             [ChatRole.System, ChatRole.User, ChatRole.Assistant, ChatRole.User],
             messages.Select(m => m.Role));
         Assert.Equal("Hello there", messages[2].Text);
+        Assert.StartsWith("How are you?", messages[3].Text);
     }
 }

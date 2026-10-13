@@ -1,3 +1,4 @@
+using RoleplayStudio.AI.Chat;
 using RoleplayStudio.AI.Memory;
 using RoleplayStudio.Domain.Chats;
 
@@ -36,5 +37,17 @@ public class SessionSummarizingTests
         var fold = SessionSummarizing.ToFold(Chat(200), coveredUpToSequence: 0);
 
         Assert.Equal(SessionSummarizing.MaxFoldTokens / TokensPerMessage, fold.Count);
+    }
+
+    [Fact]
+    public void The_summary_may_run_longer_for_a_chat_model_with_a_larger_context_window()
+    {
+        var small = SessionSummarizing.WordsFor(new PromptBudget(4_096, 1_024));
+        var large = SessionSummarizing.WordsFor(new PromptBudget(16_384, 1_024));
+
+        Assert.True(large > small);
+        Assert.Equal(SessionSummarizing.MinSummaryWords, SessionSummarizing.WordsFor(new PromptBudget(1_024, 512)));
+        Assert.Equal(SessionSummarizing.MaxSummaryWords, SessionSummarizing.WordsFor(new PromptBudget(1_000_000, 1_024)));
+        Assert.Contains($"at most {large} words", SessionSummarizing.Prompt("", Chat(1), "Sam", large)[0].Text);
     }
 }
