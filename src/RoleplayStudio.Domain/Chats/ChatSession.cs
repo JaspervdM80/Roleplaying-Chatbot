@@ -24,7 +24,7 @@ public class ChatSession : OwnedEntity
     /// <summary>The last message memory extraction has read; later messages have not been mined for memories yet.</summary>
     public long MemoriesExtractedUpToSequence { get; set; }
 
-    /// <summary>Moved on by every rewind, so upkeep that read the chat before one cannot save over it.</summary>
+    /// <summary>Moved on by every rewind and every correction by hand, so upkeep that read the chat before one cannot save over it.</summary>
     public int HistoryVersion { get; set; }
 
     public List<Message> Messages { get; set; } = [];
@@ -106,6 +106,37 @@ public class ChatSession : OwnedEntity
         PresentStates().Select(s => s.Character).ToList();
 
     public SceneSnapshot Snapshot() => SceneSnapshot.Of(Scene, CharacterStates);
+
+    // Corrections apply only what the user changed from what they opened, so a tracking pass that saved meanwhile keeps the rest.
+    public void CorrectScene(SceneFacts opened, SceneFacts corrected)
+    {
+        Scene.Location = TextFields.Edited(Scene.Location, opened.Location, corrected.Location);
+        Scene.TimeOfDay = TextFields.Edited(Scene.TimeOfDay, opened.TimeOfDay, corrected.TimeOfDay);
+        Scene.Mood = TextFields.Edited(Scene.Mood, opened.Mood, corrected.Mood);
+        HistoryVersion++;
+    }
+
+    /// <summary>A blank outfit, or the persona's default one, puts them back in their default outfit.</summary>
+    public void CorrectPersonaOutfit(Persona persona, string? opened, string? corrected)
+    {
+        var wears = TextFields.Edited(Scene.PersonaWears(persona), opened, corrected);
+        Scene.PersonaOutfit = wears == TextFields.Clean(persona.DefaultOutfit) ? null : wears;
+        HistoryVersion++;
+    }
+
+    /// <summary>False when nobody with that id has been met in this chat.</summary>
+    public bool CorrectCharacter(CharacterSnapshot opened, CharacterSnapshot corrected, DateTimeOffset now)
+    {
+        if (CharacterStates.FirstOrDefault(s => s.CharacterId == corrected.CharacterId) is not { } state)
+        {
+            return false;
+        }
+
+        corrected.ApplyEditsTo(state, opened);
+        state.UpdatedAt = now;
+        HistoryVersion++;
+        return true;
+    }
 
     /// <summary>
     /// Undoes what the messages from <paramref name="fromSequence"/> on left in the scene, the summary and memory, so
@@ -219,6 +250,12 @@ public class ChatSession : OwnedEntity
         present.Count == 1
             ? (MessageRole.Character, present[0].Id, present[0].Name)
             : (MessageRole.Narrator, null, NarratorName);
+}
+
+/// <summary>Where and when the scene is, as the scene panel lets the user correct it.</summary>
+public sealed record SceneFacts(string? Location, string? TimeOfDay, string? Mood)
+{
+    public static SceneFacts Of(SceneState scene) => new(scene.Location, scene.TimeOfDay, scene.Mood);
 }
 
 public class SceneState

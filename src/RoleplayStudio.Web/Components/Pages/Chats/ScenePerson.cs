@@ -15,7 +15,9 @@ public sealed record ScenePerson(
     string? Looks,
     string? Wearing,
     string? Status,
-    string? Changes)
+    string? Changes,
+    string? Relationship,
+    bool IsPersona)
 {
     public static ScenePerson Of(CharacterState state) => new(
         state.Character.Id,
@@ -28,7 +30,9 @@ public sealed record ScenePerson(
         state.Character.Appearance,
         state.CurrentOutfit,
         state.Status,
-        state.AppearanceChanges);
+        state.AppearanceChanges,
+        state.Relationship,
+        false);
 
     public static ScenePerson Of(Persona persona, SceneState scene) => new(
         persona.Id,
@@ -41,5 +45,7 @@ public sealed record ScenePerson(
         persona.Appearance,
         scene.PersonaWears(persona),
         null,
-        null);
+        null,
+        null,
+        true);
 }

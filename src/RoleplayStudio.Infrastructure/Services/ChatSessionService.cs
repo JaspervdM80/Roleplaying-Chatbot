@@ -190,6 +190,59 @@ public sealed class ChatSessionService(IDbContextFactory<ApplicationDbContext> d
             return Result.Success();
         });
 
+    public Task<Result> CorrectSceneAsync(Guid id, SceneFacts opened, SceneFacts corrected) =>
+        ServiceOperation.RunOwnerAsync(currentUser, logger, "change the scene", CancellationToken.None, async ownerId =>
+        {
+            await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
+            var session = await db.ChatSessions.SingleOrDefaultAsync(s => s.Id == id);
+            if (session is null)
+            {
+                return NotFound(id);
+            }
+
+            session.CorrectScene(opened, corrected);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Corrected the scene of chat {SessionId}", id);
+            return Result.Success();
+        });
+
+    public Task<Result> CorrectPersonaOutfitAsync(Guid id, string? opened, string? corrected) =>
+        ServiceOperation.RunOwnerAsync(currentUser, logger, "change what you wear", CancellationToken.None, async ownerId =>
+        {
+            await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
+            var session = await db.ChatSessions.Include(s => s.Persona).SingleOrDefaultAsync(s => s.Id == id);
+            if (session is null)
+            {
+                return NotFound(id);
+            }
+
+            session.CorrectPersonaOutfit(session.Persona, opened, corrected);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Corrected the persona's outfit in chat {SessionId}", id);
+            return Result.Success();
+        });
+
+    public Task<Result> CorrectCharacterAsync(Guid id, CharacterSnapshot opened, CharacterSnapshot corrected) =>
+        ServiceOperation.RunOwnerAsync(currentUser, logger, "change how they are", CancellationToken.None, async ownerId =>
+        {
+            await using var db = await dbFactory.CreateForOwnerAsync(ownerId);
+            var session = await db.ChatSessions.Include(s => s.CharacterStates).SingleOrDefaultAsync(s => s.Id == id);
+            if (session is null)
+            {
+                return NotFound(id);
+            }
+
+            if (!session.CorrectCharacter(opened, corrected, time.GetUtcNow()))
+            {
+                logger.LogWarning("Character {CharacterId} has not been met in chat {SessionId}", corrected.CharacterId, id);
+                return Result.Failure("They are no longer in this chat");
+            }
+
+            await db.SaveChangesAsync();
+            logger.LogInformation("Corrected character {CharacterId} in chat {SessionId}", corrected.CharacterId, id);
+            return Result.Success();
+        });
+
     public Task<Result<Message>> AddUserMessageAsync(Guid id, string text) =>
         ServiceOperation.RunOwnerAsync(currentUser, logger, "send the message", CancellationToken.None, async ownerId =>
         {

@@ -8,6 +8,7 @@
     <aside class="scene" aria-labelledby="scene-title">
         <div class="scene-header">
             <h2 id="scene-title" class="scene-title">Scene</h2>
+            <MudIconButton Icon="@Icons.Material.Outlined.Edit" aria-label="Change the scene" OnClick="EditSceneAsync" />
             <MudIconButton Icon="@Icons.Material.Filled.Close" aria-label="Close the scene" OnClick="OnClose" Class="scene-close" />
         </div>
 
@@ -115,6 +116,10 @@
     [Parameter]
     public EventCallback<GeneratedImage> OnOpen { get; set; }
 
+    /// <summary>Raised after the user corrected the scene or someone in it, so the caller reads it again.</summary>
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
     private const int ShownPictures = 4;
 
     protected override void OnParametersSet()
@@ -145,8 +150,32 @@
 
     private async Task ShowAsync(ScenePerson person)
     {
-        var parameters = new DialogParameters<PersonDialog> { { d => d.Person, person } };
+        var parameters = new DialogParameters<PersonDialog>
+        {
+            { d => d.Person, person },
+            { d => d.SessionId, Session.Id },
+            { d => d.PersonaName, Session.Persona.Name },
+        };
         var dialog = await Dialogs.ShowAsync<PersonDialog>(person.Name, parameters, DialogServiceExtensions.Options);
-        await dialog.Result;
+        await ChangedAsync(dialog);
+    }
+
+    private async Task EditSceneAsync()
+    {
+        var parameters = new DialogParameters<SceneDialog>
+        {
+            { d => d.SessionId, Session.Id },
+            { d => d.Scene, Session.Scene },
+        };
+        var dialog = await Dialogs.ShowAsync<SceneDialog>("Scene", parameters, DialogServiceExtensions.Options with { MaxWidth = MaxWidth.ExtraSmall });
+        await ChangedAsync(dialog);
+    }
+
+    private async Task ChangedAsync(IDialogReference dialog)
+    {
+        if (await dialog.Result is { Canceled: false, Data: true })
+        {
+            await OnChanged.InvokeAsync();
+        }
     }
 }

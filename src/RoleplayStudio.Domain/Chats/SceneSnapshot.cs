@@ -48,6 +48,7 @@ public class CharacterSnapshot
     public string? CurrentOutfit { get; set; }
     public string? AppearanceChanges { get; set; }
     public string? Status { get; set; }
+    public string? Relationship { get; set; }
 
     public static CharacterSnapshot Of(CharacterState state) => new()
     {
@@ -55,13 +56,24 @@ public class CharacterSnapshot
         CurrentOutfit = state.CurrentOutfit,
         AppearanceChanges = state.AppearanceChanges,
         Status = state.Status,
+        Relationship = state.Relationship,
     };
+
+    /// <summary>Applies only what the user changed from <paramref name="opened"/>, so what tracking saved meanwhile stays.</summary>
+    public void ApplyEditsTo(CharacterState state, CharacterSnapshot opened)
+    {
+        state.CurrentOutfit = TextFields.Edited(state.CurrentOutfit, opened.CurrentOutfit, CurrentOutfit);
+        state.AppearanceChanges = TextFields.Edited(state.AppearanceChanges, opened.AppearanceChanges, AppearanceChanges);
+        state.Status = TextFields.Edited(state.Status, opened.Status, Status);
+        state.Relationship = TextFields.Edited(state.Relationship, opened.Relationship, Relationship);
+    }
 
     public CharacterState ApplyTo(CharacterState state)
     {
         state.CurrentOutfit = CurrentOutfit;
         state.AppearanceChanges = AppearanceChanges;
         state.Status = Status;
+        state.Relationship = Relationship;
         return state;
     }
 }
